@@ -45,7 +45,21 @@ export const Dashboard = () => {
         width: 240,
       }}>
         {_.map(_.keys(schema).sort(), (key) => (
-          <div key={key}>
+          <div
+            key={key}
+            style={[
+              {
+                padding: '12px 16px',
+                cursor: 'pointer',
+              },
+              selected && {
+                backgroundColor: selected?.params.schema === key ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
+              },
+            ]}
+            onClick={() => {
+              location.pushState({}, `/${key}`);
+            }}
+          >
             {key}
           </div>
         ))}
