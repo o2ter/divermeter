@@ -24,17 +24,13 @@
 //
 
 import _ from 'lodash';
-import { ComponentType } from 'frosty';
-import { Dashboard as _Dashboard } from './dashboard';
-import { ProtoContext } from './proto';
-import type { ProtoClient } from 'proto.io';
+import { useProto } from '../proto';
 
-export const Dashboard: ComponentType<{
-  proto: ProtoClient;
-}> = ({ proto }) => (
-  <ProtoContext value={proto}>
-    <_Dashboard />
-  </ProtoContext>
-);
+export const Dashboard = () => {
 
-export default Dashboard;
+  const proto = useProto();
+
+  return (
+    <div></div>
+  );
+};
