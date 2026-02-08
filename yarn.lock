@@ -3184,13 +3184,13 @@ emojis-list@^3.0.0:
   resolved "https://registry.yarnpkg.com/emojis-list/-/emojis-list-3.0.0.tgz#5570662046ad29e2e916e71aae260abdff4f6a78"
   integrity sha512-/kyM18EfinwXZbno9FyUGeFh87KC8HRQBQGildHZbEuRyWFOmv1U10o9BBp8XVZDVNNuQKyIGIu5ZYAAXJ0V2Q==
 
-enhanced-resolve@^5.17.4:
-  version "5.18.4"
-  resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-5.18.4.tgz#c22d33055f3952035ce6a144ce092447c525f828"
-  integrity sha512-LgQMM4WXU3QI+SYgEc2liRgznaD5ojbmY3sb8LxyguVkIg5FxdpTkvk72te2R38/TGKxH634oLxXRGY6d7AP+Q==
+enhanced-resolve@^5.19.0:
+  version "5.19.0"
+  resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-5.19.0.tgz#6687446a15e969eaa63c2fa2694510e17ae6d97c"
+  integrity sha512-phv3E1Xl4tQOShqSte26C7Fl84EwUdZsyOuSSk9qtAGyyQs2s3jJzComh+Abf4g187lUUAvH+H26omrqia2aGg==
   dependencies:
     graceful-fs "^4.2.4"
-    tapable "^2.2.0"
+    tapable "^2.3.0"
 
 entities@^6.0.0:
   version "6.0.1"
@@ -3392,10 +3392,10 @@ foreground-child@^3.1.0:
     cross-spawn "^7.0.6"
     signal-exit "^4.0.1"
 
-frosty-native@^0.0.122:
-  version "0.0.122"
-  resolved "https://registry.yarnpkg.com/frosty-native/-/frosty-native-0.0.122.tgz#efd29e08949f1f0226d10e3ab2967c85923454ab"
-  integrity sha512-Rcffm/9iqmycb/4GeyqTioCMPcuAdLUzJJUgyQLW/43Hd4AQtyTvNVO02D9YvMS8ZdO3n99+4PWNeGGUwIjMyQ==
+frosty-native@^0.0.148:
+  version "0.0.148"
+  resolved "https://registry.yarnpkg.com/frosty-native/-/frosty-native-0.0.148.tgz#b896c3342e0a215703a1188643124b547e0ec773"
+  integrity sha512-j5esY4K0ZZ0IaLLTMKoA2juj0+tAAKVfGuL5vntipmTheheoqKcupgt+eNzj+kVzABCyjuWbIvCQdj9CcFEzeQ==
   dependencies:
     "@babel/core" "^7.26.10"
     "@babel/preset-env" "^7.26.9"
@@ -3406,36 +3406,36 @@ frosty-native@^0.0.122:
     copy-webpack-plugin "^13.0.0"
     core-js "^3.41.0"
     file-loader "^6.2.0"
-    frosty "^0.0.111"
-    lodash "^4.17.21"
+    frosty "^0.0.121"
+    lodash "^4.17.23"
     terser-webpack-plugin "^5.3.14"
     ts-node "^10.9.2"
     tslib "^2.8.1"
     typescript "^5.7.3"
-    webpack "^5.98.0"
+    webpack "^5.104.1"
     webpack-cli "^6.0.1"
 
-frosty@^0.0.111:
-  version "0.0.111"
-  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.111.tgz#86eefde316213533f03cd3bef7adb20cd50b67c7"
-  integrity sha512-10W/k1f7zwhZ9/9Ll6ARY8PDemDYn1OFbg9Z4gLNDx3jYTGdvdIgQCKiMzlMuPfaIwqlykdVO80PbIb3F8wdvw==
+frosty@^0.0.121:
+  version "0.0.121"
+  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.121.tgz#abd067f2fc99fbf0829840f4a2713687a4787402"
+  integrity sha512-hD9KyysYkRCpKZVbk7DjKcmx8RYThs7MIRaLghnZn6WNYidJlqHvYtjxcCllXL54g7TWQGp0Oy3++8unFrfQ+w==
   dependencies:
     "@o2ter/utils-js" "^0.0.19"
     "@types/jsdom" "^21.1.7"
     "@types/lodash" "^4.17.16"
     csstype "^3.1.3"
     jsdom "^27.0.0"
-    lodash ">=4.17.21"
-    myers.js "^0.0.20"
+    lodash ">=4.17.23"
+    myers.js "^0.0.22"
     nextick "^0.0.2"
     postcss "^8.5.6"
     postcss-js "^5.0.0"
     postcss-nested "^7.0.2"
 
-frosty@^0.0.122:
-  version "0.0.122"
-  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.122.tgz#a8c9ff7f9fa4539bf2c037e70dac8b345e1fa37f"
-  integrity sha512-g95ixm7IPtUpKq43VAxrpSAJgYeohZUkrO1feZAB9fXyfHAZZJsrSESqcYSyJd9QGNdUfO7Kf+gfGumkZhZlJA==
+frosty@^0.0.123:
+  version "0.0.123"
+  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.123.tgz#f5477b5ac1fa7118344dd4e5aa4edbf76d2dd78b"
+  integrity sha512-OQIO+HTA8OO2G0A8VoxLN9LaEb8O7Jop28mK33Gl6tmrNWmmdSRy55erm9M8WbvMI50Lcz24zAO+vBXR0Fbvcw==
   dependencies:
     "@o2ter/utils-js" "^0.0.19"
     "@types/jsdom" "^21.1.7"
@@ -4284,7 +4284,7 @@ lodash@>=4.17.21, lodash@^4.17.21:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
   integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
 
-lodash@>=4.17.23:
+lodash@>=4.17.23, lodash@^4.17.23:
   version "4.17.23"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.23.tgz#f113b0378386103be4f6893388c73d0bde7f2c5a"
   integrity sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==
@@ -4402,14 +4402,6 @@ ms@^2.1.3:
   version "2.1.3"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.3.tgz#574c8138ce1d2b5861f0b44579dbadd60c6615b2"
   integrity sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
-
-myers.js@^0.0.20:
-  version "0.0.20"
-  resolved "https://registry.yarnpkg.com/myers.js/-/myers.js-0.0.20.tgz#93ae821b490f7b6f66fed081b1b720ae19c066d0"
-  integrity sha512-uwTqcHx4ZezNxGH88HuzsNGizHMbxIep4Nq/QMDdNAJR0yuG5TeHMFEgxFhyn7qU4kDMqjXl0sIUd38+OzqNfg==
-  dependencies:
-    lodash "^4.17.21"
-    nextick "^0.0.2"
 
 myers.js@^0.0.22:
   version "0.0.22"
@@ -5104,11 +5096,6 @@ synckit@^0.11.8:
   dependencies:
     "@pkgr/core" "^0.2.9"
 
-tapable@^2.2.0:
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/tapable/-/tapable-2.2.1.tgz#1967a73ef4060a82f12ab96af86d52fdb76eeca0"
-  integrity sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==
-
 tapable@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/tapable/-/tapable-2.3.0.tgz#7e3ea6d5ca31ba8e078b560f0d83ce9a14aa8be6"
@@ -5388,10 +5375,10 @@ walker@^1.0.8:
   dependencies:
     makeerror "1.0.12"
 
-watchpack@^2.4.4:
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/watchpack/-/watchpack-2.5.0.tgz#fa115d5ccaa4bf3aa594f586257c0bc4768939fd"
-  integrity sha512-e6vZvY6xboSwLz2GD36c16+O/2Z6fKvIf4pOXptw2rY9MVwE/TXc6RGqxD3I3x0a28lwBY7DE+76uTPSsBrrCA==
+watchpack@^2.5.1:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/watchpack/-/watchpack-2.5.1.tgz#dd38b601f669e0cbf567cb802e75cead82cde102"
+  integrity sha512-Zn5uXdcFNIA1+1Ei5McRd+iRzfhENPCe7LeABkJtNulSxjma+l7ltNx55BWZkRlwRnpOgHqxnjyaDgJnNXnqzg==
   dependencies:
     glob-to-regexp "^0.4.1"
     graceful-fs "^4.1.2"
@@ -5434,10 +5421,10 @@ webpack-sources@^3.3.3:
   resolved "https://registry.yarnpkg.com/webpack-sources/-/webpack-sources-3.3.3.tgz#d4bf7f9909675d7a070ff14d0ef2a4f3c982c723"
   integrity sha512-yd1RBzSGanHkitROoPFd6qsrxt+oFhg/129YzheDGqeustzX0vTZJZsSsQjVQC4yzBQ56K55XU8gaNCtIzOnTg==
 
-webpack@^5.98.0:
-  version "5.104.1"
-  resolved "https://registry.yarnpkg.com/webpack/-/webpack-5.104.1.tgz#94bd41eb5dbf06e93be165ba8be41b8260d4fb1a"
-  integrity sha512-Qphch25abbMNtekmEGJmeRUhLDbe+QfiWTiqpKYkpCOWY64v9eyl+KRRLmqOFA2AvKPpc9DC6+u2n76tQLBoaA==
+webpack@^5.104.1:
+  version "5.105.0"
+  resolved "https://registry.yarnpkg.com/webpack/-/webpack-5.105.0.tgz#38b5e6c5db8cbe81debbd16e089335ada05ea23a"
+  integrity sha512-gX/dMkRQc7QOMzgTe6KsYFM7DxeIONQSui1s0n/0xht36HvrgbxtM1xBlgx596NbpHuQU8P7QpKwrZYwUX48nw==
   dependencies:
     "@types/eslint-scope" "^3.7.7"
     "@types/estree" "^1.0.8"
@@ -5449,7 +5436,7 @@ webpack@^5.98.0:
     acorn-import-phases "^1.0.3"
     browserslist "^4.28.1"
     chrome-trace-event "^1.0.2"
-    enhanced-resolve "^5.17.4"
+    enhanced-resolve "^5.19.0"
     es-module-lexer "^2.0.0"
     eslint-scope "5.1.1"
     events "^3.2.0"
@@ -5462,7 +5449,7 @@ webpack@^5.98.0:
     schema-utils "^4.3.3"
     tapable "^2.3.0"
     terser-webpack-plugin "^5.3.16"
-    watchpack "^2.4.4"
+    watchpack "^2.5.1"
     webpack-sources "^3.3.3"
 
 whatwg-mimetype@^4.0.0:
