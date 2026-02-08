@@ -32,6 +32,24 @@ export const Dashboard = () => {
   const schema = useProtoSchema();
 
   return (
-    <div></div>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+    }}>
+      <div style={{
+        width: 240,
+      }}>
+        {_.map(_.keys(schema), (key) => (
+          <div key={key}>
+            {key}
+          </div>
+        ))}
+      </div>
+      <div style={{
+        flex: 1,
+      }}>
+
+      </div>
+    </div>
   );
 };
