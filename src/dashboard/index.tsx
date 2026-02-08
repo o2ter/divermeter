@@ -28,45 +28,46 @@ import { useProto, useProtoSchema } from '../proto';
 import { useLocation } from 'frosty/web';
 import { match } from 'path-to-regexp';
 
-export const Dashboard = () => {
-
+const Menu = () => {
   const location = useLocation();
-  const proto = useProto();
   const schema = useProtoSchema();
+  const selected = match('/classes/:schema')(location.pathname);
+  return (
+    <div>
+      {_.map(_.keys(schema).sort(), (key) => (
+        <div
+          key={key}
+          style={[
+            {
+              padding: '12px 16px',
+              cursor: 'pointer',
+            },
+            selected && {
+              backgroundColor: selected?.params.schema === key ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
+            },
+          ]}
+          onClick={() => {
+            location.pushState({}, `/classes/${key}`);
+          }}
+        >
+          {key}
+        </div>
+      ))}
+    </div>
+  );
+};
 
-  const selected = match('/:schema')(location.pathname);
-
+export const Dashboard = () => {
+  const location = useLocation();
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'row',
     }}>
-      <div style={{
-        width: 240,
-      }}>
-        {_.map(_.keys(schema).sort(), (key) => (
-          <div
-            key={key}
-            style={[
-              {
-                padding: '12px 16px',
-                cursor: 'pointer',
-              },
-              selected && {
-                backgroundColor: selected?.params.schema === key ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
-              },
-            ]}
-            onClick={() => {
-              location.pushState({}, `/${key}`);
-            }}
-          >
-            {key}
-          </div>
-        ))}
+      <div style={{ width: 240 }}>
+        <Menu />
       </div>
-      <div style={{
-        flex: 1,
-      }}>
+      <div style={{ flex: 1 }}>
 
       </div>
     </div>
