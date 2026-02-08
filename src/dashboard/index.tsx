@@ -24,11 +24,12 @@
 //
 
 import _ from 'lodash';
-import { useProto } from '../proto';
+import { useProto, useProtoSchema } from '../proto';
 
 export const Dashboard = () => {
 
   const proto = useProto();
+  const schema = useProtoSchema();
 
   return (
     <div></div>

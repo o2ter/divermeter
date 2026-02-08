@@ -25,8 +25,29 @@
 
 import _ from 'lodash';
 import type { ProtoClient } from 'proto.io';
-import { createContext, useContext } from 'frosty';
+import { createContext, PropsWithChildren, useContext, useMemo, useResource } from 'frosty';
 
-export const ProtoContext = createContext<ProtoClient>();
+type ProtoContextType = {
+  proto: ProtoClient;
+  schema: Awaited<ReturnType<ProtoClient['schema']>>;
+};
 
-export const useProto = () => useContext(ProtoContext)!;
+const Context = createContext<ProtoContextType>();
+
+export const ProtoProvider = ({
+  proto,
+  children,
+}: PropsWithChildren<{
+  proto: ProtoClient;
+}>) => {
+  const { resource: schema } = useResource(() => proto.schema({ master: true }), [proto]);
+  const value = useMemo(() => ({ proto, schema: schema ?? {} }), [proto, schema]);
+  return (
+    <Context value={value}>
+      {children}
+    </Context>
+  );
+}
+
+export const useProto = () => useContext(Context)!.proto;
+export const useProtoSchema = () => useContext(Context)!.schema;
