@@ -27,7 +27,8 @@
   },
   "dependencies": {
     "frosty": "^0.0.128",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "path-to-regexp": "^8.3.0"
   },
   "peerDependencies": {
     "proto.io": "^0.0.229"

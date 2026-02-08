@@ -26,6 +26,7 @@
 import _ from 'lodash';
 import { useProto, useProtoSchema } from '../proto';
 import { useLocation } from 'frosty/web';
+import { match } from 'path-to-regexp';
 
 export const Dashboard = () => {
 
@@ -33,7 +34,7 @@ export const Dashboard = () => {
   const proto = useProto();
   const schema = useProtoSchema();
 
-  const selected = location.pathname.split('/')[1];
+  const selected = match('/:schema')(location.pathname);
 
   return (
     <div style={{
