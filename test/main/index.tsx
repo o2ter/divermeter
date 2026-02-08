@@ -32,7 +32,7 @@ import { useLocation } from 'frosty/web';
 export const Main = () => {
   const location = useLocation();
   const proto = useMemo(() => new ProtoClient({
-    endpoint: `${location.protocol}//${location.host}`,
+    endpoint: `${location.protocol}//${location.host}/proto`,
     masterUser: {
       user: 'admin',
       pass: 'password',
