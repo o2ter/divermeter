@@ -23,7 +23,7 @@
   "scripts": {
     "clean": "rm -rf ./dist/*",
     "rollup": "yarn clean && rollup -c",
-    "start": "npx frosty run -d -w -s ./src tests/server/app.tsx"
+    "start": "npx frosty run -d -w"
   },
   "dependencies": {
     "frosty": "^0.0.127",
