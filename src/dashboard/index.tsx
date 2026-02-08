@@ -25,11 +25,15 @@
 
 import _ from 'lodash';
 import { useProto, useProtoSchema } from '../proto';
+import { useLocation } from 'frosty/web';
 
 export const Dashboard = () => {
 
+  const location = useLocation();
   const proto = useProto();
   const schema = useProtoSchema();
+
+  const selected = location.pathname.split('/')[1];
 
   return (
     <div style={{
@@ -39,7 +43,7 @@ export const Dashboard = () => {
       <div style={{
         width: 240,
       }}>
-        {_.map(_.keys(schema), (key) => (
+        {_.map(_.keys(schema).sort(), (key) => (
           <div key={key}>
             {key}
           </div>
