@@ -2658,10 +2658,10 @@ foreground-child@^3.1.0:
     cross-spawn "^7.0.6"
     signal-exit "^4.0.1"
 
-frosty@^0.0.124:
-  version "0.0.124"
-  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.124.tgz#06f8d7eb5d2e552b7c4327206edbf1d1d96c822f"
-  integrity sha512-CchduIZBalizKbFoAlbL4NjKzgiMmBLlqpy9aPMxytg43t08Lm6s+2+nAHWJH6++F5skvvFycJYSrdZErzVONQ==
+frosty@^0.0.125:
+  version "0.0.125"
+  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.125.tgz#bc880a5eb0ba42883ecdf95d743ea3d41cc3da97"
+  integrity sha512-dsZ2KlStdmLfTrt/IQGg4fYWSxngjRLUXWD1RtFNOdomI1RONkx2ehzqOMNHR+BuMT4lu/eblmlQDwMJUpHnrw==
   dependencies:
     "@o2ter/utils-js" "^0.0.19"
     "@types/jsdom" "^21.1.7"
