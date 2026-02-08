@@ -28,7 +28,8 @@
   },
   "dependencies": {
     "frosty": "^0.0.127",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "proto.io": "^0.0.229"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",

@@ -1,5 +1,5 @@
 //
-//  index.tsx
+//  context.ts
 //
 //  The MIT License
 //  Copyright (c) 2021 - 2025 O2ter Limited. All rights reserved.
@@ -24,18 +24,9 @@
 //
 
 import _ from 'lodash';
-import { ComponentType } from 'frosty';
-import { ProtoContext } from './proto';
 import type { ProtoClient } from 'proto.io';
+import { createContext, useContext } from 'frosty';
 
-export const Dashboard: ComponentType<{
-  proto: ProtoClient;
-}> = ({ proto }) => {
-  return (
-    <ProtoContext value={proto}>
-      <div>Dashboard</div>
-    </ProtoContext>
-  );
-};
+export const ProtoContext = createContext<ProtoClient>();
 
-export default Dashboard;
+export const useProto = () => useContext(ProtoContext)!;
