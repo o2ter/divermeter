@@ -5,9 +5,9 @@ module.exports = (env, argv) => ({
   output: path.join(__dirname, 'test/dist'),
   client: {
     main: {
-      entry: './test/client/index.js',
+      entry: './test/app.tsx',
       uri: '/',
     },
   },
-  serverEntry: './test/server/index.ts'
+  serverEntry: './test/server.ts'
 })

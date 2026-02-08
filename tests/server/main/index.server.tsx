@@ -1,5 +1,5 @@
 //
-//  app.tsx
+//  index.server.tsx
 //
 //  The MIT License
 //  Copyright (c) 2021 - 2025 O2ter Limited. All rights reserved.
@@ -25,15 +25,6 @@
 
 import _ from 'lodash';
 
-import './app.scss';
-import { Main } from './main';
-
-export const App = () => {
-  return (
-    <div style={{ display: 'flex', flex: 1 }}>
-      <Main />
-    </div>
-  );
-};
-
-export default App;
+export const Main = () => (
+  <></>
+);

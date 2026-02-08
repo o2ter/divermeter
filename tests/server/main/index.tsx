@@ -1,5 +1,5 @@
 //
-//  app.tsx
+//  index.tsx
 //
 //  The MIT License
 //  Copyright (c) 2021 - 2025 O2ter Limited. All rights reserved.
@@ -24,16 +24,23 @@
 //
 
 import _ from 'lodash';
+import Dashboard from '../../../src';
+import { ProtoClient } from 'proto.io';
+import { useMemo } from 'frosty';
+import { useLocation } from 'frosty/web';
 
-import './app.scss';
-import { Main } from './main';
-
-export const App = () => {
+export const Main = () => {
+  const location = useLocation();
+  const proto = useMemo(() => new ProtoClient({
+    endpoint: `${location.protocol}//${location.host}`,
+    masterUser: {
+      user: 'admin',
+      pass: 'password',
+    },
+  }), []);
   return (
     <div style={{ display: 'flex', flex: 1 }}>
-      <Main />
+      <Dashboard proto={proto} />
     </div>
   );
 };
-
-export default App;
