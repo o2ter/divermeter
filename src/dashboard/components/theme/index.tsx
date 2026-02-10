@@ -236,10 +236,12 @@ export type ThemeSettings = {
   secondaryColor: string;
 };
 
-const Context = createContext<ThemeSettings>({
+const Context = createContext<ThemeSettings>();
+
+const defaultTheme: ThemeSettings = {
   primaryColor: '#1890ff',
   secondaryColor: '#f0f0f0',
-});
+};
 
 export const ThemeProvider = ({
   theme,
@@ -248,19 +250,19 @@ export const ThemeProvider = ({
   theme?: Partial<ThemeSettings>;
 }>) => {
   const parent = useContext(Context);
-  const value = _.merge({}, parent, theme);
+  const value = _.merge({}, parent ?? defaultTheme, theme);
   return (
     <Context value={value}>
-      <head>
+      {!parent && <head>
         <style>{initialStyle}</style>
-      </head>
+      </head>}
       {children}
     </Context>
   );
 };
 
 export const useTheme = () => {
-  const theme = useContext(Context);
+  const theme = useContext(Context) ?? {};
   return {
     ...theme,
   };
