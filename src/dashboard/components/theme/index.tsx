@@ -262,7 +262,7 @@ export const ThemeProvider = ({
 };
 
 export const useTheme = () => {
-  const theme = useContext(Context) ?? {};
+  const theme = useContext(Context) ?? defaultTheme;
   return {
     ...theme,
   };
