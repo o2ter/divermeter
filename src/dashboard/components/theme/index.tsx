@@ -251,9 +251,7 @@ export const ThemeProvider = ({
   const value = _.merge({}, parent, theme);
   return (
     <Context value={value}>
-      <head>
-        <style>{initialStyle}</style>
-      </head>
+      <style>{initialStyle}</style>
       {children}
     </Context>
   );
