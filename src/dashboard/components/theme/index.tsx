@@ -231,47 +231,7 @@ thead {
 }
 `;
 
-export type ThemeSettings = {
-  colors: {
-    primary: string;
-    secondary: string;
-    menuBackground: string;
-    activeBackground: string;
-    hoverBackground: string;
-    borderColor: string;
-    textPrimary: string;
-    textSecondary: string;
-    accentBorder: string;
-    divider: string;
-  },
-  spacing: {
-    xs: number;
-    sm: number;
-    md: number;
-    lg: number;
-    xl: number;
-  };
-  fontSize: {
-    xs: number;
-    sm: number;
-    md: number;
-    lg: number;
-  };
-  borderRadius: {
-    sm: number;
-    md: number;
-    lg: number;
-  };
-  fontWeight: {
-    normal: number;
-    medium: number;
-    semibold: number;
-  };
-};
-
-const Context = createContext<ThemeSettings>();
-
-const defaultTheme: ThemeSettings = {
+const defaultTheme = {
   colors: {
     primary: '#1890ff',
     secondary: '#f0f0f0',
@@ -308,6 +268,10 @@ const defaultTheme: ThemeSettings = {
     semibold: 600,
   },
 };
+
+export type ThemeSettings = typeof defaultTheme;
+
+const Context = createContext<ThemeSettings>();
 
 export const ThemeProvider = ({
   theme,
