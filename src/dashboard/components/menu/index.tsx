@@ -27,8 +27,10 @@ import _ from 'lodash';
 import { useProtoSchema } from '../../../proto';
 import { useLocation } from 'frosty/web';
 import { match } from 'path-to-regexp';
+import { useTheme } from '../theme';
 
 export const Menu = () => {
+  const theme = useTheme();
   const location = useLocation();
   const schema = useProtoSchema();
   const selected = match('/classes/:schema')(location.pathname);
