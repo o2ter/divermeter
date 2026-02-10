@@ -29,28 +29,69 @@ import { useLocation } from 'frosty/web';
 import { match } from 'path-to-regexp';
 import { useTheme } from '../theme';
 
+const MenuItem = ({
+  label,
+  isActive,
+  onClick
+}: {
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}) => {
+  return (
+    <div
+      style={{
+        padding: '12px 16px',
+        cursor: 'pointer',
+        fontWeight: isActive ? 600 : 400,
+        backgroundColor: isActive ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
+        borderLeft: isActive ? '3px solid #007AFF' : '3px solid transparent',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          backgroundColor: 'rgba(0, 0, 0, 0.05)',
+        },
+      }}
+      onClick={onClick}
+    >
+      {label}
+    </div>
+  );
+};
+
 const SchemaList = () => {
   const theme = useTheme();
   const location = useLocation();
   const schema = useProtoSchema();
-  const selected = match('/classes/:schema')(location.pathname);
+  const selected = match('/classes/:schema')(location.pathname) || undefined;
+
   return (
-    <div>
+    <div style={{ paddingLeft: '8px' }}>
+      <div
+        style={{
+          padding: '8px 8px 4px 8px',
+          fontSize: '12px',
+          fontWeight: 600,
+          color: 'rgba(0, 0, 0, 0.5)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+        }}
+      >
+        Classes
+      </div>
       {_.map(_.keys(schema).sort(), (key) => (
         <div
           key={key}
-          style={[
-            {
-              padding: '12px 16px',
-              cursor: 'pointer',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.05)',
-              },
+          style={{
+            padding: '10px 16px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            backgroundColor: selected?.params.schema === key ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
+            borderLeft: selected?.params.schema === key ? '3px solid #007AFF' : '3px solid transparent',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.05)',
             },
-            selected && {
-              backgroundColor: selected?.params.schema === key ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
-            },
-          ]}
+          }}
           onClick={() => {
             location.pushState({}, `/classes/${key}`);
           }}
@@ -65,20 +106,51 @@ const SchemaList = () => {
 export const Menu = () => {
   const theme = useTheme();
   const location = useLocation();
+  const isHome = location.pathname === '/';
+  const isConfig = location.pathname === '/config';
+
   return (
-    <div>
-      <div
-        onClick={() => {
-          location.pushState({}, `/`);
-        }}>
-        Dashboard
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      backgroundColor: '#f8f9fa',
+      borderRight: '1px solid rgba(0, 0, 0, 0.1)',
+    }}>
+      <div style={{
+        padding: '16px',
+        fontSize: '18px',
+        fontWeight: 700,
+        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+        backgroundColor: '#fff',
+      }}>
+        Menu
       </div>
-      <div><SchemaList /></div>
-      <div
-        onClick={() => {
-          location.pushState({}, `/config`);
-        }}>
-        Config
+
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <MenuItem
+          label="Dashboard"
+          isActive={isHome}
+          onClick={() => location.pushState({}, '/')}
+        />
+
+        <div style={{
+          margin: '12px 0',
+          borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+        }} />
+
+        <SchemaList />
+
+        <div style={{
+          margin: '12px 0',
+          borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+        }} />
+
+        <MenuItem
+          label="Config"
+          isActive={isConfig}
+          onClick={() => location.pushState({}, '/config')}
+        />
       </div>
     </div>
   );
