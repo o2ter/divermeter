@@ -232,15 +232,81 @@ thead {
 `;
 
 export type ThemeSettings = {
-  primaryColor: string;
-  secondaryColor: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    menuBackground: string;
+    activeBackground: string;
+    hoverBackground: string;
+    borderColor: string;
+    textPrimary: string;
+    textSecondary: string;
+    accentBorder: string;
+    divider: string;
+  },
+  spacing: {
+    xs: number;
+    sm: number;
+    md: number;
+    lg: number;
+    xl: number;
+  };
+  fontSize: {
+    xs: number;
+    sm: number;
+    md: number;
+    lg: number;
+  };
+  borderRadius: {
+    sm: number;
+    md: number;
+    lg: number;
+  };
+  fontWeight: {
+    normal: number;
+    medium: number;
+    semibold: number;
+  };
 };
 
 const Context = createContext<ThemeSettings>();
 
 const defaultTheme: ThemeSettings = {
-  primaryColor: '#1890ff',
-  secondaryColor: '#f0f0f0',
+  colors: {
+    primary: '#1890ff',
+    secondary: '#f0f0f0',
+    menuBackground: '#f8f9fa',
+    activeBackground: 'rgba(0, 0, 0, 0.08)',
+    hoverBackground: 'rgba(0, 0, 0, 0.05)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    textPrimary: '#212529',
+    textSecondary: 'rgba(0, 0, 0, 0.5)',
+    accentBorder: '#1890ff',
+    divider: 'rgba(0, 0, 0, 0.1)',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+  },
+  fontSize: {
+    xs: 12,
+    sm: 14,
+    md: 16,
+    lg: 20,
+  },
+  borderRadius: {
+    sm: 2,
+    md: 4,
+    lg: 8,
+  },
+  fontWeight: {
+    normal: 400,
+    medium: 500,
+    semibold: 600,
+  },
 };
 
 export const ThemeProvider = ({
@@ -265,5 +331,30 @@ export const useTheme = () => {
   const theme = useContext(Context) ?? defaultTheme;
   return {
     ...theme,
+    // Calculated styles for menu items
+    menuItem: {
+      padding: `${theme.spacing.md}px ${theme.spacing.lg}px`,
+      fontSize: theme.fontSize.sm,
+      fontWeight: theme.fontWeight.normal,
+      activeFontWeight: theme.fontWeight.semibold,
+      borderWidth: 3,
+    },
+    // Calculated styles for menu header
+    menuHeader: {
+      padding: `${theme.spacing.sm}px ${theme.spacing.sm}px ${theme.spacing.xs}px ${theme.spacing.sm}px`,
+      fontSize: theme.fontSize.xs,
+      fontWeight: theme.fontWeight.semibold,
+      letterSpacing: '0.5px',
+    },
+    // Calculated styles for divider
+    divider: {
+      margin: `${theme.spacing.md}px 0`,
+      borderWidth: 1,
+    },
+    // List item specific styles
+    listItem: {
+      padding: `${theme.spacing.sm + 2}px ${theme.spacing.lg}px`,
+      fontSize: theme.fontSize.sm,
+    },
   };
 };

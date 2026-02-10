@@ -38,17 +38,19 @@ const MenuItem = ({
   isActive: boolean;
   onClick: () => void;
 }) => {
+  const theme = useTheme();
   return (
     <div
       style={{
-        padding: '12px 16px',
+        padding: theme.menuItem.padding,
         cursor: 'pointer',
-        fontWeight: isActive ? 600 : 400,
-        backgroundColor: isActive ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
-        borderLeft: isActive ? '3px solid #007AFF' : '3px solid transparent',
+        fontSize: `${theme.menuItem.fontSize}px`,
+        fontWeight: isActive ? theme.menuItem.activeFontWeight : theme.menuItem.fontWeight,
+        backgroundColor: isActive ? theme.colors.activeBackground : 'transparent',
+        borderLeft: isActive ? `${theme.menuItem.borderWidth}px solid ${theme.colors.accentBorder}` : `${theme.menuItem.borderWidth}px solid transparent`,
         transition: 'all 0.2s ease',
         '&:hover': {
-          backgroundColor: 'rgba(0, 0, 0, 0.05)',
+          backgroundColor: theme.colors.hoverBackground,
         },
       }}
       onClick={onClick}
@@ -65,15 +67,15 @@ const SchemaList = () => {
   const selected = match('/classes/:schema')(location.pathname) || undefined;
 
   return (
-    <div style={{ paddingLeft: '8px' }}>
+    <div style={{ paddingLeft: `${theme.spacing.sm}px` }}>
       <div
         style={{
-          padding: '8px 8px 4px 8px',
-          fontSize: '12px',
-          fontWeight: 600,
-          color: 'rgba(0, 0, 0, 0.5)',
+          padding: theme.menuHeader.padding,
+          fontSize: `${theme.menuHeader.fontSize}px`,
+          fontWeight: theme.menuHeader.fontWeight,
+          color: theme.colors.textSecondary,
           textTransform: 'uppercase',
-          letterSpacing: '0.5px',
+          letterSpacing: theme.menuHeader.letterSpacing,
         }}
       >
         Classes
@@ -82,14 +84,14 @@ const SchemaList = () => {
         <div
           key={key}
           style={{
-            padding: '10px 16px',
+            padding: theme.listItem.padding,
             cursor: 'pointer',
-            fontSize: '14px',
-            backgroundColor: selected?.params.schema === key ? 'rgba(0, 0, 0, 0.08)' : 'transparent',
-            borderLeft: selected?.params.schema === key ? '3px solid #007AFF' : '3px solid transparent',
+            fontSize: `${theme.listItem.fontSize}px`,
+            backgroundColor: selected?.params.schema === key ? theme.colors.activeBackground : 'transparent',
+            borderLeft: selected?.params.schema === key ? `${theme.menuItem.borderWidth}px solid ${theme.colors.accentBorder}` : `${theme.menuItem.borderWidth}px solid transparent`,
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.05)',
+              backgroundColor: theme.colors.hoverBackground,
             },
           }}
           onClick={() => {
@@ -114,8 +116,8 @@ export const Menu = () => {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: '#f8f9fa',
-      borderRight: '1px solid rgba(0, 0, 0, 0.1)',
+      backgroundColor: theme.colors.menuBackground,
+      borderRight: `1px solid ${theme.colors.borderColor}`,
     }}>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <MenuItem
@@ -125,15 +127,15 @@ export const Menu = () => {
         />
 
         <div style={{
-          margin: '12px 0',
-          borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+          margin: theme.divider.margin,
+          borderTop: `${theme.divider.borderWidth}px solid ${theme.colors.divider}`,
         }} />
 
         <SchemaList />
 
         <div style={{
-          margin: '12px 0',
-          borderTop: '1px solid rgba(0, 0, 0, 0.1)',
+          margin: theme.divider.margin,
+          borderTop: `${theme.divider.borderWidth}px solid ${theme.colors.divider}`,
         }} />
 
         <MenuItem
