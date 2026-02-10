@@ -78,9 +78,8 @@ The `./scripts/test` script:
 ### Styling
 - Inline styles only (no CSS modules or separate stylesheets)
 - Style objects with camelCase properties
-- All theme values accessed via `useTheme()` hook
-- Theme is fully customizable - all component styles (menuItem, menuHeader, divider, listItem) are part of ThemeSettings
-- Example: `style={{ padding: theme.menuItem.padding, fontSize: theme.fontSize.sm }}`
+- Theme values accessed via `useTheme()` hook
+- Example: `style={{ padding: theme.spacing.sm, color: theme.colors.textPrimary }}`
 
 ### TypeScript Patterns
 - Strict mode enabled
