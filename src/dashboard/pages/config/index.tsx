@@ -24,9 +24,14 @@
 //
 
 import _ from 'lodash';
-import { useParams } from '../../router';
+import { useResource } from 'frosty';
+import { useProto } from '../../../proto';
 
 export const ConfigPage = () => {
-  const params = useParams();
-  return <div>Config {JSON.stringify(params)}</div>;
+  const proto = useProto();
+  const {
+    resource: config,
+    refresh,
+  } = useResource(async () => proto.config({ master: true }), []);
+  return <div>Config</div>;
 };
