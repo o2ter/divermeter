@@ -36,6 +36,12 @@ export const Menu = () => {
   const selected = match('/classes/:schema')(location.pathname);
   return (
     <div>
+      <div
+        onClick={() => {
+          location.pushState({}, `/`);
+        }}>
+        Dashboard
+      </div>
       {_.map(_.keys(schema).sort(), (key) => (
         <div
           key={key}
@@ -58,6 +64,12 @@ export const Menu = () => {
           {key}
         </div>
       ))}
+      <div
+        onClick={() => {
+          location.pushState({}, `/config`);
+        }}>
+        Config
+      </div>
     </div>
   );
 };
