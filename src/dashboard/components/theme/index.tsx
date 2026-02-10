@@ -28,206 +28,206 @@ import { createContext, PropsWithChildren, useContext } from 'frosty';
 
 const initialStyle = `
 :root {
-    --font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    --font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 body {
-    margin: 0;
-    font-family: var(--font-sans-serif);
-    background-color: white;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #212529;
+  margin: 0;
+  font-family: var(--font-sans-serif);
+  background-color: white;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
 }
 
 h1 {
-    font-weight: 500;
-    font-size: 40px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 h2 {
-    font-weight: 500;
-    font-size: 32px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 32px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 h3 {
-    font-weight: 500;
-    font-size: 28px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 h4 {
-    font-weight: 500;
-    font-size: 24px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 h5 {
-    font-weight: 500;
-    font-size: 20px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 h6 {
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 table {
-    width: 100%;
-    color: #212529;
-    vertical-align: top;
-    border-collapse: collapse;
-    margin-bottom: 16px;
-    border-top-color: #dee2e6;
-    border-bottom-color: #dee2e6;
-    border-left-color: #dee2e6;
-    border-right-color: #dee2e6;
+  width: 100%;
+  color: #212529;
+  vertical-align: top;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  border-top-color: #dee2e6;
+  border-bottom-color: #dee2e6;
+  border-left-color: #dee2e6;
+  border-right-color: #dee2e6;
 }
 
 th {
-    text-align: inherit;
+  text-align: inherit;
 }
 
 tbody, td, tfoot, th, thead, tr {
-    border-style: solid;
-    border-top-color: inherit;
-    border-bottom-color: inherit;
-    border-left-color: inherit;
-    border-right-color: inherit;
-    border-top-width: 0;
-    border-bottom-width: 0;
-    border-left-width: 0;
-    border-right-width: 0;
+  border-style: solid;
+  border-top-color: inherit;
+  border-bottom-color: inherit;
+  border-left-color: inherit;
+  border-right-color: inherit;
+  border-top-width: 0;
+  border-bottom-width: 0;
+  border-left-width: 0;
+  border-right-width: 0;
 }
 
 table &gt;
 thead &gt;
 tr &gt;
 * {
-    border-bottom-color: currentColor;
+  border-bottom-color: currentColor;
 }
 
 table tr &gt;
 * {
-    background-color: transparent;
-    padding-top: 8px;
-    padding-bottom: 8px;
-    padding-left: 8px;
-    padding-right: 8px;
-    border-bottom-width: 1px;
+  background-color: transparent;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-bottom-width: 1px;
 }
 
 table &gt;
 tbody {
-    vertical-align: inherit;
+  vertical-align: inherit;
 }
 
 table &gt;
 thead {
-    vertical-align: bottom;
+  vertical-align: bottom;
 }
 
 .table-striped tr:nth-of-type(odd) &gt;
 * {
-    background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .absolute-fill {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
 }
 
 .fixed-top {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1030;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
 }
 
 .fixed-bottom {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 1030;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
 }
 
 .sticky-top {
-    position: sticky;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1020;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1020;
 }
 
 .h1 {
-    font-weight: 500;
-    font-size: 40px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 .h2 {
-    font-weight: 500;
-    font-size: 32px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 32px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 .h3 {
-    font-weight: 500;
-    font-size: 28px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 .h4 {
-    font-weight: 500;
-    font-size: 24px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 .h5 {
-    font-weight: 500;
-    font-size: 20px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 .h6 {
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 1.2;
-    margin-top: 0;
-    margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 `;
 
@@ -251,7 +251,9 @@ export const ThemeProvider = ({
   const value = _.merge({}, parent, theme);
   return (
     <Context value={value}>
-      <style>{initialStyle}</style>
+      <head>
+        <style>{initialStyle}</style>
+      </head>
       {children}
     </Context>
   );
