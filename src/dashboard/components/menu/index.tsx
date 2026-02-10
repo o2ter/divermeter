@@ -29,19 +29,13 @@ import { useLocation } from 'frosty/web';
 import { match } from 'path-to-regexp';
 import { useTheme } from '../theme';
 
-export const Menu = () => {
+const SchemaList = () => {
   const theme = useTheme();
   const location = useLocation();
   const schema = useProtoSchema();
   const selected = match('/classes/:schema')(location.pathname);
   return (
     <div>
-      <div
-        onClick={() => {
-          location.pushState({}, `/`);
-        }}>
-        Dashboard
-      </div>
       {_.map(_.keys(schema).sort(), (key) => (
         <div
           key={key}
@@ -64,6 +58,22 @@ export const Menu = () => {
           {key}
         </div>
       ))}
+    </div>
+  );
+};
+
+export const Menu = () => {
+  const theme = useTheme();
+  const location = useLocation();
+  return (
+    <div>
+      <div
+        onClick={() => {
+          location.pushState({}, `/`);
+        }}>
+        Dashboard
+      </div>
+      <div><SchemaList /></div>
       <div
         onClick={() => {
           location.pushState({}, `/config`);
