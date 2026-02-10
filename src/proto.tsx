@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import type { ProtoClient } from 'proto.io';
+import { ProtoClient } from 'proto.io';
 import { createContext, PropsWithChildren, useContext, useMemo, useResource } from 'frosty';
 
 type ProtoContextType = {
