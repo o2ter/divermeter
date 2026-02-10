@@ -24,28 +24,9 @@
 //
 
 import _ from 'lodash';
-import { useLocation } from 'frosty/web';
-import { Menu } from './menu';
-import { Route, Routes } from './router';
-import { BrowserPage } from './pages/browser';
-import { ConfigPage } from './pages/config';
+import { useParams } from '../../router';
 
-export const Dashboard = () => {
-  const location = useLocation();
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'row',
-    }}>
-      <div style={{ width: 240 }}>
-        <Menu />
-      </div>
-      <div style={{ flex: 1 }}>
-        <Routes>
-          <Route path="/classes/:schema" element={<BrowserPage />} />
-          <Route path="/config" element={<ConfigPage />} />
-        </Routes>
-      </div>
-    </div>
-  );
+export const ConfigPage = () => {
+  const params = useParams();
+  return <div>Config {JSON.stringify(params)}</div>;
 };
