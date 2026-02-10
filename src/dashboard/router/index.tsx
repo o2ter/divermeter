@@ -67,7 +67,7 @@ export const Route = ({
   const currentPath = path ? `${_.trimEnd(parent.path, '/')}/${_.trimStart(path, '/')}` : parent.path;
   const matchedIndex = useMemo(() => index && match(parent.path)(location.pathname), [location.pathname, parent.path, index]);
   const matchedPath = useMemo(() => !!currentPath && match(currentPath)(location.pathname), [location.pathname, currentPath]);
-  const matched = matchedIndex || matchedPath;
+  const matched = matchedIndex || matchedPath || undefined;
   const outlet = (
     <Parent>{children}</Parent>
   );
@@ -76,9 +76,9 @@ export const Route = ({
       <Context value={{
         path: currentPath,
         outlet,
-        params: matched ? matched.params : undefined,
+        params: matched?.params,
       }}>
-        {!!matched && element}
+        {matched && element}
         {outlet}
       </Context>
     </Child>
