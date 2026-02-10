@@ -24,22 +24,38 @@
 //
 
 import _ from 'lodash';
+import { useProtoSchema } from '../../proto';
 import { useLocation } from 'frosty/web';
-import { Menu } from './menu';
+import { match } from 'path-to-regexp';
 
-export const Dashboard = () => {
+export const Menu = () => {
   const location = useLocation();
+  const schema = useProtoSchema();
+  const selected = match('/classes/:schema')(location.pathname);
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'row',
-    }}>
-      <div style={{ width: 240 }}>
-        <Menu />
-      </div>
-      <div style={{ flex: 1 }}>
-
-      </div>
+    <div>
+      {_.map(_.keys(schema).sort(), (key) => (
+        <div
+          key={key}
+          style={[
+            {
+              padding: '12px 16px',
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.05)',
+              },
+            },
+            selected && {
+              backgroundColor: selected?.params.schema === key ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
+            },
+          ]}
+          onClick={() => {
+            location.pushState({}, `/classes/${key}`);
+          }}
+        >
+          {key}
+        </div>
+      ))}
     </div>
   );
 };
