@@ -41,6 +41,9 @@ const Menu = () => {
             {
               padding: '12px 16px',
               cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.05)',
+              },
             },
             selected && {
               backgroundColor: selected?.params.schema === key ? 'rgba(0, 0, 0, 0.05)' : 'transparent',
