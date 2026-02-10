@@ -26,6 +26,7 @@
 import _ from 'lodash';
 import { useLocation } from 'frosty/web';
 import { Menu } from './menu';
+import { Route, Routes } from './router';
 
 export const Dashboard = () => {
   const location = useLocation();
@@ -38,7 +39,10 @@ export const Dashboard = () => {
         <Menu />
       </div>
       <div style={{ flex: 1 }}>
-
+        <Routes>
+          <Route path="/classes/:schema" element={<div>Class</div>} />
+          <Route path="/config" element={<div>Config</div>} />
+        </Routes>
       </div>
     </div>
   );
