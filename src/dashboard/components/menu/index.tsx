@@ -117,16 +117,6 @@ export const Menu = () => {
       backgroundColor: '#f8f9fa',
       borderRight: '1px solid rgba(0, 0, 0, 0.1)',
     }}>
-      <div style={{
-        padding: '16px',
-        fontSize: '18px',
-        fontWeight: 700,
-        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-        backgroundColor: '#fff',
-      }}>
-        Menu
-      </div>
-
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <MenuItem
           label="Dashboard"
