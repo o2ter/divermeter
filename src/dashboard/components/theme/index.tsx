@@ -23,31 +23,37 @@
 //  THE SOFTWARE.
 //
 
+import { createContext, PropsWithChildren, useContext } from 'frosty';
 import _ from 'lodash';
-import { useLocation } from 'frosty/web';
-import { Menu } from './components/menu';
-import { Route, Routes } from './components/router';
-import { BrowserPage } from './pages/browser';
-import { ConfigPage } from './pages/config';
-import { HomePage } from './pages/home';
 
-export const Dashboard = () => {
-  const location = useLocation();
+export type ThemeSettings = {
+  primaryColor: string;
+  secondaryColor: string;
+};
+
+const Context = createContext<ThemeSettings>({
+  primaryColor: '#1890ff',
+  secondaryColor: '#f0f0f0',
+});
+
+export const ThemeProvider = ({
+  theme,
+  children,
+}: PropsWithChildren<{
+  theme?: Partial<ThemeSettings>;
+}>) => {
+  const parent = useContext(Context);
+  const value = _.merge({}, parent, theme);
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'row',
-    }}>
-      <div style={{ width: 240 }}>
-        <Menu />
-      </div>
-      <div style={{ flex: 1 }}>
-        <Routes>
-          <Route index element={<HomePage />} />
-          <Route path="/classes/:schema" element={<BrowserPage />} />
-          <Route path="/config" element={<ConfigPage />} />
-        </Routes>
-      </div>
-    </div>
+    <Context value={value}>
+      {children}
+    </Context>
   );
+};
+
+export const useTheme = () => {
+  const theme = useContext(Context);
+  return {
+    ...theme,
+  };
 };

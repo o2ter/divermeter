@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { useParams } from '../../router';
+import { useParams } from '../../components/router';
 
 export const BrowserPage = () => {
   const params = useParams();
