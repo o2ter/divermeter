@@ -319,13 +319,12 @@ export const useTheme = () => {
 
 // Derive all UI colors from primary and secondary
 const background = '#ffffff';
-const menuBackground = shiftColor(theme.colors.primary, -0.85); // Lighter primary color
+  const menuBackground = shiftColor(theme.colors.primary, -0.85); // Lighter primary color
 
   const derivedColors = {
     // Base colors
     primary: theme.colors.primary,
     secondary: theme.colors.secondary,
-    background,
     menuBackground,
 
     // Interactive states - derived from primary/secondary with opacity
@@ -337,11 +336,8 @@ const menuBackground = shiftColor(theme.colors.primary, -0.85); // Lighter prima
     divider: withOpacity(theme.colors.secondary, 0.3),
 
     // Text colors - automatically contrast with backgrounds
-    text: colorContrast(background, 'black', 'white'),
-    textPrimary: colorContrast(background, 'black', 'white'),
     textSecondary: withOpacity(colorContrast(background, 'black', 'white'), 0.6),
     textOnMenu: colorContrast(menuBackground, 'black', 'white'),
-    textOnPrimary: colorContrast(theme.colors.primary, 'black', 'white'),
 
     // Accent uses primary color
     accentBorder: theme.colors.primary,
