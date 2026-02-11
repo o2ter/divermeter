@@ -41,10 +41,12 @@ src/
    - **All components MUST use theme values - never hardcode styles**
    - Theme structure defined by `ThemeSettings` type exported from this file
    - User configuration allows customization of all visual aspects without modifying source code
-3. **StyleProvider** ([src/components/style/index.tsx](src/components/style/index.tsx)): Caches derived menu styles
+3. **StyleProvider** ([src/components/style/index.tsx](src/components/style/index.tsx)): Caches derived styles and component-specific configurations
    - Hook: `useStyle()` - Returns cached style calculations based on theme
-   - Provides menu-specific color derivations, spacing, and component styles
-   - Wraps menu components to avoid recalculating styles
+   - Provides derived colors (borders, dividers, interactive states, text colors)
+   - Component-specific styles: menuItem, menuHeader, divider, listItem
+   - Uses `@o2ter/colors.js` for dynamic color derivations from theme
+   - Currently used primarily in menu components, but provides general-purpose UI styles
    - **IMPORTANT: Maintain StyleProvider** - When modifying components or removing features:
      - Check if styles in StyleProvider are still being used
      - Remove unused style properties and calculations to avoid bloat
