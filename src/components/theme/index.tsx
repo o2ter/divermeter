@@ -235,8 +235,9 @@ thead {
 const defaultTheme = {
   colors: {
     // Core colors - everything else derives from these two
-    primary: '#1890ff',      // Main brand/accent color
+    primary: '#097147',      // Main brand/accent color
     secondary: '#f0f0f0',    // Secondary color
+    tint: '#1890ff',         // For selection and highlights
     contrastDark: '#000000',     // For light backgrounds
     contrastLight: '#ffffff',    // For dark backgrounds
   },
