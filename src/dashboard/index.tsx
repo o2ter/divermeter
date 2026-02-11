@@ -24,7 +24,6 @@
 //
 
 import _ from 'lodash';
-import { useLocation } from 'frosty/web';
 import { Menu } from './components/menu';
 import { Route, Routes } from './components/router';
 import { StyleProvider } from './components/style';
@@ -33,7 +32,6 @@ import { ConfigPage } from './pages/config';
 import { HomePage } from './pages/home';
 
 export const Dashboard = () => {
-  const location = useLocation();
   return (
     <StyleProvider>
       <div style={{

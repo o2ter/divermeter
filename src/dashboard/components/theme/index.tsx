@@ -275,7 +275,7 @@ export const ThemeProvider = ({
   theme,
   children,
 }: PropsWithChildren<{
-  theme?: Partial<_ThemeSettings>;
+  theme?: ThemeSettings;
 }>) => {
   const parent = useContext(Context);
   const value = _.merge({}, parent ?? defaultTheme, theme);
