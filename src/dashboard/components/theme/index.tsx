@@ -308,74 +308,15 @@ export const useTheme = () => {
     secondary: theme.colors.secondary,
   } as const;
 
-  // Helper to create color with opacity
-  const withOpacity = (color: string, opacity: number) => {
-    const hex = color.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  };
-
-// Derive all UI colors from primary and secondary
-const background = '#ffffff';
-  const menuBackground = shiftColor(theme.colors.primary, -0.85); // Lighter primary color
-
-  const derivedColors = {
-    // Base colors
-    primary: theme.colors.primary,
-    secondary: theme.colors.secondary,
-    menuBackground,
-
-    // Interactive states - derived from primary/secondary with opacity
-    activeBackground: withOpacity(theme.colors.primary, 0.12),
-    hoverBackground: withOpacity(theme.colors.primary, 0.08),
-
-    // Borders and dividers
-    borderColor: withOpacity(theme.colors.secondary, 0.3),
-    divider: withOpacity(theme.colors.secondary, 0.3),
-
-    // Text colors - automatically contrast with backgrounds
-    textSecondary: withOpacity(colorContrast(background, 'black', 'white'), 0.6),
-    textOnMenu: colorContrast(menuBackground, 'black', 'white'),
-
-    // Accent uses primary color
-    accentBorder: theme.colors.primary,
-  };
-
   return {
     ...theme,
+    colorContrast: (color: string) => colorContrast(color, 'black', 'white'),
     colors: {
-      ...derivedColors,
+      ...theme.colors,
       // Generate primary and second
       ..._.fromPairs(
         _.flatMap(colors, (v, k) => _.map(colorWeights, (s, w) => [`${k}-${w}`, shiftColor(v, s)]))
       ) as Record<`${keyof typeof colors}-${keyof typeof colorWeights}`, string>,
-    },
-    // Calculated styles for menu items
-    menuItem: {
-      padding: `${theme.spacing.md}px ${theme.spacing.lg}px`,
-      fontSize: theme.fontSize.sm,
-      fontWeight: theme.fontWeight.normal,
-      activeFontWeight: theme.fontWeight.semibold,
-      borderWidth: 3,
-    },
-    // Calculated styles for menu header
-    menuHeader: {
-      padding: `${theme.spacing.sm}px ${theme.spacing.sm}px ${theme.spacing.xs}px ${theme.spacing.sm}px`,
-      fontSize: theme.fontSize.xs,
-      fontWeight: theme.fontWeight.semibold,
-      letterSpacing: '0.5px',
-    },
-    // Calculated styles for divider
-    divider: {
-      margin: `${theme.spacing.md}px 0`,
-      borderWidth: 1,
-    },
-    // List item specific styles
-    listItem: {
-      padding: `${theme.spacing.sm + 2}px ${theme.spacing.lg}px`,
-      fontSize: theme.fontSize.sm,
     },
   };
 };
