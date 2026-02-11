@@ -248,6 +248,107 @@ Users can customize the theme by passing a partial `ThemeSettings` object to the
 />
 ```
 
+#### Creating Harmonious Color Schemes
+**CRITICAL: Always assume users provide random colors that may not be coordinated.**
+
+When users provide theme colors (especially primary colors), you MUST derive a harmonious color palette using color theory principles and `@o2ter/colors.js`. Never use user-provided colors in isolation.
+
+**Color Derivation Strategy:**
+1. **Analyze the primary color's luminance** - Determine if it's light, middle, or dark
+2. **Apply appropriate mixing strategy** based on luminance:
+   - **Light colors** (luminance > 0.7): Use more shading, less tinting; darker interactive states
+   - **Middle colors** (0.3 ≤ luminance ≤ 0.7): Balanced tinting and shading
+   - **Dark colors** (luminance < 0.3): Use more tinting, less shading; lighter interactive states
+3. **Generate complementary colors** using color theory:
+   - **Secondary colors**: Mix primary with complementary hues for accent colors
+   - **Tints and shades**: Create lighter/darker variations for hierarchy
+   - **Neutral colors**: Derive grays by mixing primary with its complement for cohesion
+4. **Ensure sufficient contrast** - Use `colorContrast()` for text/background pairs
+5. **Create interactive state colors** - Derive hover, active, and disabled states based on luminance
+
+**Example Color Derivation:**
+```tsx
+import { mixColor, shiftColor, tintColor, shadeColor, colorContrast, luminance, normalizeColor } from '@o2ter/colors.js';
+
+// User provides random primary color
+const userPrimary = '#ff5722'; // Random orange
+
+// Step 1: Analyze luminance to determine color brightness
+const primaryColor = normalizeColor(userPrimary);
+const primaryLuminance = primaryColor ? luminance(primaryColor) : 0.5;
+
+// Categorize: light (> 0.7), middle (0.3-0.7), dark (< 0.3)
+const isLight = primaryLuminance > 0.7;
+const isDark = primaryLuminance < 0.3;
+const isMiddle = !isLight && !isDark;
+
+// Step 2: Derive harmonious palette with luminance-aware mixing
+const primary = userPrimary;
+const secondary = shiftColor(primary, 0.33); // Shift hue for accent
+
+// Adjust semantic colors based on primary luminance
+const success = isLight 
+  ? mixColor(primary, '#059669', 0.4) // Darker green for light primary
+  : mixColor(primary, '#10b981', 0.3); // Standard green blend
+
+const danger = isLight
+  ? mixColor(primary, '#dc2626', 0.7) // Darker red for light primary
+  : mixColor(primary, '#ef4444', 0.7); // Standard red blend
+
+const warning = isLight
+  ? shadeColor(shiftColor(primary, 0.15), 0.1) // Darken for light primary
+  : tintColor(shiftColor(primary, 0.15), 0.2); // Lighten for dark primary
+
+// Derive backgrounds with luminance-aware tinting
+const background = isLight
+  ? mixColor(primary, '#ffffff', 0.05) // Stronger tint for light colors
+  : mixColor(primary, '#ffffff', 0.02); // Subtle tint for dark colors
+
+const surface = isLight
+  ? mixColor(primary, '#f1f5f9', 0.08)
+  : mixColor(primary, '#f8f9fa', 0.03);
+
+// Derive neutrals by mixing primary with its complement
+const complement = shiftColor(primary, 0.5); // Opposite on color wheel
+const textPrimary = mixColor(complement, '#1a1a1a', 0.85); // Near-black with subtle complement
+const textSecondary = mixColor(complement, '#6b7280', 0.7);
+const border = mixColor(primary, '#e5e7eb', 0.1);
+
+// Interactive states: luminance-aware approach
+const primaryHover = isLight
+  ? shadeColor(primary, 0.2) // More shading for light colors
+  : isDark
+    ? tintColor(primary, 0.15) // More tinting for dark colors
+    : shadeColor(primary, 0.15); // Balanced for middle colors
+
+const primaryActive = isLight
+  ? shadeColor(primary, 0.3)
+  : isDark
+    ? tintColor(primary, 0.25)
+    : shadeColor(primary, 0.25);
+
+const primaryDisabled = isLight
+  ? tintColor(primary, 0.4) // Subtle tint for light colors
+  : isDark
+    ? shadeColor(primary, 0.5) // Darken dark colors when disabled
+    : tintColor(primary, 0.6); // Standard tint for middle colors
+```
+
+**Key Principles:**
+- **Never use arbitrary color values** - All colors must relate to the user's base color(s)
+- **Mix, don't pick** - Always derive new colors by mixing existing ones
+- **Maintain consistent color temperature** - If primary is warm, keep derivatives warm
+- **Test contrast ratios** - Use `colorContrast()` to ensure WCAG compliance
+- **Think in color systems** - Create tints (lighter), shades (darker), and tones (mixed with gray)
+
+**Color Theory Guidelines:**
+- **Analogous colors**: Adjacent on color wheel (harmonious, low contrast)
+- **Complementary colors**: Opposite on wheel (high contrast, vibrant)
+- **Triadic colors**: Three evenly spaced colors (balanced, colorful)
+- **Split-complementary**: Base + two adjacent to complement (dynamic but harmonious)
+
+When implementing themes, always derive a complete, cohesive color system from whatever random colors users provide, ensuring the result looks professionally designed.
+
 #### Styling Checklist
 Before writing any styled component, ensure:
 - [ ] You've imported and called `useTheme()` at the component top
