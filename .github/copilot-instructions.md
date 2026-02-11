@@ -107,6 +107,67 @@ The `useTheme()` hook returns a complete theme object with:
 - `theme.borderRadius`: Border radius values (`sm: 2`, `md: 4`, `lg: 8`)
 - `theme.fontWeight`: Font weights (`normal: 400`, `medium: 500`, `semibold: 600`)
 
+#### Color Mixing with @o2ter/colors.js
+**IMPORTANT: Always use @o2ter/colors.js for color manipulation and mixing.**
+
+When you need to:
+- Mix colors together
+- Lighten or darken colors
+- Adjust opacity/alpha
+- Create color variations
+
+Use the `@o2ter/colors.js` library instead of writing custom color manipulation logic:
+```tsx
+import { 
+  mixColor, shiftColor, tintColor, shadeColor, 
+  colorContrast, rgba, getAlpha, getRed, getGreen, getBlue,
+  normalizeColor, toHexString 
+} from '@o2ter/colors.js';
+
+// Mix two colors (weight: 0 = all color2, 1 = all color1)
+const mixed = mixColor(theme.colors.primary, theme.colors.secondary, 0.5);
+
+// Shift color lighter (negative) or darker (positive)
+const lighter = shiftColor(theme.colors.primary, -0.3); // Lighten
+const darker = shiftColor(theme.colors.primary, 0.3);   // Darken
+
+// Tint (mix with white) or shade (mix with black)
+const tinted = tintColor(theme.colors.primary, 0.2);  // Lighter
+const shaded = shadeColor(theme.colors.primary, 0.2); // Darker
+
+// Get best contrasting color for accessibility
+const textColor = colorContrast(backgroundColor, '#000000', '#ffffff');
+
+// Adjust opacity by extracting RGB and creating new RGBA
+const normalizedColor = normalizeColor(theme.colors.primary);
+if (normalizedColor) {
+  const withOpacity = toHexString(rgba(
+    getRed(normalizedColor),
+    getGreen(normalizedColor),
+    getBlue(normalizedColor),
+    Math.round(255 * 0.5) // 50% opacity
+  ), true);
+}
+```
+
+**Available functions:**
+- `mixColor(color1, color2, weight)` - Interpolate between two colors
+- `shiftColor(color, weight)` - Shift lighter (negative) or darker (positive)
+- `tintColor(color, weight)` - Mix with white to lighten
+- `shadeColor(color, weight)` - Mix with black to darken
+- `colorContrast(bg, dark, light, minRatio?)` - Find best contrasting color
+- `normalizeColor(color)` - Parse color string to ColorValue
+- `rgba(r, g, b, a?)` - Create color from RGBA components (0-255)
+- `getRed/getGreen/getBlue/getAlpha(color)` - Extract color components
+- `toHexString(color, includeAlpha?)` - Convert to hex string
+- `luminance(color)` - Calculate relative luminance (WCAG 2.1)
+- `contrastRatio(bg, fg)` - Calculate contrast ratio (WCAG 2.1)
+
+This ensures:
+- Consistent color manipulation across the codebase
+- Proper color space calculations and WCAG-compliant contrast
+- Type-safe color operations with ColorValue types
+
 #### Theme Customization
 Users can customize the theme by passing a partial `ThemeSettings` object to the Dashboard:
 ```tsx
@@ -132,6 +193,7 @@ Before writing any styled component, ensure:
 - [ ] All font sizes come from `theme.fontSize.*`
 - [ ] All border radii come from `theme.borderRadius.*`
 - [ ] All font weights come from `theme.fontWeight.*`
+- [ ] Use `@o2ter/colors.js` for any color mixing, opacity adjustments, or color variations
 - [ ] No magic numbers or hardcoded style values
 
 ### TypeScript Patterns
