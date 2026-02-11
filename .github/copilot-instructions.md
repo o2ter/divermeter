@@ -43,6 +43,12 @@ src/
    - **All components MUST use theme values - never hardcode styles**
    - Theme structure defined by `ThemeSettings` type exported from this file
    - User configuration allows customization of all visual aspects without modifying source code
+3. **StyleProvider** ([src/dashboard/components/style/index.tsx](src/dashboard/components/style/index.tsx)): Caches derived menu styles
+   - Hook: `useStyle()` - Returns cached style calculations based on theme
+   - Provides menu-specific color derivations, spacing, and component styles
+   - Wraps menu components to avoid recalculating styles
+
+**See "Context Providers Pattern" section below for how to create new providers correctly in Frosty.**
 
 ## Build & Development Workflow
 
@@ -77,6 +83,58 @@ The `./scripts/test` script:
 - Exports at bottom: `export const Component = ...` then `export default Component`
 - Index files re-export components
 - Use lodash (`import _ from 'lodash'`) for utilities
+
+### Context Providers Pattern (Frosty-specific)
+
+**CRITICAL: Frosty's context API differs from React.** Follow this exact pattern:
+
+#### Creating a Context Provider
+```tsx
+import { createContext, useContext, useMemo, PropsWithChildren } from 'frosty';
+
+// 1. Create context WITHOUT default value or undefined type
+const MyContext = createContext<MyContextType>();
+
+// 2. Create provider using <Context value={...}> directly (NOT Context.Provider)
+export const MyProvider = ({ children }: PropsWithChildren<{}>) => {
+  const value = useMemo(() => ({ /* calculated values */ }), [deps]);
+  
+  return (
+    <MyContext value={value}>
+      {children}
+    </MyContext>
+  );
+};
+
+// 3. Create hook with non-null assertion (using !)
+export const useMyContext = () => useContext(MyContext)!;
+```
+
+#### Key Differences from React
+- **NO `.Provider`** - Use `<Context value={...}>` directly
+- **NO default value** - `createContext<Type>()` not `createContext<Type | undefined>(undefined)`
+- **Non-null assertion in hook** - `useContext(Context)!` assumes context always exists
+- **NO manual error checking** - Trust the context will be available when hook is called
+
+#### Examples in Codebase
+- **ProtoProvider** ([src/proto.tsx](src/proto.tsx)): 
+  ```tsx
+  const Context = createContext<ProtoContextType>();
+  // Provider: <Context value={value}>{children}</Context>
+  // Hook: useContext(Context)!.proto
+  ```
+- **ThemeProvider** ([src/dashboard/components/theme/index.tsx](src/dashboard/components/theme/index.tsx)):
+  ```tsx
+  const Context = createContext<ThemeSettings>();
+  // Provider: <Context value={value}>{children}</Context>
+  // Hook: useContext(Context) ?? defaultTheme
+  ```
+- **StyleProvider** ([src/dashboard/components/style/index.tsx](src/dashboard/components/style/index.tsx)):
+  ```tsx
+  const StyleContext = createContext<MenuStyle>();
+  // Provider: <StyleContext value={style}>{children}</StyleContext>
+  // Hook: useContext(StyleContext)!
+  ```
 
 ### Styling & Theme System
 
@@ -211,18 +269,21 @@ Before writing any styled component, ensure:
 ## Common Pitfalls
 
 1. **Don't import from 'react'** - Use `frosty` instead
-2. **Don't hardcode styles** - Always use `useTheme()` hook for all style values. Never use magic numbers or literal color values.
-3. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`
-4. **Context access** - Always call hooks inside components, not in conditionals
-5. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
-6. **Path separators** - Use forward slashes `/` in all configs, even on Windows
-7. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
-8. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
+2. **Don't use React context pattern** - Frosty uses `<Context value={...}>` directly, NOT `<Context.Provider value={...}>`
+3. **Context creation** - Use `createContext<Type>()` without default value, not `createContext<Type | undefined>(undefined)`
+4. **Don't hardcode styles** - Always use `useTheme()` hook for all style values. Never use magic numbers or literal color values.
+5. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`
+6. **Context access** - Always call hooks inside components, not in conditionals
+7. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
+8. **Path separators** - Use forward slashes `/` in all configs, even on Windows
+9. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
+10. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
 - [src/proto.tsx](src/proto.tsx) - Proto context and providers
 - [src/dashboard/components/theme/index.tsx](src/dashboard/components/theme/index.tsx) - Complete theming system (ThemeProvider, useTheme, ThemeSettings type)
+- [src/dashboard/components/style/index.tsx](src/dashboard/components/style/index.tsx) - StyleProvider for cached menu styles (example of Frosty context pattern)
 - [src/dashboard/components/router/index.tsx](src/dashboard/components/router/index.tsx) - Custom router implementation
 - [src/dashboard/components/menu/index.tsx](src/dashboard/components/menu/index.tsx) - Dynamic menu from schema
 - [test/server.ts](test/server.ts) - Example proto.io service setup

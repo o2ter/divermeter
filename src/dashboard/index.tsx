@@ -27,6 +27,7 @@ import _ from 'lodash';
 import { useLocation } from 'frosty/web';
 import { Menu } from './components/menu';
 import { Route, Routes } from './components/router';
+import { StyleProvider } from './components/style';
 import { BrowserPage } from './pages/browser';
 import { ConfigPage } from './pages/config';
 import { HomePage } from './pages/home';
@@ -34,20 +35,22 @@ import { HomePage } from './pages/home';
 export const Dashboard = () => {
   const location = useLocation();
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'row',
-    }}>
-      <div style={{ width: 240 }}>
-        <Menu />
+    <StyleProvider>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'row',
+      }}>
+        <div style={{ width: 240 }}>
+          <Menu />
+        </div>
+        <div style={{ flex: 1 }}>
+          <Routes>
+            <Route index element={<HomePage />} />
+            <Route path="/classes/:schema" element={<BrowserPage />} />
+            <Route path="/config" element={<ConfigPage />} />
+          </Routes>
+        </div>
       </div>
-      <div style={{ flex: 1 }}>
-        <Routes>
-          <Route index element={<HomePage />} />
-          <Route path="/classes/:schema" element={<BrowserPage />} />
-          <Route path="/config" element={<ConfigPage />} />
-        </Routes>
-      </div>
-    </div>
+    </StyleProvider>
   );
 };
