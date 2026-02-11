@@ -25,7 +25,7 @@
 
 import { createContext, useContext, useMemo, PropsWithChildren } from 'frosty';
 import { useTheme } from '../theme';
-import { shiftColor, tintColor, shadeColor, mixColor, luminance, normalizeColor, getRed, getGreen, getBlue, rgba, toHexString } from '@o2ter/colors.js';
+import { shiftColor, tintColor, shadeColor, mixColor, luminance, normalizeColor, getRed, getGreen, getBlue, rgba, toHexString, colorContrast } from '@o2ter/colors.js';
 
 type MenuStyle = ReturnType<typeof createMenuStyle>;
 
@@ -97,6 +97,16 @@ const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
 
   const accentGlow = withOpacity(accentPrimary, 0.4);
 
+  // Active text color with proper contrast against active background
+  const activeTextColor = isLight
+    ? shadeColor(primary, 0.5)  // Much darker shade for light themes
+    : isDark
+      ? tintColor(primary, 0.4)  // Lighter tint for dark themes
+      : shadeColor(primary, 0.2); // Slightly darker for mid-tones
+
+  // Ensure active text has sufficient contrast - use colorContrast as fallback
+  const activeTextFinal = colorContrast(activeBackground, activeTextColor, menuTextPrimary);
+
   // Modern border colors
   const borderPrimary = withOpacity(menuTextPrimary, 0.08);
   const borderAccent = withOpacity(accentPrimary, 0.3);
@@ -125,7 +135,7 @@ const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
       fontWeight: theme.fontWeight.medium,
       activeFontWeight: theme.fontWeight.semibold,
       textColor: menuTextPrimary,
-      activeTextColor: accentPrimary,
+      activeTextColor: activeTextFinal,
       activeBackground: activeBackground,
       hoverBackground: hoverBackground,
       accentBorder: accentPrimary,
@@ -156,7 +166,7 @@ const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
       fontSize: theme.fontSize.sm,
       fontWeight: theme.fontWeight.normal,
       textColor: menuTextSecondary,
-      activeTextColor: accentPrimary,
+      activeTextColor: activeTextFinal,
       hoverBackground: hoverBackground,
       borderRadius: theme.borderRadius.md,
       activeShadow: `0 1px 4px ${accentGlow}, 0 0 0 1px ${borderAccent}`,
