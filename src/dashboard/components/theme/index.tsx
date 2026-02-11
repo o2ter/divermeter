@@ -234,16 +234,10 @@ thead {
 
 const defaultTheme = {
   colors: {
-    primary: '#1890ff',
-    secondary: '#f0f0f0',
-    menuBackground: '#f8f9fa',
-    activeBackground: 'rgba(0, 0, 0, 0.08)',
-    hoverBackground: 'rgba(0, 0, 0, 0.05)',
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    textPrimary: '#212529',
-    textSecondary: 'rgba(0, 0, 0, 0.5)',
-    accentBorder: '#1890ff',
-    divider: 'rgba(0, 0, 0, 0.1)',
+    // Core colors - everything else derives from these
+    primary: '#1890ff',      // Main brand/accent color
+    background: '#ffffff',    // Base background color
+    text: '#212529',         // Base text color
   },
   spacing: {
     xs: 4,
@@ -308,14 +302,51 @@ const colorWeights = {
 
 export const useTheme = () => {
   const theme = useContext(Context) ?? defaultTheme;
+
+  // Core colors for generating variants
   const colors = {
     primary: theme.colors.primary,
-    secondary: theme.colors.secondary,
   } as const;
+
+  // Helper to create color with opacity
+  const withOpacity = (color: string, opacity: number) => {
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
+  // Derive all UI colors from the 3 base colors
+  const derivedColors = {
+    // Base colors
+    primary: theme.colors.primary,
+    background: theme.colors.background,
+    text: theme.colors.text,
+
+    // Derived from background (slightly darker for contrast)
+    secondary: shiftColor(theme.colors.background, -0.05),
+    menuBackground: shiftColor(theme.colors.background, -0.02),
+
+    // Derived from text (with opacity for subtle effects)
+    activeBackground: withOpacity(theme.colors.text, 0.08),
+    hoverBackground: withOpacity(theme.colors.text, 0.05),
+    borderColor: withOpacity(theme.colors.text, 0.1),
+    divider: withOpacity(theme.colors.text, 0.1),
+
+    // Text variations
+    textPrimary: theme.colors.text,
+    textSecondary: withOpacity(theme.colors.text, 0.5),
+
+    // Accent uses primary color
+    accentBorder: theme.colors.primary,
+  };
+
   return {
     ...theme,
     colors: {
-      ...theme.colors,
+      ...derivedColors,
+      // Generate primary color variants (100-900)
       ..._.fromPairs(
         _.flatMap(colors, (v, k) => _.map(colorWeights, (s, w) => [`${k}-${w}`, shiftColor(v, s)]))
       ) as Record<`${keyof typeof colors}-${keyof typeof colorWeights}`, string>,
