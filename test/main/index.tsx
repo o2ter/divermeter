@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import Dashboard from '../../src';
-import { ProtoClient } from 'proto.io/client';
+import { ProtoClient } from 'proto.io';
 import { useMemo } from 'frosty';
 import { useLocation } from 'frosty/web';
 
