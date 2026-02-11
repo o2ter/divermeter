@@ -24,21 +24,23 @@
 //
 
 import _ from 'lodash';
-import { ComponentType } from 'frosty';
-import { Dashboard as _Dashboard } from './dashboard';
-import { ProtoProvider } from './proto';
-import { ThemeProvider, ThemeSettings } from './dashboard/components/theme';
-import type { ProtoClient } from 'proto.io';
+import Dashboard from '../../src';
+import { ProtoClient } from 'proto.io/client';
+import { useMemo } from 'frosty';
+import { useLocation } from 'frosty/web';
 
-export const Dashboard: ComponentType<{
-  proto: ProtoClient;
-  theme?: ThemeSettings;
-}> = ({ proto, theme }) => (
-  <ThemeProvider theme={theme}>
-    <ProtoProvider proto={proto}>
-      <_Dashboard />
-    </ProtoProvider>
-  </ThemeProvider>
-);
-
-export default Dashboard;
+export const Main = () => {
+  const location = useLocation();
+  const proto = useMemo(() => new ProtoClient({
+    endpoint: `${location.protocol}//${location.host}/proto`,
+    masterUser: {
+      user: 'admin',
+      pass: 'password',
+    },
+  }), []);
+  return (
+    <div style={{ display: 'flex', flex: 1 }}>
+      <Dashboard proto={proto} />
+    </div>
+  );
+};

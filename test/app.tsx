@@ -1,8 +1,8 @@
 //
-//  app.scss
+//  app.tsx
 //
 //  The MIT License
-//  Copyright (c) 2021 - 2025 O2ter Limited. All rights reserved.
+//  Copyright (c) 2021 - 2026 O2ter Limited. All rights reserved.
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
@@ -23,26 +23,17 @@
 //  THE SOFTWARE.
 //
 
-html {
-  display: flex;
-  width: 100%;
-}
+import _ from 'lodash';
 
-body,
-#root {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
+import './app.scss';
+import { Main } from './main';
 
-body {
-  -webkit-font-smoothing: auto;
-  -moz-osx-font-smoothing: auto;
-  font-smooth: auto;
-}
+export const App = () => {
+  return (
+    <div style={{ display: 'flex', flex: 1 }}>
+      <Main />
+    </div>
+  );
+};
 
-#root {
-  display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
-}
+export default App;

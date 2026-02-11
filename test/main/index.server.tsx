@@ -1,5 +1,5 @@
 //
-//  index.tsx
+//  index.server.tsx
 //
 //  The MIT License
 //  Copyright (c) 2021 - 2026 O2ter Limited. All rights reserved.
@@ -24,21 +24,7 @@
 //
 
 import _ from 'lodash';
-import { ComponentType } from 'frosty';
-import { Dashboard as _Dashboard } from './dashboard';
-import { ProtoProvider } from './proto';
-import { ThemeProvider, ThemeSettings } from './dashboard/components/theme';
-import type { ProtoClient } from 'proto.io';
 
-export const Dashboard: ComponentType<{
-  proto: ProtoClient;
-  theme?: ThemeSettings;
-}> = ({ proto, theme }) => (
-  <ThemeProvider theme={theme}>
-    <ProtoProvider proto={proto}>
-      <_Dashboard />
-    </ProtoProvider>
-  </ThemeProvider>
+export const Main = () => (
+  <></>
 );
-
-export default Dashboard;

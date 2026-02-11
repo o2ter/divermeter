@@ -24,21 +24,14 @@
 //
 
 import _ from 'lodash';
-import { ComponentType } from 'frosty';
-import { Dashboard as _Dashboard } from './dashboard';
-import { ProtoProvider } from './proto';
-import { ThemeProvider, ThemeSettings } from './dashboard/components/theme';
-import type { ProtoClient } from 'proto.io';
+import { useResource } from 'frosty';
+import { useProto } from '../../../proto';
 
-export const Dashboard: ComponentType<{
-  proto: ProtoClient;
-  theme?: ThemeSettings;
-}> = ({ proto, theme }) => (
-  <ThemeProvider theme={theme}>
-    <ProtoProvider proto={proto}>
-      <_Dashboard />
-    </ProtoProvider>
-  </ThemeProvider>
-);
-
-export default Dashboard;
+export const ConfigPage = () => {
+  const proto = useProto();
+  const {
+    resource: config,
+    refresh,
+  } = useResource(async () => proto.config({ master: true }), []);
+  return <div>Config</div>;
+};

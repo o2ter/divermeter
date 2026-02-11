@@ -24,21 +24,9 @@
 //
 
 import _ from 'lodash';
-import { ComponentType } from 'frosty';
-import { Dashboard as _Dashboard } from './dashboard';
-import { ProtoProvider } from './proto';
-import { ThemeProvider, ThemeSettings } from './dashboard/components/theme';
-import type { ProtoClient } from 'proto.io';
+import { useParams } from '../../components/router';
 
-export const Dashboard: ComponentType<{
-  proto: ProtoClient;
-  theme?: ThemeSettings;
-}> = ({ proto, theme }) => (
-  <ThemeProvider theme={theme}>
-    <ProtoProvider proto={proto}>
-      <_Dashboard />
-    </ProtoProvider>
-  </ThemeProvider>
-);
-
-export default Dashboard;
+export const BrowserPage = () => {
+  const params = useParams();
+  return <div>Classes {JSON.stringify(params)}</div>;
+};

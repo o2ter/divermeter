@@ -1,5 +1,5 @@
 //
-//  index.tsx
+//  context.ts
 //
 //  The MIT License
 //  Copyright (c) 2021 - 2026 O2ter Limited. All rights reserved.
@@ -24,21 +24,30 @@
 //
 
 import _ from 'lodash';
-import { ComponentType } from 'frosty';
-import { Dashboard as _Dashboard } from './dashboard';
-import { ProtoProvider } from './proto';
-import { ThemeProvider, ThemeSettings } from './dashboard/components/theme';
-import type { ProtoClient } from 'proto.io';
+import { ProtoClient } from 'proto.io';
+import { createContext, PropsWithChildren, useContext, useMemo, useResource } from 'frosty';
 
-export const Dashboard: ComponentType<{
+type ProtoContextType = {
   proto: ProtoClient;
-  theme?: ThemeSettings;
-}> = ({ proto, theme }) => (
-  <ThemeProvider theme={theme}>
-    <ProtoProvider proto={proto}>
-      <_Dashboard />
-    </ProtoProvider>
-  </ThemeProvider>
-);
+  schema: Awaited<ReturnType<ProtoClient['schema']>>;
+};
 
-export default Dashboard;
+const Context = createContext<ProtoContextType>();
+
+export const ProtoProvider = ({
+  proto,
+  children,
+}: PropsWithChildren<{
+  proto: ProtoClient;
+}>) => {
+  const { resource: schema } = useResource(() => proto.schema({ master: true }), [proto]);
+  const value = useMemo(() => ({ proto, schema: schema ?? {} }), [proto, schema]);
+  return (
+    <Context value={value}>
+      {children}
+    </Context>
+  );
+}
+
+export const useProto = () => useContext(Context)!.proto;
+export const useProtoSchema = () => useContext(Context)!.schema;
