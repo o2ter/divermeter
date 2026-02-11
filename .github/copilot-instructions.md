@@ -151,7 +151,6 @@ Users can customize the theme by passing a partial `ThemeSettings` object to the
   theme={{
     colors: {
       primary: '#ff5722',
-      menuBackground: '#fafafa',
     },
     spacing: {
       md: 16,
