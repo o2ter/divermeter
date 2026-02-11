@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { createContext, PropsWithChildren, useContext } from 'frosty';
-import { shiftColor } from '@o2ter/colors.js/index.js';
+import { shiftColor } from '@o2ter/colors.js';
 
 const initialStyle = `
 :root {
