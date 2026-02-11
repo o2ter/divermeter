@@ -302,12 +302,6 @@ const colorWeights = {
 export const useTheme = () => {
   const theme = useContext(Context) ?? defaultTheme;
 
-  // Core colors for generating variants
-  const colors = {
-    primary: theme.colors.primary,
-    secondary: theme.colors.secondary,
-  } as const;
-
   // Helper to create color with opacity
   const withOpacity = (color: string, opacity: number) => {
     const hex = color.replace('#', '');
@@ -351,10 +345,6 @@ const menuBackground = shiftColor(theme.colors.primary, -0.85); // Lighter prima
     ...theme,
     colors: {
       ...derivedColors,
-      // Generate primary and second
-      ..._.fromPairs(
-        _.flatMap(colors, (v, k) => _.map(colorWeights, (s, w) => [`${k}-${w}`, shiftColor(v, s)]))
-      ) as Record<`${keyof typeof colors}-${keyof typeof colorWeights}`, string>,
     },
     // Calculated styles for menu items
     menuItem: {
