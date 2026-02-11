@@ -107,34 +107,6 @@ The `useTheme()` hook returns a complete theme object with:
 - `theme.borderRadius`: Border radius values (`sm: 2`, `md: 4`, `lg: 8`)
 - `theme.fontWeight`: Font weights (`normal: 400`, `medium: 500`, `semibold: 600`)
 
-#### Styling Examples
-```tsx
-// Basic styling with theme
-<div style={{
-  padding: theme.spacing.md,
-  backgroundColor: theme.colors.menuBackground,
-  borderRadius: theme.borderRadius.md,
-  color: theme.colors.textPrimary,
-}}>Content</div>
-
-// Using calculated component styles
-<div style={{
-  padding: theme.menuItem.padding,
-  fontSize: theme.menuItem.fontSize,
-  fontWeight: theme.menuItem.fontWeight,
-}}>Menu Item</div>
-
-// Hover/active states
-<div style={{
-  backgroundColor: isActive 
-    ? theme.colors.activeBackground 
-    : isHover 
-    ? theme.colors.hoverBackground 
-    : 'transparent',
-  borderLeft: isActive ? `${theme.menuItem.borderWidth}px solid ${theme.colors.accentBorder}` : 'none',
-}}>Interactive Item</div>
-```
-
 #### Theme Customization
 Users can customize the theme by passing a partial `ThemeSettings` object to the Dashboard:
 ```tsx
