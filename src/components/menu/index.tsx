@@ -46,12 +46,12 @@ const MenuItem = ({
         cursor: 'pointer',
         fontSize: `${style.menuItem.fontSize}px`,
         fontWeight: isActive ? style.menuItem.activeFontWeight : style.menuItem.fontWeight,
-        color: style.colors.textOnMenu,
-        backgroundColor: isActive ? style.colors.activeBackground : 'transparent',
-        borderLeft: isActive ? `${style.menuItem.borderWidth}px solid ${style.colors.accentBorder}` : `${style.menuItem.borderWidth}px solid transparent`,
+        color: style.menu.textColor,
+        backgroundColor: isActive ? style.menuItem.activeBackground : 'transparent',
+        borderLeft: isActive ? `${style.menuItem.borderWidth}px solid ${style.menuItem.accentBorder}` : `${style.menuItem.borderWidth}px solid transparent`,
         transition: 'all 0.2s ease',
         '&:hover': {
-          backgroundColor: style.colors.hoverBackground,
+          backgroundColor: style.menuItem.hoverBackground,
         },
       }}
       onClick={onClick}
@@ -74,7 +74,7 @@ const SchemaList = () => {
           padding: style.menuHeader.padding,
           fontSize: `${style.menuHeader.fontSize}px`,
           fontWeight: style.menuHeader.fontWeight,
-          color: style.colors.textOnMenu,
+          color: style.menuHeader.textColor,
           textTransform: 'uppercase',
           letterSpacing: style.menuHeader.letterSpacing,
         }}
@@ -88,12 +88,12 @@ const SchemaList = () => {
             padding: style.listItem.padding,
             cursor: 'pointer',
             fontSize: `${style.listItem.fontSize}px`,
-            color: style.colors.textOnMenu,
-            backgroundColor: selected?.params.schema === key ? style.colors.activeBackground : 'transparent',
-            borderLeft: selected?.params.schema === key ? `${style.menuItem.borderWidth}px solid ${style.colors.accentBorder}` : `${style.menuItem.borderWidth}px solid transparent`,
+            color: style.menu.textColor,
+            backgroundColor: selected?.params.schema === key ? style.menuItem.activeBackground : 'transparent',
+            borderLeft: selected?.params.schema === key ? `${style.menuItem.borderWidth}px solid ${style.menuItem.accentBorder}` : `${style.menuItem.borderWidth}px solid transparent`,
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: style.colors.hoverBackground,
+              backgroundColor: style.listItem.hoverBackground,
             },
           }}
           onClick={() => {
@@ -118,8 +118,8 @@ export const Menu = () => {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: style.colors.menuBackground,
-      borderRight: `1px solid ${style.colors.borderColor}`,
+      backgroundColor: style.menu.background,
+      borderRight: `1px solid ${style.menu.borderColor}`,
     }}>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <MenuItem
@@ -130,14 +130,14 @@ export const Menu = () => {
 
         <div style={{
           margin: style.divider.margin,
-          borderTop: `${style.divider.borderWidth}px solid ${style.colors.divider}`,
+          borderTop: `${style.divider.borderWidth}px solid ${style.divider.color}`,
         }} />
 
         <SchemaList />
 
         <div style={{
           margin: style.divider.margin,
-          borderTop: `${style.divider.borderWidth}px solid ${style.colors.divider}`,
+          borderTop: `${style.divider.borderWidth}px solid ${style.divider.color}`,
         }} />
 
         <MenuItem

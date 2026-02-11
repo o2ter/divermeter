@@ -44,55 +44,52 @@ const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
     ), true);
   };
 
-  // Derive all UI colors from primary and secondary
-  const menuBackground = shiftColor(theme.colors.primary, -0.85); // Lighter primary color
+  // Derive menu background from primary color
+  const menuBackground = shiftColor(theme.colors.primary, -0.85);
 
   return {
-    ...theme,
-    colors: {
-      // Base colors
-      primary: theme.colors.primary,
-      secondary: theme.colors.secondary,
-      menuBackground,
+    // Expose theme properties for direct access
+    spacing: theme.spacing,
+    fontSize: theme.fontSize,
+    fontWeight: theme.fontWeight,
+    borderRadius: theme.borderRadius,
 
-      // Interactive states - derived from primary/secondary with opacity
-      activeBackground: withOpacity(theme.colors.primary, 0.12),
-      hoverBackground: withOpacity(theme.colors.primary, 0.08),
-
-      // Borders and dividers
+    // Menu container styles
+    menu: {
+      background: menuBackground,
+      textColor: theme.colorContrast(menuBackground),
       borderColor: withOpacity(theme.colors.secondary, 0.3),
-      divider: withOpacity(theme.colors.secondary, 0.3),
-
-      // Text colors - automatically contrast with backgrounds
-      textOnMenu: theme.colorContrast(menuBackground),
-
-      // Accent uses primary color
-      accentBorder: theme.colors.primary,
     },
-    // Calculated styles for menu items
+    // Menu item styles and colors
     menuItem: {
       padding: `${theme.spacing.md}px ${theme.spacing.lg}px`,
       fontSize: theme.fontSize.sm,
       fontWeight: theme.fontWeight.normal,
       activeFontWeight: theme.fontWeight.semibold,
+      activeBackground: withOpacity(theme.colors.primary, 0.12),
+      hoverBackground: withOpacity(theme.colors.primary, 0.08),
+      accentBorder: theme.colors.primary,
       borderWidth: 3,
     },
-    // Calculated styles for menu header
+    // Menu header styles and colors
     menuHeader: {
       padding: `${theme.spacing.sm}px ${theme.spacing.sm}px ${theme.spacing.xs}px ${theme.spacing.sm}px`,
       fontSize: theme.fontSize.xs,
       fontWeight: theme.fontWeight.semibold,
       letterSpacing: '0.5px',
+      textColor: withOpacity(theme.colors.secondary, 0.6),
     },
-    // Calculated styles for divider
+    // Divider styles and colors
     divider: {
       margin: `${theme.spacing.md}px 0`,
       borderWidth: 1,
+      color: withOpacity(theme.colors.secondary, 0.3),
     },
-    // List item specific styles
+    // List item styles and colors
     listItem: {
       padding: `${theme.spacing.sm + 2}px ${theme.spacing.lg}px`,
       fontSize: theme.fontSize.sm,
+      hoverBackground: withOpacity(theme.colors.primary, 0.04),
     },
   };
 };
