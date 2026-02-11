@@ -162,16 +162,7 @@ const SchemaList = () => {
               <div style={{
                 paddingLeft: isActive ? `${style.spacing.sm}px` : '0',
                 transition: 'padding 0.25s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: `${style.spacing.xs}px`,
               }}>
-                <span style={{
-                  fontSize: `${style.fontSize.xs}px`,
-                  opacity: 0.6,
-                }}>
-                  ▸
-                </span>
                 {key}
               </div>
             </div>
