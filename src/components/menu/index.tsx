@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { useProtoSchema } from '../../../proto';
+import { useProtoSchema } from '../../proto';
 import { useLocation } from 'frosty/web';
 import { match } from 'path-to-regexp';
 import { useStyle } from '../style';

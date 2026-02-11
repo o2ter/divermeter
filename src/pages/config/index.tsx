@@ -24,31 +24,14 @@
 //
 
 import _ from 'lodash';
-import { Menu } from './components/menu';
-import { Route, Routes } from './components/router';
-import { StyleProvider } from './components/style';
-import { BrowserPage } from './pages/browser';
-import { ConfigPage } from './pages/config';
-import { HomePage } from './pages/home';
+import { useResource } from 'frosty';
+import { useProto } from '../../proto';
 
-export const Dashboard = () => {
-  return (
-    <StyleProvider>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'row',
-      }}>
-        <div style={{ width: 240 }}>
-          <Menu />
-        </div>
-        <div style={{ flex: 1 }}>
-          <Routes>
-            <Route index element={<HomePage />} />
-            <Route path="/classes/:schema" element={<BrowserPage />} />
-            <Route path="/config" element={<ConfigPage />} />
-          </Routes>
-        </div>
-      </div>
-    </StyleProvider>
-  );
+export const ConfigPage = () => {
+  const proto = useProto();
+  const {
+    resource: config,
+    refresh,
+  } = useResource(async () => proto.config({ master: true }), []);
+  return <div>Config</div>;
 };
