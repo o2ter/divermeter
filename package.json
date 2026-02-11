@@ -26,7 +26,7 @@
     "start": "npx frosty run -d -w"
   },
   "dependencies": {
-    "frosty": "^0.0.131",
+    "frosty": "^0.0.132",
     "lodash": "^4.17.21",
     "path-to-regexp": "^8.3.0"
   },
