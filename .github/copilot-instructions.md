@@ -45,6 +45,11 @@ src/
    - Hook: `useStyle()` - Returns cached style calculations based on theme
    - Provides menu-specific color derivations, spacing, and component styles
    - Wraps menu components to avoid recalculating styles
+   - **IMPORTANT: Maintain StyleProvider** - When modifying components or removing features:
+     - Check if styles in StyleProvider are still being used
+     - Remove unused style properties and calculations to avoid bloat
+     - Update style calculations when theme dependencies change
+     - Keep StyleProvider lean and only include actively used styles
 
 **See "Context Providers Pattern" section below for how to create new providers correctly in Frosty.**
 
@@ -276,6 +281,7 @@ Before writing any styled component, ensure:
 8. **Path separators** - Use forward slashes `/` in all configs, even on Windows
 9. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
 10. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
+11. **StyleProvider maintenance** - When modifying or removing menu components, always check StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) and remove any unused style calculations. Dead code in style providers creates unnecessary performance overhead and maintenance burden.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
