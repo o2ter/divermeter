@@ -26,7 +26,6 @@
 import _ from 'lodash';
 import { ProtoClient } from 'proto.io';
 import { createContext, PropsWithChildren, useContext, useMemo, useResource } from 'frosty';
-import { ThemeProvider, ThemeSettings } from './dashboard/components/theme';
 
 type ProtoContextType = {
   proto: ProtoClient;
@@ -36,21 +35,17 @@ type ProtoContextType = {
 const Context = createContext<ProtoContextType>();
 
 export const ProtoProvider = ({
-  theme,
   proto,
   children,
 }: PropsWithChildren<{
-  theme?: ThemeSettings;
   proto: ProtoClient;
 }>) => {
   const { resource: schema } = useResource(() => proto.schema({ master: true }), [proto]);
   const value = useMemo(() => ({ proto, schema: schema ?? {} }), [proto, schema]);
   return (
-    <ThemeProvider theme={theme}>
-      <Context value={value}>
-        {children}
-      </Context>
-    </ThemeProvider>
+    <Context value={value}>
+      {children}
+    </Context>
   );
 }
 
