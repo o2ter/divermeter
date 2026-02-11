@@ -306,14 +306,17 @@ const colorWeights = {
 
 export const useTheme = () => {
   const theme = useContext(Context) ?? defaultTheme;
+  const colors = {
+    primary: theme.colors.primary,
+    secondary: theme.colors.secondary,
+  } as const;
   return {
     ...theme,
     colors: {
       ...theme.colors,
-      ..._.fromPairs(_.flatMap({
-        primary: theme.colors.primary,
-        secondary: theme.colors.secondary,
-      }, (v, k) => _.map(colorWeights, (s, w) => [`${k}-${w}`, shiftColor(v, s)]))),
+      ..._.fromPairs(
+        _.flatMap(colors, (v, k) => _.map(colorWeights, (s, w) => [`${k}-${w}`, shiftColor(v, s)]))
+      ) as Record<`${keyof typeof colors}-${keyof typeof colorWeights}`, string>,
     },
     // Calculated styles for menu items
     menuItem: {
