@@ -107,12 +107,6 @@ The `useTheme()` hook returns a complete theme object with:
 - `theme.borderRadius`: Border radius values (`sm: 2`, `md: 4`, `lg: 8`)
 - `theme.fontWeight`: Font weights (`normal: 400`, `medium: 500`, `semibold: 600`)
 
-**Calculated Component Styles:**
-- `theme.menuItem`: Pre-calculated menu item styles (padding, fontSize, fontWeight, activeFontWeight, borderWidth)
-- `theme.menuHeader`: Pre-calculated menu header styles (padding, fontSize, fontWeight, letterSpacing)
-- `theme.divider`: Pre-calculated divider styles (margin, borderWidth)
-- `theme.listItem`: Pre-calculated list item styles (padding, fontSize)
-
 #### Styling Examples
 ```tsx
 // Basic styling with theme
