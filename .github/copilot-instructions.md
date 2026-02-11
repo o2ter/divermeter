@@ -18,10 +18,8 @@ DiVerMeter is a **Frosty-based** dashboard library for proto.io (backend-as-a-se
 src/
   index.tsx          # Main export: <Dashboard proto={client} />
   proto.tsx          # ProtoProvider context & hooks (useProto, useProtoSchema)
-  dashboard/
-    index.tsx        # Main layout with Menu + Routes
-    components/      # Router, Menu, Theme providers
-    pages/           # Browser, Config, Home pages
+  components/      # Router, Menu, Theme providers
+  pages/           # Browser, Config, Home pages
 ```
 
 ### Custom Router (Not React Router)
@@ -29,13 +27,13 @@ src/
 - Components: `<Routes>`, `<Route>`, `<Outlet>`
 - Hooks: `useParams()` for URL parameters, `useLocation()` for navigation
 - Navigate via `location.pushState({}, '/path')`
-- See [src/dashboard/components/router/index.tsx](src/dashboard/components/router/index.tsx) for implementation
+- See [src/components/router/index.tsx](src/components/router/index.tsx) for implementation
 
 ### Context Providers
 1. **ProtoProvider** ([src/proto.tsx](src/proto.tsx)): Provides proto client and schema via context
    - Hooks: `useProto()` returns ProtoClient, `useProtoSchema()` returns schema object
    - Wraps `ThemeProvider` automatically
-2. **ThemeProvider** ([src/dashboard/components/theme/index.tsx](src/dashboard/components/theme/index.tsx)): **Centralized theming system - USE THIS FOR ALL STYLES**
+2. **ThemeProvider** ([src/components/theme/index.tsx](src/components/theme/index.tsx)): **Centralized theming system - USE THIS FOR ALL STYLES**
    - Hook: `useTheme()` - **MUST be called in every component that uses styles**
    - Accepts optional `theme` prop with partial `ThemeSettings` to override defaults
    - Uses deep merge (`_.merge`) to combine user settings with defaults
@@ -43,7 +41,7 @@ src/
    - **All components MUST use theme values - never hardcode styles**
    - Theme structure defined by `ThemeSettings` type exported from this file
    - User configuration allows customization of all visual aspects without modifying source code
-3. **StyleProvider** ([src/dashboard/components/style/index.tsx](src/dashboard/components/style/index.tsx)): Caches derived menu styles
+3. **StyleProvider** ([src/components/style/index.tsx](src/components/style/index.tsx)): Caches derived menu styles
    - Hook: `useStyle()` - Returns cached style calculations based on theme
    - Provides menu-specific color derivations, spacing, and component styles
    - Wraps menu components to avoid recalculating styles
@@ -123,13 +121,13 @@ export const useMyContext = () => useContext(MyContext)!;
   // Provider: <Context value={value}>{children}</Context>
   // Hook: useContext(Context)!.proto
   ```
-- **ThemeProvider** ([src/dashboard/components/theme/index.tsx](src/dashboard/components/theme/index.tsx)):
+- **ThemeProvider** ([src/components/theme/index.tsx](src/components/theme/index.tsx)):
   ```tsx
   const Context = createContext<ThemeSettings>();
   // Provider: <Context value={value}>{children}</Context>
   // Hook: useContext(Context) ?? defaultTheme
   ```
-- **StyleProvider** ([src/dashboard/components/style/index.tsx](src/dashboard/components/style/index.tsx)):
+- **StyleProvider** ([src/components/style/index.tsx](src/components/style/index.tsx)):
   ```tsx
   const StyleContext = createContext<MenuStyle>();
   // Provider: <StyleContext value={style}>{children}</StyleContext>
@@ -282,9 +280,9 @@ Before writing any styled component, ensure:
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
 - [src/proto.tsx](src/proto.tsx) - Proto context and providers
-- [src/dashboard/components/theme/index.tsx](src/dashboard/components/theme/index.tsx) - Complete theming system (ThemeProvider, useTheme, ThemeSettings type)
-- [src/dashboard/components/style/index.tsx](src/dashboard/components/style/index.tsx) - StyleProvider for cached menu styles (example of Frosty context pattern)
-- [src/dashboard/components/router/index.tsx](src/dashboard/components/router/index.tsx) - Custom router implementation
-- [src/dashboard/components/menu/index.tsx](src/dashboard/components/menu/index.tsx) - Dynamic menu from schema
+- [src/components/theme/index.tsx](src/components/theme/index.tsx) - Complete theming system (ThemeProvider, useTheme, ThemeSettings type)
+- [src/components/style/index.tsx](src/components/style/index.tsx) - StyleProvider for cached menu styles (example of Frosty context pattern)
+- [src/components/router/index.tsx](src/components/router/index.tsx) - Custom router implementation
+- [src/components/menu/index.tsx](src/components/menu/index.tsx) - Dynamic menu from schema
 - [test/server.ts](test/server.ts) - Example proto.io service setup
 - [rollup.config.mjs](rollup.config.mjs) - Build configuration
