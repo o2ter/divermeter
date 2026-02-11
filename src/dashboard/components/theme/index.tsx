@@ -25,6 +25,7 @@
 
 import _ from 'lodash';
 import { createContext, PropsWithChildren, useContext } from 'frosty';
+import { shiftColor } from '@o2ter/colors.js/index.js';
 
 const initialStyle = `
 :root {
@@ -291,10 +292,29 @@ export const ThemeProvider = ({
   );
 };
 
+const colorWeights = {
+  '100': -0.8,
+  '200': -0.6,
+  '300': -0.4,
+  '400': -0.2,
+  '500': 0,
+  '600': 0.2,
+  '700': 0.4,
+  '800': 0.6,
+  '900': 0.8,
+} as const;
+
 export const useTheme = () => {
   const theme = useContext(Context) ?? defaultTheme;
   return {
     ...theme,
+    colors: {
+      ...theme.colors,
+      ..._.fromPairs(_.flatMap({
+        primary: theme.colors.primary,
+        secondary: theme.colors.secondary,
+      }, (v, k) => _.map(colorWeights, (s, w) => [`${k}-${w}`, shiftColor(v, s)]))),
+    },
     // Calculated styles for menu items
     menuItem: {
       padding: `${theme.spacing.md}px ${theme.spacing.lg}px`,
