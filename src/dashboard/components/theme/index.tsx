@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { createContext, PropsWithChildren, useContext } from 'frosty';
-import { shiftColor } from '@o2ter/colors.js';
+import { shiftColor, colorContrast } from '@o2ter/colors.js';
 
 const initialStyle = `
 :root {
@@ -234,10 +234,9 @@ thead {
 
 const defaultTheme = {
   colors: {
-    // Core colors - everything else derives from these
+    // Core colors - everything else derives from these two
     primary: '#1890ff',      // Main brand/accent color
-    background: '#ffffff',    // Base background color
-    text: '#212529',         // Base text color
+    secondary: '#f0f0f0',    // Secondary color
   },
   spacing: {
     xs: 4,
@@ -306,6 +305,7 @@ export const useTheme = () => {
   // Core colors for generating variants
   const colors = {
     primary: theme.colors.primary,
+    secondary: theme.colors.secondary,
   } as const;
 
   // Helper to create color with opacity
@@ -317,26 +317,31 @@ export const useTheme = () => {
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   };
 
-  // Derive all UI colors from the 3 base colors
+// Derive all UI colors from primary and secondary
+const background = '#ffffff';
+const menuBackground = shiftColor(theme.colors.primary, -0.85); // Lighter primary color
+
   const derivedColors = {
     // Base colors
     primary: theme.colors.primary,
-    background: theme.colors.background,
-    text: theme.colors.text,
+    secondary: theme.colors.secondary,
+    background,
+    menuBackground,
 
-    // Derived from background (slightly darker for contrast)
-    secondary: shiftColor(theme.colors.background, -0.05),
-    menuBackground: shiftColor(theme.colors.background, -0.02),
+    // Interactive states - derived from primary/secondary with opacity
+    activeBackground: withOpacity(theme.colors.primary, 0.12),
+    hoverBackground: withOpacity(theme.colors.primary, 0.08),
 
-    // Derived from text (with opacity for subtle effects)
-    activeBackground: withOpacity(theme.colors.text, 0.08),
-    hoverBackground: withOpacity(theme.colors.text, 0.05),
-    borderColor: withOpacity(theme.colors.text, 0.1),
-    divider: withOpacity(theme.colors.text, 0.1),
+    // Borders and dividers
+    borderColor: withOpacity(theme.colors.secondary, 0.3),
+    divider: withOpacity(theme.colors.secondary, 0.3),
 
-    // Text variations
-    textPrimary: theme.colors.text,
-    textSecondary: withOpacity(theme.colors.text, 0.5),
+    // Text colors - automatically contrast with backgrounds
+    text: colorContrast(background, 'black', 'white'),
+    textPrimary: colorContrast(background, 'black', 'white'),
+    textSecondary: withOpacity(colorContrast(background, 'black', 'white'), 0.6),
+    textOnMenu: colorContrast(menuBackground, 'black', 'white'),
+    textOnPrimary: colorContrast(theme.colors.primary, 'black', 'white'),
 
     // Accent uses primary color
     accentBorder: theme.colors.primary,
@@ -346,7 +351,7 @@ export const useTheme = () => {
     ...theme,
     colors: {
       ...derivedColors,
-      // Generate primary color variants (100-900)
+      // Generate primary and second
       ..._.fromPairs(
         _.flatMap(colors, (v, k) => _.map(colorWeights, (s, w) => [`${k}-${w}`, shiftColor(v, s)]))
       ) as Record<`${keyof typeof colors}-${keyof typeof colorWeights}`, string>,
