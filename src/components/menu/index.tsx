@@ -43,20 +43,49 @@ const MenuItem = ({
     <div
       style={{
         padding: style.menuItem.padding,
+        margin: style.menuItem.margin,
         cursor: 'pointer',
         fontSize: `${style.menuItem.fontSize}px`,
         fontWeight: isActive ? style.menuItem.activeFontWeight : style.menuItem.fontWeight,
-        color: style.menu.textColor,
+        color: isActive ? style.menuItem.activeTextColor : style.menuItem.textColor,
         backgroundColor: isActive ? style.menuItem.activeBackground : 'transparent',
-        borderLeft: isActive ? `${style.menuItem.borderWidth}px solid ${style.menuItem.accentBorder}` : `${style.menuItem.borderWidth}px solid transparent`,
-        transition: 'all 0.2s ease',
-        '&:hover': {
-          backgroundColor: style.menuItem.hoverBackground,
-        },
+        borderRadius: `${style.menuItem.borderRadius}px`,
+        boxShadow: isActive ? style.menuItem.activeShadow : 'none',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = style.menuItem.hoverBackground;
+          e.currentTarget.style.boxShadow = style.menuItem.hoverShadow;
+          e.currentTarget.style.transform = 'translateX(2px)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = 'transparent';
+          e.currentTarget.style.boxShadow = 'none';
+          e.currentTarget.style.transform = 'translateX(0)';
+        }
       }}
       onClick={onClick}
     >
-      {label}
+      {isActive && (
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: '3px',
+          height: '60%',
+          backgroundColor: style.menuItem.accentBorder,
+          borderRadius: '0 2px 2px 0',
+        }} />
+      )}
+      <div style={{ paddingLeft: isActive ? `${style.spacing.sm}px` : '0', transition: 'padding 0.25s ease' }}>
+        {label}
+      </div>
     </div>
   );
 };
@@ -68,7 +97,7 @@ const SchemaList = () => {
   const selected = match('/classes/:schema')(location.pathname) || undefined;
 
   return (
-    <div style={{ paddingLeft: `${style.spacing.sm}px` }}>
+    <div>
       <div
         style={{
           padding: style.menuHeader.padding,
@@ -81,28 +110,74 @@ const SchemaList = () => {
       >
         Classes
       </div>
-      {_.map(_.keys(schema).sort(), (key) => (
-        <div
-          key={key}
-          style={{
-            padding: style.listItem.padding,
-            cursor: 'pointer',
-            fontSize: `${style.listItem.fontSize}px`,
-            color: style.menu.textColor,
-            backgroundColor: selected?.params.schema === key ? style.menuItem.activeBackground : 'transparent',
-            borderLeft: selected?.params.schema === key ? `${style.menuItem.borderWidth}px solid ${style.menuItem.accentBorder}` : `${style.menuItem.borderWidth}px solid transparent`,
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: style.listItem.hoverBackground,
-            },
-          }}
-          onClick={() => {
-            location.pushState({}, `/classes/${key}`);
-          }}
-        >
-          {key}
-        </div>
-      ))}
+      <div style={{ marginTop: `${style.spacing.xs}px` }}>
+        {_.map(_.keys(schema).sort(), (key) => {
+          const isActive = selected?.params.schema === key;
+          return (
+            <div
+              key={key}
+              style={{
+                padding: style.listItem.padding,
+                margin: style.listItem.margin,
+                cursor: 'pointer',
+                fontSize: `${style.listItem.fontSize}px`,
+                fontWeight: isActive ? style.menuItem.activeFontWeight : style.listItem.fontWeight,
+                color: isActive ? style.listItem.activeTextColor : style.listItem.textColor,
+                backgroundColor: isActive ? style.menuItem.activeBackground : 'transparent',
+                borderRadius: `${style.listItem.borderRadius}px`,
+                boxShadow: isActive ? style.listItem.activeShadow : 'none',
+                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = style.listItem.hoverBackground;
+                  e.currentTarget.style.color = style.menuItem.textColor;
+                  e.currentTarget.style.transform = 'translateX(2px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = style.listItem.textColor;
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }
+              }}
+              onClick={() => {
+                location.pushState({}, `/classes/${key}`);
+              }}
+            >
+              {isActive && (
+                <div style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '3px',
+                  height: '50%',
+                  backgroundColor: style.menuItem.accentBorder,
+                  borderRadius: '0 2px 2px 0',
+                }} />
+              )}
+              <div style={{
+                paddingLeft: isActive ? `${style.spacing.sm}px` : '0',
+                transition: 'padding 0.25s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: `${style.spacing.xs}px`,
+              }}>
+                <span style={{
+                  fontSize: `${style.fontSize.xs}px`,
+                  opacity: 0.6,
+                }}>
+                  ▸
+                </span>
+                {key}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -118,10 +193,17 @@ export const Menu = () => {
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      backgroundColor: style.menu.background,
+      background: style.menu.background,
       borderRight: `1px solid ${style.menu.borderColor}`,
+      boxShadow: style.menu.shadow,
     }}>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        paddingTop: `${style.spacing.md}px`,
+        paddingBottom: `${style.spacing.xl}px`,
+      }}>
         <MenuItem
           label="Dashboard"
           isActive={isHome}
@@ -130,14 +212,16 @@ export const Menu = () => {
 
         <div style={{
           margin: style.divider.margin,
-          borderTop: `${style.divider.borderWidth}px solid ${style.divider.color}`,
+          height: `${style.divider.height}px`,
+          background: style.divider.background,
         }} />
 
         <SchemaList />
 
         <div style={{
           margin: style.divider.margin,
-          borderTop: `${style.divider.borderWidth}px solid ${style.divider.color}`,
+          height: `${style.divider.height}px`,
+          background: style.divider.background,
         }} />
 
         <MenuItem

@@ -25,7 +25,7 @@
 
 import { createContext, useContext, useMemo, PropsWithChildren } from 'frosty';
 import { useTheme } from '../theme';
-import { shiftColor, normalizeColor, getRed, getGreen, getBlue, getAlpha, rgba, toHexString } from '@o2ter/colors.js';
+import { shiftColor, tintColor, shadeColor, mixColor, luminance, normalizeColor, getRed, getGreen, getBlue, rgba, toHexString } from '@o2ter/colors.js';
 
 type MenuStyle = ReturnType<typeof createMenuStyle>;
 
@@ -44,8 +44,62 @@ const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
     ), true);
   };
 
-  // Derive menu background from primary color
-  const menuBackground = shiftColor(theme.colors.primary, -0.85);
+  // Analyze primary color luminance for proper color derivation
+  const primaryColor = normalizeColor(theme.colors.primary);
+  const primaryLuminance = primaryColor ? luminance(primaryColor) : 0.5;
+  const isLight = primaryLuminance > 0.7;
+  const isDark = primaryLuminance < 0.3;
+
+  // Create harmonious color palette following color theory
+  const primary = theme.colors.primary;
+
+  // Derive complementary color for accents (opposite on color wheel)
+  const complement = shiftColor(primary, 0.5);
+
+  // Create sophisticated menu background with gradient
+  const menuBgBase = isLight
+    ? mixColor(primary, '#fafbfc', 0.03)  // Very subtle tint for light colors
+    : isDark
+      ? mixColor(primary, '#1a1d23', 0.08)  // Dark, rich background
+      : mixColor(primary, '#f8f9fa', 0.05); // Neutral mid-tone
+
+  const menuBgGradientStart = menuBgBase;
+  const menuBgGradientEnd = isLight
+    ? tintColor(menuBgBase, 0.02)
+    : isDark
+      ? shadeColor(menuBgBase, 0.05)
+      : tintColor(menuBgBase, 0.01);
+
+  // Create text colors with proper contrast
+  const menuTextPrimary = theme.colorContrast(menuBgBase);
+  const menuTextSecondary = withOpacity(menuTextPrimary, 0.65);
+  const menuTextMuted = withOpacity(menuTextPrimary, 0.45);
+
+  // Create active and hover states using color theory
+  const activeBackground = isLight
+    ? mixColor(primary, '#ffffff', 0.85)  // Soft highlight for light themes
+    : isDark
+      ? mixColor(primary, '#2d3748', 0.7)  // Rich, saturated for dark themes
+      : mixColor(primary, '#f0f4f8', 0.75); // Balanced for mid-tones
+
+  const hoverBackground = isLight
+    ? withOpacity(primary, 0.06)
+    : isDark
+      ? withOpacity(tintColor(primary, 0.3), 0.12)
+      : withOpacity(primary, 0.08);
+
+  // Create modern accent colors using primary and complement
+  const accentPrimary = isLight
+    ? shadeColor(primary, 0.1)  // Slightly darker for visibility
+    : isDark
+      ? tintColor(primary, 0.2)  // Lighter for contrast
+      : primary;
+
+  const accentGlow = withOpacity(accentPrimary, 0.4);
+
+  // Modern border colors
+  const borderPrimary = withOpacity(menuTextPrimary, 0.08);
+  const borderAccent = withOpacity(accentPrimary, 0.3);
 
   return {
     // Expose theme properties for direct access
@@ -54,42 +108,58 @@ const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
     fontWeight: theme.fontWeight,
     borderRadius: theme.borderRadius,
 
-    // Menu container styles
+    // Menu container styles with gradient
     menu: {
-      background: menuBackground,
-      textColor: theme.colorContrast(menuBackground),
-      borderColor: withOpacity(theme.colors.secondary, 0.3),
+      background: `linear-gradient(180deg, ${menuBgGradientStart} 0%, ${menuBgGradientEnd} 100%)`,
+      textColor: menuTextPrimary,
+      borderColor: borderPrimary,
+      shadow: isLight
+        ? '0 0 0 1px rgba(0, 0, 0, 0.04)'
+        : '0 0 0 1px rgba(255, 255, 255, 0.05)',
     },
-    // Menu item styles and colors
+    // Modern menu item styles
     menuItem: {
       padding: `${theme.spacing.md}px ${theme.spacing.lg}px`,
+      margin: `${theme.spacing.xs}px ${theme.spacing.md}px`,
       fontSize: theme.fontSize.sm,
-      fontWeight: theme.fontWeight.normal,
+      fontWeight: theme.fontWeight.medium,
       activeFontWeight: theme.fontWeight.semibold,
-      activeBackground: withOpacity(theme.colors.primary, 0.12),
-      hoverBackground: withOpacity(theme.colors.primary, 0.08),
-      accentBorder: theme.colors.primary,
-      borderWidth: 3,
+      textColor: menuTextPrimary,
+      activeTextColor: accentPrimary,
+      activeBackground: activeBackground,
+      hoverBackground: hoverBackground,
+      accentBorder: accentPrimary,
+      accentGlow: accentGlow,
+      borderWidth: 0,
+      borderRadius: theme.borderRadius.md,
+      activeShadow: `0 2px 8px ${accentGlow}, 0 0 0 1px ${borderAccent}`,
+      hoverShadow: `0 1px 4px ${withOpacity(menuTextPrimary, 0.08)}`,
     },
-    // Menu header styles and colors
+    // Menu header with modern typography
     menuHeader: {
-      padding: `${theme.spacing.sm}px ${theme.spacing.sm}px ${theme.spacing.xs}px ${theme.spacing.sm}px`,
+      padding: `${theme.spacing.md}px ${theme.spacing.lg}px ${theme.spacing.xs}px`,
       fontSize: theme.fontSize.xs,
       fontWeight: theme.fontWeight.semibold,
-      letterSpacing: '0.5px',
-      textColor: withOpacity(theme.colors.secondary, 0.6),
+      letterSpacing: '0.8px',
+      textColor: menuTextMuted,
     },
-    // Divider styles and colors
+    // Subtle modern divider
     divider: {
-      margin: `${theme.spacing.md}px 0`,
-      borderWidth: 1,
-      color: withOpacity(theme.colors.secondary, 0.3),
+      margin: `${theme.spacing.lg}px ${theme.spacing.lg}px`,
+      height: 1,
+      background: `linear-gradient(90deg, transparent 0%, ${borderPrimary} 50%, transparent 100%)`,
     },
-    // List item styles and colors
+    // List item styles
     listItem: {
       padding: `${theme.spacing.sm + 2}px ${theme.spacing.lg}px`,
+      margin: `2px ${theme.spacing.md}px`,
       fontSize: theme.fontSize.sm,
-      hoverBackground: withOpacity(theme.colors.primary, 0.04),
+      fontWeight: theme.fontWeight.normal,
+      textColor: menuTextSecondary,
+      activeTextColor: accentPrimary,
+      hoverBackground: hoverBackground,
+      borderRadius: theme.borderRadius.md,
+      activeShadow: `0 1px 4px ${accentGlow}, 0 0 0 1px ${borderAccent}`,
     },
   };
 };
