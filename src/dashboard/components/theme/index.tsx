@@ -272,7 +272,7 @@ const defaultTheme = {
 
 type _ThemeSettings = typeof defaultTheme;
 
-export type ThemeSettings = _ThemeSettings;
+export type ThemeSettings = { [x in keyof _ThemeSettings]?: Partial<_ThemeSettings[x]>; };
 
 const Context = createContext<_ThemeSettings>();
 
