@@ -74,7 +74,7 @@ const SchemaList = () => {
           padding: style.menuHeader.padding,
           fontSize: `${style.menuHeader.fontSize}px`,
           fontWeight: style.menuHeader.fontWeight,
-          color: style.colors.textSecondary,
+          color: style.colors.textOnMenu,
           textTransform: 'uppercase',
           letterSpacing: style.menuHeader.letterSpacing,
         }}

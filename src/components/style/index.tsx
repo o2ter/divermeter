@@ -45,7 +45,6 @@ const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
   };
 
   // Derive all UI colors from primary and secondary
-  const background = '#ffffff';
   const menuBackground = shiftColor(theme.colors.primary, -0.85); // Lighter primary color
 
   return {
@@ -65,7 +64,6 @@ const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
       divider: withOpacity(theme.colors.secondary, 0.3),
 
       // Text colors - automatically contrast with backgrounds
-      textSecondary: withOpacity(theme.colorContrast(background), 0.6),
       textOnMenu: theme.colorContrast(menuBackground),
 
       // Accent uses primary color
