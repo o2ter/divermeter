@@ -102,8 +102,6 @@ The `useTheme()` hook returns a complete theme object with:
 
 **Core Theme Settings:**
 - `theme.colors`: All color values
-  - `primary`, `secondary`, `menuBackground`, `activeBackground`, `hoverBackground`
-  - `borderColor`, `textPrimary`, `textSecondary`, `accentBorder`, `divider`
 - `theme.spacing`: Spacing scale (`xs: 4`, `sm: 8`, `md: 12`, `lg: 16`, `xl: 24`)
 - `theme.fontSize`: Font sizes (`xs: 12`, `sm: 14`, `md: 16`, `lg: 20`)
 - `theme.borderRadius`: Border radius values (`sm: 2`, `md: 4`, `lg: 8`)
