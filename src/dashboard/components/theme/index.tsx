@@ -237,6 +237,8 @@ const defaultTheme = {
     // Core colors - everything else derives from these two
     primary: '#1890ff',      // Main brand/accent color
     secondary: '#f0f0f0',    // Secondary color
+    contrastDark: '#000000',     // For light backgrounds
+    contrastLight: '#ffffff',    // For dark backgrounds
   },
   spacing: {
     xs: 4,
@@ -300,19 +302,20 @@ const colorWeights = {
 } as const;
 
 export const useTheme = () => {
-  const theme = useContext(Context) ?? defaultTheme;
-
-  // Core colors for generating variants
-  const colors = {
-    primary: theme.colors.primary,
-    secondary: theme.colors.secondary,
-  } as const;
+  const { 
+    colors: {
+      contrastDark,
+      contrastLight,
+      ...colors
+    },
+    ...theme
+  } = useContext(Context) ?? defaultTheme;
 
   return {
     ...theme,
-    colorContrast: (color: string) => colorContrast(color, 'black', 'white'),
+    colorContrast: (color: string) => colorContrast(color, contrastDark, contrastLight),
     colors: {
-      ...theme.colors,
+      ...colors,
       // Generate primary and second
       ..._.fromPairs(
         _.flatMap(colors, (v, k) => _.map(colorWeights, (s, w) => [`${k}-${w}`, shiftColor(v, s)]))
