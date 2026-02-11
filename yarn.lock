@@ -1140,6 +1140,13 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@o2ter/colors.js@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@o2ter/colors.js/-/colors.js-1.0.0.tgz#d8c906f45a33369c6735fed5fd73f30f000006f4"
+  integrity sha512-WR08PsRh4/QprP+x7slK7D0B7fjQXixdgC5MfuOzV4iMhyz4EAUeECDgthRtbYIimdkFBaTBG3BSOoSMoSsWgw==
+  dependencies:
+    lodash "^4.17.21"
+
 "@o2ter/crypto-js@^0.0.7":
   version "0.0.7"
   resolved "https://registry.yarnpkg.com/@o2ter/crypto-js/-/crypto-js-0.0.7.tgz#65da958c73dd471d2e1cf54e1e38b09ff87df500"
