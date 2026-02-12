@@ -184,6 +184,23 @@ export const Menu = ({ pages }: MenuProps) => {
   const isHome = location.pathname === '/';
   const isConfig = location.pathname === '/config';
 
+  const renderPageItem = (page: Page, index: number) => {
+    if (!page.path || page.index) return null;
+
+    const pagePath = page.path.startsWith('/') ? page.path : `/${page.path}`;
+    const isActive = location.pathname === pagePath;
+    const pageLabel = typeof page.title === 'string' ? page.title : page.path;
+
+    return (
+      <MenuItem
+        key={`page-${index}`}
+        label={pageLabel}
+        isActive={isActive}
+        onClick={() => location.pushState({}, pagePath)}
+      />
+    );
+  };
+
   return (
     <div style={{
       display: 'flex',
@@ -225,6 +242,17 @@ export const Menu = ({ pages }: MenuProps) => {
           isActive={isConfig}
           onClick={() => location.pushState({}, '/config')}
         />
+
+        {pages && pages.length > 0 && (
+          <>
+            <div style={{
+              margin: style.divider.margin,
+              height: `${style.divider.height}px`,
+              background: style.divider.background,
+            }} />
+            {_.map(pages, (page, index) => renderPageItem(page, index))}
+          </>
+        )}
       </div>
     </div>
   );

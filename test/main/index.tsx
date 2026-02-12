@@ -40,7 +40,16 @@ export const Main = () => {
   }), []);
   return (
     <div style={{ display: 'flex', flex: 1 }}>
-      <Dashboard proto={proto} />
+      <Dashboard
+        proto={proto}
+        pages={[
+          {
+            title: 'Custom Page',
+            path: '/custom',
+            element: <div style={{ padding: 20 }}>This is a custom page added through the Dashboard's pages prop.</div>,
+          }
+        ]}
+      />
     </div>
   );
 };

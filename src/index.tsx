@@ -52,7 +52,7 @@ export const Dashboard: ComponentType<{
           flexDirection: 'row',
         }}>
           <div style={{ width: 240 }}>
-            <Menu />
+            <Menu pages={pages} />
           </div>
           <div style={{ flex: 1 }}>
             <Routes>

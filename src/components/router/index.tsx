@@ -77,9 +77,13 @@ export const Route = ({
   );
   return (
     <Child>
-      {title && <head><title>{_.isFunction(title) ? title(matched?.params) : title}</title></head>}
       <Context value={{ path: currentPath, params: matched?.params, outlet }}>
-        {matched && element}
+        {matched && (
+          <>
+            {title && <head><title>{_.isFunction(title) ? title(matched?.params) : title}</title></head>}
+            {element}
+          </>
+        )}
         {!element && outlet}
       </Context>
     </Child>
