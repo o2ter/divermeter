@@ -34,6 +34,7 @@ import { createPages, Page, Route, Routes } from './components/router';
 import { HomePage } from './pages/home';
 import { BrowserPage } from './pages/browser';
 import { ConfigPage } from './pages/config';
+import { AlertProvider } from './components/alert';
 
 export { useTheme } from './components/theme';
 export { useParams, Outlet } from './components/router';
@@ -45,26 +46,28 @@ export const Dashboard: ComponentType<{
   pages?: Page[];
 }> = ({ proto, theme, pages }) => (
   <ThemeProvider theme={theme}>
-    <ProtoProvider proto={proto}>
-      <StyleProvider>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'row',
-        }}>
-          <div style={{ width: 240 }}>
-            <Menu pages={pages} />
+    <AlertProvider>
+      <ProtoProvider proto={proto}>
+        <StyleProvider>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+          }}>
+            <div style={{ width: 240 }}>
+              <Menu pages={pages} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <Routes>
+                <Route title='Dashboard' index element={<HomePage />} />
+                <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />
+                <Route title='Config' path="/config" element={<ConfigPage />} />
+                {pages && createPages(pages)}
+              </Routes>
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <Routes>
-              <Route title='Dashboard' index element={<HomePage />} />
-              <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />
-              <Route title='Config' path="/config" element={<ConfigPage />} />
-              {pages && createPages(pages)}
-            </Routes>
-          </div>
-        </div>
-      </StyleProvider>
-    </ProtoProvider>
+        </StyleProvider>
+      </ProtoProvider>
+    </AlertProvider>
   </ThemeProvider>
 );
 
