@@ -30,10 +30,12 @@ import { createContext, createPairs, ElementNode, PropsWithChildren, useContext,
 
 const { Parent, Child } = createPairs();
 
+type Params = Partial<Record<string, string | string[]>>;
+
 const Context = createContext<{
   path: string;
   outlet?: ElementNode;
-  params?: Partial<Record<string, string | string[]>>;
+  params?: Params;
 }>({
   path: '',
 });
@@ -51,12 +53,14 @@ export const Routes = ({
 };
 
 type RouteProps = {
+  title?: string | ((x: { path: string; params?: Params; }) => string);
   path?: string;
   index?: boolean;
   element?: ElementNode;
 };
 
 export const Route = ({
+  title,
   path,
   index,
   element,
@@ -70,16 +74,14 @@ export const Route = ({
     !!currentPath && match(currentPath)(location.pathname),
   ], [index, location.pathname, parent.path, currentPath]);
   const matched = matchedIndex || matchedPath || undefined;
+  const value = { path: currentPath, params: matched?.params };
   const outlet = (
     <Parent>{children}</Parent>
   );
   return (
     <Child>
-      <Context value={{
-        path: currentPath,
-        outlet,
-        params: matched?.params,
-      }}>
+      {title && <head><title>{_.isFunction(title) ? title(value) : title}</title></head>}
+      <Context value={{ ...value, outlet }}>
         {matched && element}
         {outlet}
       </Context>
