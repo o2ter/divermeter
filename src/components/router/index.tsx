@@ -87,9 +87,9 @@ export const Route = ({
 };
 
 export const Outlet = () => {
-  const { outlet, ...parent } = useContext(Context);
+  const { outlet, path } = useContext(Context);
   return (
-    <Context value={parent}>
+    <Context value={{ path }}>
       {outlet}
     </Context>
   );
