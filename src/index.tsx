@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { ComponentType } from 'frosty';
+import { ComponentType, ErrorBoundary } from 'frosty';
 import { ProtoProvider } from './proto';
 import { ThemeProvider, ThemeSettings } from './components/theme';
 import type { ProtoClient } from 'proto.io';
@@ -34,11 +34,36 @@ import { createPages, Page, Route, Routes } from './components/router';
 import { HomePage } from './pages/home';
 import { BrowserPage } from './pages/browser';
 import { ConfigPage } from './pages/config';
-import { AlertProvider } from './components/alert';
+import { AlertProvider, useAlert } from './components/alert';
 
 export { useTheme } from './components/theme';
 export { useParams, Outlet } from './components/router';
 export { useProto, useProtoSchema } from './proto';
+export { useAlert } from './components/alert';
+
+const Main = ({ pages }: { pages?: Page[]; }) => {
+  const { showError } = useAlert();
+  return (
+    <ErrorBoundary onError={error => showError(error.message)}>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'row',
+      }}>
+        <div style={{ width: 240 }}>
+          <Menu pages={pages} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <Routes>
+            <Route title='Dashboard' index element={<HomePage />} />
+            <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />
+            <Route title='Config' path="/config" element={<ConfigPage />} />
+            {pages && createPages(pages)}
+          </Routes>
+        </div>
+      </div>
+    </ErrorBoundary>
+  );
+};
 
 export const Dashboard: ComponentType<{
   proto: ProtoClient;
@@ -49,22 +74,7 @@ export const Dashboard: ComponentType<{
     <AlertProvider>
       <ProtoProvider proto={proto}>
         <StyleProvider>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'row',
-          }}>
-            <div style={{ width: 240 }}>
-              <Menu pages={pages} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <Routes>
-                <Route title='Dashboard' index element={<HomePage />} />
-                <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />
-                <Route title='Config' path="/config" element={<ConfigPage />} />
-                {pages && createPages(pages)}
-              </Routes>
-            </div>
-          </div>
+          <Main pages={pages} />
         </StyleProvider>
       </ProtoProvider>
     </AlertProvider>
