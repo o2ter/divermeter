@@ -25,17 +25,15 @@
 
 import _ from 'lodash';
 import { useLocation } from 'frosty/web';
-import { match } from 'path-to-regexp';
+import { match, ParamData } from 'path-to-regexp';
 import { createContext, createPairs, ElementNode, PropsWithChildren, useContext, useMemo } from 'frosty';
 
 const { Parent, Child } = createPairs();
 
-type Params = Partial<Record<string, string | string[]>>;
-
 const Context = createContext<{
   path: string;
   outlet?: ElementNode;
-  params?: Params;
+  params?: ParamData;
 }>({
   path: '',
 });
@@ -53,7 +51,7 @@ export const Routes = ({
 };
 
 type RouteProps = {
-  title?: string | ((x: { path: string; params?: Params; }) => string);
+  title?: string | ((x: { path: string; params?: ParamData; }) => string);
   path?: string;
   index?: boolean;
   element?: ElementNode;
