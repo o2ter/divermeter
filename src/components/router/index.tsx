@@ -51,7 +51,7 @@ export const Routes = ({
 };
 
 type RouteProps = {
-  title?: string | ((x: { params?: ParamData; }) => string);
+  title?: string | ((x: { path: string; params?: ParamData; }) => string);
   path?: string;
   index?: boolean;
   element?: ElementNode;
