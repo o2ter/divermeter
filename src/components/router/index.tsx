@@ -88,10 +88,10 @@ export const Route = ({
 };
 
 export const Outlet = () => {
-  const parent = useContext(Context);
+  const { outlet, ...parent } = useContext(Context);
   return (
-    <Context value={_.omit(parent, 'outlet')}>
-      {parent.outlet}
+    <Context value={parent}>
+      {outlet}
     </Context>
   );
 };
