@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@o2ter/colors.js": "^1.0.2",
-    "frosty": "^0.0.135",
+    "frosty": "^0.0.136",
     "lodash": "^4.17.21",
     "path-to-regexp": "^8.3.0"
   },
