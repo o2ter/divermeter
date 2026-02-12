@@ -85,7 +85,6 @@ The `./scripts/test` script:
 
 ### File Structure
 - **All source files** include MIT license header (25 lines)
-- Exports at bottom: `export const Component = ...` then `export default Component`
 - Index files re-export components
 - Use lodash (`import _ from 'lodash'`) for utilities
 

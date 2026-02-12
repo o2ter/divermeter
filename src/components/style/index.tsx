@@ -186,5 +186,3 @@ export const StyleProvider = ({ children }: PropsWithChildren<{}>) => {
 };
 
 export const useStyle = () => useContext(StyleContext)!;
-
-export default StyleProvider;

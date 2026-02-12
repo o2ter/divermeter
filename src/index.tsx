@@ -28,7 +28,7 @@ import { ComponentType } from 'frosty';
 import { ProtoProvider } from './proto';
 import { ThemeProvider, ThemeSettings } from './components/theme';
 import type { ProtoClient } from 'proto.io';
-import StyleProvider from './components/style';
+import { StyleProvider } from './components/style';
 import { Menu } from './components/menu';
 import { Route, Routes } from './components/router';
 import { HomePage } from './pages/home';
