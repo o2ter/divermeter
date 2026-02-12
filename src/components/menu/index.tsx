@@ -28,6 +28,7 @@ import { useProtoSchema } from '../../proto';
 import { useLocation } from 'frosty/web';
 import { match } from 'path-to-regexp';
 import { useStyle } from '../style';
+import { Page } from '../router';
 
 const MenuItem = ({
   label,
@@ -173,7 +174,11 @@ const SchemaList = () => {
   );
 };
 
-export const Menu = () => {
+type MenuProps = {
+  pages?: Page[];
+};
+
+export const Menu = ({ pages }: MenuProps) => {
   const style = useStyle();
   const location = useLocation();
   const isHome = location.pathname === '/';

@@ -30,15 +30,20 @@ import { ThemeProvider, ThemeSettings } from './components/theme';
 import type { ProtoClient } from 'proto.io';
 import { StyleProvider } from './components/style';
 import { Menu } from './components/menu';
-import { Route, Routes } from './components/router';
+import { createPages, Page, Route, Routes } from './components/router';
 import { HomePage } from './pages/home';
 import { BrowserPage } from './pages/browser';
 import { ConfigPage } from './pages/config';
 
+export { useTheme } from './components/theme';
+export { useParams, Outlet } from './components/router';
+export { useProto, useProtoSchema } from './proto';
+
 export const Dashboard: ComponentType<{
   proto: ProtoClient;
   theme?: ThemeSettings;
-}> = ({ proto, theme }) => (
+  pages?: Page[];
+}> = ({ proto, theme, pages }) => (
   <ThemeProvider theme={theme}>
     <ProtoProvider proto={proto}>
       <StyleProvider>
@@ -54,6 +59,7 @@ export const Dashboard: ComponentType<{
               <Route index element={<HomePage />} />
               <Route path="/classes/:schema" element={<BrowserPage />} />
               <Route path="/config" element={<ConfigPage />} />
+              {pages && createPages(pages)}
             </Routes>
           </div>
         </div>

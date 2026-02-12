@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { useLocation } from 'frosty/web';
 import { match, ParamData } from 'path-to-regexp';
-import { createContext, createPairs, ElementNode, PropsWithChildren, useContext, useMemo } from 'frosty';
+import { ComponentProps, createContext, createPairs, ElementNode, PropsWithChildren, useContext, useMemo } from 'frosty';
 
 const { Parent, Child } = createPairs();
 
@@ -99,3 +99,13 @@ export const useParams = () => {
   const { params = {} } = useContext(Context);
   return params;
 };
+
+export type Page = Omit<ComponentProps<typeof Route>, 'children'> & {
+  children?: Page[];
+};
+
+export const createPages = (pages: Page[]) => _.map(pages, ({ children, ...props }) => (
+  <Route {...props}>
+    {children && createPages(children)}
+  </Route>
+));
