@@ -142,7 +142,7 @@ const AlertBody = ({
       minWidth: '300px',
       maxWidth: '500px',
       opacity: isExiting ? 0 : isVisible ? 1 : 0,
-      transform: isExiting ? 'translateY(-20px)' : isVisible ? 'translateY(0)' : 'translateY(-20px)',
+      transform: isExiting ? 'translateY(20px)' : isVisible ? 'translateY(0)' : 'translateY(20px)',
       transition: 'opacity 0.3s ease, transform 0.3s ease',
     }}>
       {icon && <div style={{ flexShrink: 0 }}>{icon}</div>}
@@ -216,11 +216,11 @@ export const AlertProvider = ({
       {children}
       {!_.isEmpty(elements) && <div style={{
         position: 'fixed',
-        top: theme.spacing.lg,
+        bottom: theme.spacing.lg,
         right: theme.spacing.lg,
         zIndex: 9999,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'column-reverse',
         pointerEvents: 'none',
       }}>
         <div style={{ pointerEvents: 'auto' }}>
