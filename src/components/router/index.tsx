@@ -32,8 +32,8 @@ const { Parent, Child } = createPairs();
 
 const Context = createContext<{
   path: string;
-  outlet?: ElementNode;
   params?: ParamData;
+  outlet?: ElementNode;
 }>({
   path: '',
 });
@@ -51,7 +51,7 @@ export const Routes = ({
 };
 
 type RouteProps = {
-  title?: string | ((x: { path: string; params?: ParamData; }) => string);
+  title?: string | ((params?: ParamData) => string);
   path?: string;
   index?: boolean;
   element?: ElementNode;
@@ -72,14 +72,13 @@ export const Route = ({
     !!currentPath && match(currentPath)(location.pathname),
   ], [index, location.pathname, parent.path, currentPath]);
   const matched = matchedIndex || matchedPath || undefined;
-  const value = { path: currentPath, params: matched?.params };
   const outlet = (
     <Parent>{children}</Parent>
   );
   return (
     <Child>
-      {title && <head><title>{_.isFunction(title) ? title(value) : title}</title></head>}
-      <Context value={{ ...value, outlet }}>
+      {title && <head><title>{_.isFunction(title) ? title(matched?.params) : title}</title></head>}
+      <Context value={{ path: currentPath, params: matched?.params, outlet }}>
         {matched && element}
         {outlet}
       </Context>
