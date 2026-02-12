@@ -1140,10 +1140,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@o2ter/colors.js@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@o2ter/colors.js/-/colors.js-1.0.1.tgz#39cec71583b05f87bf2ffe2504ad6538a38dbae8"
-  integrity sha512-qdTG/UOntPe5g6Iv02fkbOGKy2ak9SCL/gfykveWE5xcXbn/oaZO7dKOH5xPQEQfKrxwXC8ErxPjyk5hGpZvbg==
+"@o2ter/colors.js@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@o2ter/colors.js/-/colors.js-1.0.2.tgz#dfec77cdaecaf0bd016cfe02293583e852c826d7"
+  integrity sha512-MAUKfibx68rJYqVFspg2mcH6V3uIVPKTThsjrNX8zNA5owBbVg8JUoHkLtFSVSjZIrGwyZy3eC8P0hp2vizsPw==
   dependencies:
     lodash "^4.17.21"
 

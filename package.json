@@ -26,7 +26,7 @@
     "start": "npx frosty run -d -w"
   },
   "dependencies": {
-    "@o2ter/colors.js": "^1.0.1",
+    "@o2ter/colors.js": "^1.0.2",
     "frosty": "^0.0.135",
     "lodash": "^4.17.21",
     "path-to-regexp": "^8.3.0"
