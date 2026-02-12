@@ -240,6 +240,11 @@ const defaultTheme = {
     tint: '#1890ff',         // For selection and highlights
     contrastDark: '#000000',     // For light backgrounds
     contrastLight: '#ffffff',    // For dark backgrounds
+    // Alert type colors
+    success: '#10b981',      // Success messages
+    info: '#3b82f6',         // Info messages
+    warning: '#f59e0b',      // Warning messages
+    error: '#ef4444',        // Error messages
   },
   spacing: {
     xs: 4,

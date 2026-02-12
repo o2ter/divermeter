@@ -24,10 +24,28 @@
 //
 
 import _ from 'lodash';
-import Dashboard from '../../src';
+import Dashboard, { useAlert } from '../../src';
 import { ProtoClient } from 'proto.io';
 import { useMemo } from 'frosty';
 import { useLocation } from 'frosty/web';
+
+const CustomPage = () => {
+  const {
+    showSuccess,
+    showInfo,
+    showWarning,
+    showError,
+  } = useAlert();
+  return (
+    <>
+      <div style={{ padding: 20 }}>This is a custom page added through the Dashboard's pages prop.</div>
+      <button onClick={() => showSuccess('This is a success message!')}>Show Success Alert</button>
+      <button onClick={() => showInfo('This is an info message!')}>Show Info Alert</button>
+      <button onClick={() => showWarning('This is a warning message!')}>Show Warning Alert</button>
+      <button onClick={() => showError('This is an error message!')}>Show Error Alert</button>
+    </>
+  );
+}
 
 export const Main = () => {
   const location = useLocation();
@@ -46,7 +64,7 @@ export const Main = () => {
           {
             title: 'Custom Page',
             path: '/custom',
-            element: <div style={{ padding: 20 }}>This is a custom page added through the Dashboard's pages prop.</div>,
+            element: <CustomPage />,
           }
         ]}
       />

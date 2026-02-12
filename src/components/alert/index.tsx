@@ -24,8 +24,9 @@
 //
 
 import _ from 'lodash';
-import { createContext, ElementNode, PropsWithChildren, useCallback, useContext, useMemo, useState } from 'frosty';
+import { createContext, ElementNode, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'frosty';
 import { useTheme } from '../theme';
+import { normalizeColor, getRed, getGreen, getBlue, rgba, toHexString } from '@o2ter/colors.js';
 
 type AlertType = 'success' | 'info' | 'warning' | 'error';
 type AlertOptions = {
@@ -70,10 +71,109 @@ const AlertBody = ({
   onDismiss,
   formatter,
 }: AlertBodyProps) => {
+  const theme = useTheme();
+  const [isVisible, setIsVisible] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+
+  useEffect(() => {
+    // Trigger enter animation
+    setTimeout(() => setIsVisible(true), 10);
+
+    // Register dismiss callback
+    onShow({
+      dismiss: () => {
+        setIsExiting(true);
+        setTimeout(onDismiss, 300); // Wait for exit animation
+      },
+    });
+  }, [onShow, onDismiss]);
+
+  // Determine color based on style
+  const getColor = () => {
+    if (_.isString(style)) {
+      switch (style) {
+        case 'success': return theme.colors.success;
+        case 'info': return theme.colors.info;
+        case 'warning': return theme.colors.warning;
+        case 'error': return theme.colors.error;
+        default: return theme.colors.info;
+      }
+    }
+    return style.color;
+  };
+
+  const color = getColor();
+  const textColor = theme.colorContrast(color);
+
+  // Create background with opacity
+  const backgroundColor = (() => {
+    const normalized = normalizeColor(color);
+    if (!normalized) return color;
+    return toHexString(rgba(
+      getRed(normalized),
+      getGreen(normalized),
+      getBlue(normalized),
+      Math.round(255 * 0.9)
+    ), true);
+  })();
+
+  // Format message
+  const displayMessage = (() => {
+    if (_.isString(message)) return message;
+    if (message instanceof Error) {
+      return formatter ? formatter(message) : message.message;
+    }
+    return String(message);
+  })();
+
+  const icon = !_.isString(style) ? style.icon : undefined;
 
   return (
     <div style={{
+      backgroundColor,
+      color: textColor,
+      padding: `${theme.spacing.md}px ${theme.spacing.lg}px`,
+      marginBottom: theme.spacing.sm,
+      borderRadius: theme.borderRadius.md,
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing.sm,
+      minWidth: '300px',
+      maxWidth: '500px',
+      opacity: isExiting ? 0 : isVisible ? 1 : 0,
+      transform: isExiting ? 'translateY(-20px)' : isVisible ? 'translateY(0)' : 'translateY(-20px)',
+      transition: 'opacity 0.3s ease, transform 0.3s ease',
     }}>
+      {icon && <div style={{ flexShrink: 0 }}>{icon}</div>}
+      <div style={{
+        flex: 1,
+        fontSize: theme.fontSize.sm,
+        lineHeight: 1.5,
+      }}>
+        {displayMessage}
+      </div>
+      <button
+        onClick={() => {
+          setIsExiting(true);
+          setTimeout(onDismiss, 300);
+        }}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: textColor,
+          cursor: 'pointer',
+          padding: theme.spacing.xs,
+          fontSize: theme.fontSize.lg,
+          lineHeight: 1,
+          opacity: 0.7,
+          flexShrink: 0,
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+        onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.7')}
+      >
+        ×
+      </button>
     </div>
   );
 };
@@ -115,7 +215,18 @@ export const AlertProvider = ({
     <Context value={showMessage}>
       {children}
       {!_.isEmpty(elements) && <div style={{
-      }}>{_.values(elements)}</div>}
+        position: 'fixed',
+        top: theme.spacing.lg,
+        right: theme.spacing.lg,
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        pointerEvents: 'none',
+      }}>
+        <div style={{ pointerEvents: 'auto' }}>
+          {_.values(elements)}
+        </div>
+      </div>}
     </Context>
   );
 }
