@@ -97,6 +97,6 @@ export const Outlet = () => {
 };
 
 export const useParams = () => {
-  const context = useContext(Context);
-  return context.params ?? {};
+  const { params = {} } = useContext(Context);
+  return params;
 };
