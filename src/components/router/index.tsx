@@ -72,14 +72,15 @@ export const Route = ({
     !!currentPath && match(currentPath)(location.pathname),
   ], [index, location.pathname, parent.path, currentPath]);
   const matched = matchedIndex || matchedPath || undefined;
+  const outlet = (
+    <Parent>{children}</Parent>
+  );
   return (
     <Child>
       {title && <head><title>{_.isFunction(title) ? title(matched?.params) : title}</title></head>}
-      <Context value={{ path: currentPath, params: matched?.params, outlet: children }}>
+      <Context value={{ path: currentPath, params: matched?.params, outlet }}>
         {matched && element}
-        {!element && (
-          <Parent>{children}</Parent>
-        )}
+        {!element && outlet}
       </Context>
     </Child>
   );
