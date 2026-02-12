@@ -56,9 +56,9 @@ export const Dashboard: ComponentType<{
           </div>
           <div style={{ flex: 1 }}>
             <Routes>
-              <Route index element={<HomePage />} />
-              <Route path="/classes/:schema" element={<BrowserPage />} />
-              <Route path="/config" element={<ConfigPage />} />
+              <Route title='Home' index element={<HomePage />} />
+              <Route title='Browser' path="/classes/:schema" element={<BrowserPage />} />
+              <Route title='Config' path="/config" element={<ConfigPage />} />
               {pages && createPages(pages)}
             </Routes>
           </div>
