@@ -225,7 +225,7 @@ export const AlertProvider = ({
   children,
 }: AlertProviderProps) => {
 
-  const [elements, setElements] = useState({});
+  const [elements, setElements] = useState<{ [x: string]: ElementNode }>({});
   const theme = useTheme();
 
   const showMessage = useCallback((

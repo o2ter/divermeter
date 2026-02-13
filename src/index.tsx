@@ -35,11 +35,13 @@ import { HomePage } from './pages/home';
 import { BrowserPage } from './pages/browser';
 import { ConfigPage } from './pages/config';
 import { AlertProvider, useAlert } from './components/alert';
+import { ModalProvider } from './components/modal';
 
 export { useTheme } from './components/theme';
 export { useParams, Outlet } from './components/router';
 export { useProto, useProtoSchema } from './proto';
 export { useAlert } from './components/alert';
+export { Modal } from './components/modal';
 
 const Main = ({ pages }: { pages?: Page[]; }) => {
   const { showError } = useAlert();
@@ -72,11 +74,13 @@ export const Dashboard: ComponentType<{
 }> = ({ proto, theme, pages }) => (
   <ThemeProvider theme={theme}>
     <AlertProvider>
-      <ProtoProvider proto={proto}>
-        <StyleProvider>
-          <Main pages={pages} />
-        </StyleProvider>
-      </ProtoProvider>
+      <ModalProvider>
+        <ProtoProvider proto={proto}>
+          <StyleProvider>
+            <Main pages={pages} />
+          </StyleProvider>
+        </ProtoProvider>
+      </ModalProvider>
     </AlertProvider>
   </ThemeProvider>
 );
