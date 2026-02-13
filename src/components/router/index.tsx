@@ -81,10 +81,10 @@ export const Route = ({
     !!index && !!parent.path && match(parent.path)(location.pathname),
     !!currentPath && match(currentPath)(location.pathname),
   ], [index, location.pathname, parent.path, currentPath]);
-  const matchedChild = collectRoutes(children).find(route => {
+  const matchedChild = collectRoutes(children).map(route => {
     const routePath = `${_.trimEnd(currentPath, '/')}/${_.trimStart(route.props.path, '/')}`;
     return routePath && match(routePath)(location.pathname);
-  });
+  }).find(m => !!m);
   const matched = matchedIndex || matchedPath || matchedChild || undefined;
   const outlet = (
     <Context value={{ path: currentPath }}>
