@@ -24,7 +24,9 @@
 //
 
 import _ from 'lodash';
+import { useProto } from '../../proto';
 
 export const HomePage = () => {
+  const proto = useProto();
   return <div>Home</div>;
 };

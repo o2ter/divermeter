@@ -25,8 +25,10 @@
 
 import _ from 'lodash';
 import { useParams } from '../../components/router';
+import { useProto } from '../../proto';
 
 export const BrowserPage = () => {
   const params = useParams();
+  const proto = useProto();
   return <div>Classes {JSON.stringify(params)}</div>;
 };
