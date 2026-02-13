@@ -352,12 +352,63 @@ When implementing themes, always derive a complete, cohesive color system from w
 Before writing any styled component, ensure:
 - [ ] You've imported and called `useTheme()` at the component top
 - [ ] All colors come from `theme.colors.*`
-- [ ] All spacing comes from `theme.spacing.*`
+- [ ] All spacing come from `theme.spacing.*`
 - [ ] All font sizes come from `theme.fontSize.*`
 - [ ] All border radii come from `theme.borderRadius.*`
 - [ ] All font weights come from `theme.fontWeight.*`
 - [ ] Use `@o2ter/colors.js` for any color mixing, opacity adjustments, or color variations
 - [ ] No magic numbers or hardcoded style values
+
+#### Animations with Inline Keyframes
+**CRITICAL: Frosty supports CSS animations directly in inline styles using the `keyframes` property.**
+
+When you need animations, use inline keyframes instead of injecting CSS:
+
+```tsx
+// ✅ CORRECT: Use inline keyframes with Frosty
+<div style={{
+  animation: '1s ease-in-out infinite',
+  keyframes: {
+    '0%': { opacity: 0, transform: 'translateY(-10px)' },
+    '100%': { opacity: 1, transform: 'translateY(0)' },
+  },
+}} />
+
+// ❌ WRONG: Don't inject CSS or create <style> tags
+const injectKeyframes = () => {
+  const style = document.createElement('style');
+  style.textContent = '@keyframes ...';
+  document.head.appendChild(style);
+};
+```
+
+**Key Points:**
+- **Use `keyframes` property** directly in inline styles
+- **No CSS injection needed** - Frosty handles keyframes internally
+- **Animation property format**: `'<duration> <timing-function> <iteration-count>'`
+- **Keyframe keys** are strings: `'0%'`, `'50%'`, `'100%'`, or keywords like `'from'`, `'to'`
+- **Example component**: See [src/components/spinner/index.tsx](src/components/spinner/index.tsx) for a complete implementation
+
+**Spinner Component Example:**
+```tsx
+export const Spinner = ({ color = 'currentColor', speed = 0.6 }: SpinnerProps) => (
+  <span style={{
+    display: 'block',
+    width: '100%',
+    height: '100%',
+    border: '2px solid transparent',
+    borderTopColor: color,
+    borderRadius: '50%',
+    animation: `${speed}s linear infinite`,
+    keyframes: {
+      '0%': { transform: 'rotate(0deg)' },
+      '100%': { transform: 'rotate(360deg)' },
+    },
+  }} />
+);
+```
+
+This approach keeps all styling in JavaScript/TypeScript, maintains type safety, and avoids DOM manipulation.
 
 ### TypeScript Patterns
 - Strict mode enabled
@@ -377,19 +428,21 @@ Before writing any styled component, ensure:
 2. **Don't use React context pattern** - Frosty uses `<Context value={...}>` directly, NOT `<Context.Provider value={...}>`
 3. **Context creation** - Use `createContext<Type>()` without default value, not `createContext<Type | undefined>(undefined)`
 4. **Don't hardcode styles** - Always use `useTheme()` hook for all style values. Never use magic numbers or literal color values.
-5. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`
-6. **Context access** - Always call hooks inside components, not in conditionals
-7. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
-8. **Path separators** - Use forward slashes `/` in all configs, even on Windows
-9. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
-10. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
-11. **StyleProvider maintenance** - When modifying or removing menu components, always check StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) and remove any unused style calculations. Dead code in style providers creates unnecessary performance overhead and maintenance burden.
+5. **Don't inject CSS** - Use inline `keyframes` property for animations instead of document.createElement('style') or DOM manipulation
+6. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`
+7. **Context access** - Always call hooks inside components, not in conditionals
+8. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
+9. **Path separators** - Use forward slashes `/` in all configs, even on Windows
+10. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
+11. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
+12. **StyleProvider maintenance** - When modifying or removing menu components, always check StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) and remove any unused style calculations. Dead code in style providers creates unnecessary performance overhead and maintenance burden.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
 - [src/proto.tsx](src/proto.tsx) - Proto context and providers
 - [src/components/theme/index.tsx](src/components/theme/index.tsx) - Complete theming system (ThemeProvider, useTheme, ThemeSettings type)
 - [src/components/style/index.tsx](src/components/style/index.tsx) - StyleProvider for cached menu styles (example of Frosty context pattern)
+- [src/components/spinner/index.tsx](src/components/spinner/index.tsx) - Reusable spinner component (example of inline keyframes)
 - [src/components/router/index.tsx](src/components/router/index.tsx) - Custom router implementation
 - [src/components/menu/index.tsx](src/components/menu/index.tsx) - Dynamic menu from schema
 - [test/server.ts](test/server.ts) - Example proto.io service setup
