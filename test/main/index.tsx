@@ -155,8 +155,11 @@ export const Main = () => {
           {
             title: 'Another Page',
             path: '/another',
-            element: <AnotherPage />,
             children: [
+              {
+                index: true,
+                element: <AnotherPage />,
+              },
               {
                 title: 'Another Subpage',
                 path: '/sub',
