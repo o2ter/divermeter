@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { PropsWithChildren, useMemo, useState, ComponentType } from 'frosty';
+import { PropsWithChildren, useMemo, useState, ComponentType, ComponentProps } from 'frosty';
 import { useTheme } from '../theme';
 import { shadeColor, tintColor } from '@o2ter/colors.js';
 
@@ -32,7 +32,7 @@ type ButtonVariant = 'solid' | 'outline' | 'ghost' | 'link';
 type ButtonSize = 'sm' | 'md' | 'lg';
 type ButtonColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error';
 
-export type ButtonProps = PropsWithChildren<{
+export type ButtonProps = ComponentProps<'button'> & {
   // Appearance
   variant?: ButtonVariant;
   color?: ButtonColor;
@@ -40,24 +40,12 @@ export type ButtonProps = PropsWithChildren<{
   fullWidth?: boolean;
   
   // State
-  disabled?: boolean;
   loading?: boolean;
   
   // Icons
   leftIcon?: ComponentType<{ style?: any }>;
   rightIcon?: ComponentType<{ style?: any }>;
-  
-  // Events
-  onClick?: (e: MouseEvent) => void;
-  onMouseDown?: (e: MouseEvent) => void;
-  onMouseUp?: (e: MouseEvent) => void;
-  
-  // HTML attributes
-  type?: 'button' | 'submit' | 'reset';
-  ariaLabel?: string;
-  className?: string;
-  style?: any;
-}>;
+};
 
 export const Button = ({
   children,
@@ -76,6 +64,7 @@ export const Button = ({
   ariaLabel,
   className,
   style: customStyle,
+  ...props
 }: ButtonProps) => {
   const theme = useTheme();
   const [isHovered, setIsHovered] = useState(false);
@@ -322,6 +311,7 @@ export const Button = ({
       ariaDisabled={disabled ? 'true' : undefined}
       className={className}
       style={{ ...buttonStyles, ...customStyle }}
+      {...props}
     >
       {loading && (
         <span style={iconStyle}>
