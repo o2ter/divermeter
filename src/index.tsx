@@ -42,6 +42,10 @@ export { useParams, Outlet } from './components/router';
 export { useProto, useProtoSchema } from './proto';
 export { useAlert } from './components/alert';
 export { Modal } from './components/modal';
+export { Spinner } from './components/spinner';
+export { Button } from './components/button';
+export type { SpinnerProps } from './components/spinner';
+export type { ButtonProps } from './components/button';
 
 const Main = ({ pages }: { pages?: Page[]; }) => {
   const { showError } = useAlert();

@@ -26,6 +26,7 @@
 import _ from 'lodash';
 import { useMemo, useState, ComponentType, ComponentProps } from 'frosty';
 import { useStyle } from '../style';
+import { Spinner } from '../spinner';
 
 type ButtonVariant = 'solid' | 'subtle' | 'outline' | 'ghost' | 'link' | 'unstyled';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -233,7 +234,7 @@ export const Button = ({
     >
       {loading && (
         <span style={iconStyle}>
-          <LoadingSpinner color={buttonStyles.color} />
+          <Spinner color={buttonStyles.color} />
         </span>
       )}
       {!loading && LeftIcon && <LeftIcon style={iconStyle} />}
@@ -242,20 +243,3 @@ export const Button = ({
     </button>
   );
 };
-
-// Simple loading spinner component
-const LoadingSpinner = ({ color }: { color: string }) => (
-  <span style={{
-    display: 'block',
-    width: '100%',
-    height: '100%',
-    border: `2px solid transparent`,
-    borderTopColor: color,
-    borderRadius: '50%',
-    animation: '0.6s linear infinite',
-    keyframes: {
-      '0%': { transform: 'rotate(0deg)' },
-      '100%': { transform: 'rotate(360deg)' }
-    },
-  }} />
-);
