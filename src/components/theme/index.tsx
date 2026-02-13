@@ -235,16 +235,16 @@ thead {
 const defaultTheme = {
   colors: {
     // Core colors - everything else derives from these two
-    primary: '#006faf',      // Main brand/accent color
-    secondary: '#f0f0f0',    // Secondary color
+    primary: '#0d6efd',      // Main brand/accent color
+    secondary: '#6c757d',    // Secondary color
     tint: '#1890ff',         // For selection and highlights
     contrastDark: '#000000',     // For light backgrounds
     contrastLight: '#ffffff',    // For dark backgrounds
     // Alert type colors
-    success: '#10b981',      // Success messages
-    info: '#3b82f6',         // Info messages
-    warning: '#f59e0b',      // Warning messages
-    error: '#ef4444',        // Error messages
+    success: '#198754',      // Success messages
+    info: '#0dcaf0',         // Info messages
+    warning: '#ffc107',      // Warning messages
+    error: '#dc3545',        // Error messages
   },
   spacing: {
     xs: 4,
