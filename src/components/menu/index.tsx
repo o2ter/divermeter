@@ -174,7 +174,7 @@ export const Menu = ({ pages }: MenuProps) => {
     if (!page.path || page.index) return null;
 
     const pagePath = page.path.startsWith('/') ? page.path : `/${page.path}`;
-    const isActive = location.pathname === pagePath;
+    const isActive = !!match(pagePath)(location.pathname);
     const pageLabel = typeof page.title === 'string' ? page.title : page.path;
 
     return (
