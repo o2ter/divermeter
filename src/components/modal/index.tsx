@@ -24,13 +24,24 @@
 //
 
 import _ from 'lodash';
-import { createContext, ElementNode, PropsWithChildren, SetStateAction, useState } from 'frosty';
+import { createContext, ElementNode, PropsWithChildren, SetStateAction, useContext, useMemo, useState } from 'frosty';
 import { useTheme } from '../theme';
 
 const Context = createContext<(dispatch: SetStateAction<{ [x: string]: ElementNode; }>) => void>(() => { });
 
-export const Modal = () => { 
+type ModalProps = PropsWithChildren<{
+  show?: boolean;
+}>;
 
+export const Modal = ({
+  show,
+  children
+}: ModalProps) => {
+
+  const id = useMemo(() => _.uniqueId(), []);
+  const setElements = useContext(Context);
+
+  return <></>
 };
 
 type ModalProviderProps = PropsWithChildren<{
