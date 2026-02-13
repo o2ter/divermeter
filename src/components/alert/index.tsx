@@ -90,11 +90,10 @@ const AlertBody = ({
   }, [onShow, onDismiss]);
 
   // Determine color and background based on alert style
-  const { color, backgroundColor, textColor, icon } = useMemo(() => {
+  const { backgroundColor, textColor, icon } = useMemo(() => {
     if (_.isString(alertStyle)) {
       // Use pre-calculated styles for semantic alert types
       return {
-        color: style.alert.colors[alertStyle],
         backgroundColor: style.alert.backgrounds[alertStyle],
         textColor: style.alert.textColors[alertStyle],
         icon: style.alert.icons[alertStyle],
@@ -105,7 +104,6 @@ const AlertBody = ({
       const customBg = style.withOpacity(customColor, 0.9);
       const customText = theme.colorContrast(customColor);
       return {
-        color: customColor,
         backgroundColor: customBg,
         textColor: customText,
         icon: alertStyle.icon ?? undefined,

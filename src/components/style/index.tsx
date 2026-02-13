@@ -53,9 +53,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
   // Create harmonious color palette following color theory
   const primary = theme.colors.primary;
 
-  // Derive complementary color for accents (opposite on color wheel)
-  const complement = shiftColor(primary, 0.5);
-
   // Create sophisticated menu background with gradient
   const menuBgBase = isLight
     ? mixColor(primary, '#fafbfc', 0.03)  // Very subtle tint for light colors
@@ -229,28 +226,20 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
   };
 
   // ========== Alert Styles ==========
-  // Pre-calculate alert colors
-  const alertColors = {
-    success: theme.colors.success,
-    info: theme.colors.info,
-    warning: theme.colors.warning,
-    error: theme.colors.error,
-  };
-
   // Pre-calculate alert background colors with opacity
   const alertBackgrounds = {
-    success: withOpacity(alertColors.success, 0.9),
-    info: withOpacity(alertColors.info, 0.9),
-    warning: withOpacity(alertColors.warning, 0.9),
-    error: withOpacity(alertColors.error, 0.9),
+    success: withOpacity(theme.colors.success, 0.9),
+    info: withOpacity(theme.colors.info, 0.9),
+    warning: withOpacity(theme.colors.warning, 0.9),
+    error: withOpacity(theme.colors.error, 0.9),
   };
 
   // Pre-calculate alert text colors
   const alertTextColors = {
-    success: theme.colorContrast(alertColors.success),
-    info: theme.colorContrast(alertColors.info),
-    warning: theme.colorContrast(alertColors.warning),
-    error: theme.colorContrast(alertColors.error),
+    success: theme.colorContrast(theme.colors.success),
+    info: theme.colorContrast(theme.colors.info),
+    warning: theme.colorContrast(theme.colors.warning),
+    error: theme.colorContrast(theme.colors.error),
   };
 
   // Pre-calculate default alert icons
@@ -394,7 +383,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
 
     // Alert styles
     alert: {
-      colors: alertColors,
       backgrounds: alertBackgrounds,
       textColors: alertTextColors,
       icons: alertIcons,
