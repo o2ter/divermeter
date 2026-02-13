@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import Dashboard, { Modal, useAlert } from '../../src';
+import Dashboard, { Modal, Outlet, useAlert } from '../../src';
 import { ProtoClient } from 'proto.io';
 import { useMemo, useState } from 'frosty';
 import { useLocation } from 'frosty/web';
@@ -83,6 +83,7 @@ const SubPage2 = () => {
     <div style={{ padding: 20 }}>
       <h2>Subpage 2</h2>
       <p>This is the second subpage of the custom page.</p>
+      <Outlet />
     </div>
   );
 };
@@ -131,8 +132,11 @@ export const Main = () => {
           {
             title: 'Custom Page',
             path: '/custom',
-            element: <CustomPage />,
             children: [
+              {
+                index: true,
+                element: <CustomPage />,
+              },
               {
                 title: 'Subpage 1',
                 path: '/sub1',
