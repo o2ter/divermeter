@@ -24,9 +24,8 @@
 //
 
 import _ from 'lodash';
-import { useMemo, useState, ComponentType, ComponentProps } from 'frosty';
+import { useMemo, useState, ComponentProps } from 'frosty';
 import { useStyle } from '../style';
-import { Spinner } from '../spinner';
 
 type ButtonVariant = 'solid' | 'subtle' | 'outline' | 'ghost' | 'link' | 'unstyled';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -43,15 +42,9 @@ export type ButtonProps = ComponentProps<'button'> & {
   variant?: ButtonVariant;
   color?: ButtonColor | (string & {});
   size?: ButtonSize;
-  fullWidth?: boolean;
   
   // State
-  loading?: boolean;
   activated?: boolean;
-  
-  // Icons
-  leftIcon?: ComponentType<{ style?: any }>;
-  rightIcon?: ComponentType<{ style?: any }>;
 };
 
 export const Button = ({
@@ -59,12 +52,8 @@ export const Button = ({
   variant = 'solid',
   color = 'primary',
   size = 'md',
-  fullWidth = false,
   disabled = false,
-  loading = false,
   activated,
-  leftIcon: LeftIcon,
-  rightIcon: RightIcon,
   type = 'button',
   className,
   style: customStyle,
@@ -132,7 +121,7 @@ export const Button = ({
       paddingBottom: sizeStyles.paddingBottom,
       paddingLeft: sizeStyles.paddingLeft,
       paddingRight: sizeStyles.paddingRight,
-      width: fullWidth ? '100%' : 'auto',
+      width: 'auto',
       minHeight: sizeStyles.minHeight,
 
       // Typography
@@ -171,7 +160,7 @@ export const Button = ({
       }),
 
       // Interaction
-      cursor: disabled || loading ? 'not-allowed' : 'pointer',
+      cursor: disabled ? 'not-allowed' : 'pointer',
       transition: 'all 0.15s ease-in-out',
       outline: 'none',
       userSelect: 'none' as const,
@@ -183,8 +172,6 @@ export const Button = ({
     colors,
     style,
     disabled,
-    loading,
-    fullWidth,
     variant,
     isActivated,
   ]);
@@ -201,8 +188,7 @@ export const Button = ({
   return (
     <button
       type={type}
-      disabled={disabled || loading}
-      ariaBusy={loading ? 'true' : undefined}
+      disabled={disabled}
       ariaDisabled={disabled ? 'true' : undefined}
       className={className}
       style={{ ...buttonStyles, ...customStyle }}
@@ -232,14 +218,7 @@ export const Button = ({
       }}
       {...props}
     >
-      {loading && (
-        <span style={iconStyle}>
-          <Spinner color={buttonStyles.color} />
-        </span>
-      )}
-      {!loading && LeftIcon && <LeftIcon style={iconStyle} />}
       {children}
-      {!loading && RightIcon && <RightIcon style={iconStyle} />}
     </button>
   );
 };

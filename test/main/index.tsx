@@ -64,12 +64,7 @@ const CustomPage = () => {
       <Button size="sm">Small</Button>
       <Button size="lg">Large</Button>
 
-      <Button loading>Loading...</Button>
       <Button disabled>Disabled</Button>
-
-      <Button leftIcon={() => <span>X</span>}>With Icon</Button>
-
-      <Button fullWidth>Full Width</Button>
     </>
   );
 }
