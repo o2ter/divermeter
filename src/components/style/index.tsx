@@ -203,7 +203,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
       paddingRight: theme.spacing.md,
       fontSize: theme.fontSize.sm,
       minHeight: 32,
-      iconSize: 14,
     },
     md: {
       paddingTop: theme.spacing.sm,
@@ -212,7 +211,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
       paddingRight: theme.spacing.lg,
       fontSize: theme.fontSize.md,
       minHeight: 40,
-      iconSize: 16,
     },
     lg: {
       paddingTop: theme.spacing.md,
@@ -221,7 +219,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
       paddingRight: theme.spacing.xl,
       fontSize: theme.fontSize.lg,
       minHeight: 48,
-      iconSize: 20,
     },
   };
 

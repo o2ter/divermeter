@@ -176,15 +176,6 @@ export const Button = ({
     isActivated,
   ]);
 
-  // Icon size from pre-calculated values
-  const iconSize = sizeStyles.iconSize;
-
-  const iconStyle = useMemo(() => ({
-    width: iconSize,
-    height: iconSize,
-    flexShrink: 0,
-  }), [iconSize]);
-
   return (
     <button
       type={type}
