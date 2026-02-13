@@ -35,7 +35,10 @@ export const BrowserPage = () => {
   type QueryFilter = Parameters<ReturnType<typeof proto.Query>['filter']>[0];
   const [filter, setFilter] = useState<QueryFilter[]>([]);
 
-  const query = useMemo(() => _.reduce(filter, (query, f) => query.filter(f), proto.Query(className)), [className, filter]);
+  const query = useMemo(() => { 
+    const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
+    return q;
+  }, [className, filter]);
   
 
   return <div>Classes {className}</div>;
