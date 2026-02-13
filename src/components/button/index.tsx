@@ -317,9 +317,9 @@ export const Button = ({
       onMouseUp={handleMouseUp}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      aria-label={ariaLabel}
-      aria-busy={loading}
-      aria-disabled={disabled}
+      ariaLabel={ariaLabel}
+      ariaBusy={loading ? 'true' : undefined}
+      ariaDisabled={disabled ? 'true' : undefined}
       className={className}
       style={{ ...buttonStyles, ...customStyle }}
     >
