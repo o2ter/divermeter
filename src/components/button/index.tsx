@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { PropsWithChildren, useMemo, useState, ComponentType, ComponentProps } from 'frosty';
+import { useMemo, useState, ComponentType, ComponentProps } from 'frosty';
 import { useTheme } from '../theme';
 import { shadeColor, tintColor } from '@o2ter/colors.js';
 
