@@ -338,6 +338,7 @@ export const Button = ({
 // Simple loading spinner component
 const LoadingSpinner = ({ color }: { color: string }) => (
   <span style={{
+    display: 'block',
     width: '100%',
     height: '100%',
     border: `2px solid transparent`,
