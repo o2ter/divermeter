@@ -25,7 +25,6 @@
 
 import _ from 'lodash';
 import { useMemo, useState, ComponentType, ComponentProps } from 'frosty';
-import { useTheme } from '../theme';
 import { useStyle } from '../style';
 
 type ButtonVariant = 'solid' | 'subtle' | 'outline' | 'ghost' | 'link' | 'unstyled';
@@ -76,7 +75,6 @@ export const Button = ({
   onBlur,
   ...props
 }: ButtonProps) => {
-  const theme = useTheme();
   const style = useStyle();
 
   // Track interactive state
