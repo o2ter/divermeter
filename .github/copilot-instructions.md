@@ -359,6 +359,60 @@ Before writing any styled component, ensure:
 - [ ] Use `@o2ter/colors.js` for any color mixing, opacity adjustments, or color variations
 - [ ] No magic numbers or hardcoded style values
 
+#### Pseudo-Selectors in Inline Styles
+**CRITICAL: Frosty supports CSS pseudo-selectors directly in inline styles.**
+
+Use pseudo-selectors like `:hover`, `:active`, `:focus` instead of manual event handlers:
+
+```tsx
+// ✅ CORRECT: Use pseudo-selectors in inline styles
+<div style={{
+  color: theme.colors.text,
+  backgroundColor: 'transparent',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    backgroundColor: theme.colors.primaryLight,
+    transform: 'translateX(2px)',
+  },
+  '&:active': {
+    backgroundColor: theme.colors.primaryDark,
+  },
+}} />
+
+// ❌ WRONG: Don't manually manage hover state with event handlers
+<div 
+  style={{ color: theme.colors.text }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.backgroundColor = theme.colors.primaryLight;
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.backgroundColor = 'transparent';
+  }}
+/>
+```
+
+**Key Points:**
+- **Use `&:hover`, `&:active`, `&:focus`** for interactive states
+- **Supports nested selectors** like `&:hover > span` or `& > .child`
+- **More declarative and maintainable** than event handlers
+- **Better performance** - CSS handles the state changes
+- **Works with transitions** - Smooth animations between states
+- **Example**: See [src/components/menu/index.tsx](src/components/menu/index.tsx) for MenuItem and list item hover effects
+
+**Conditional Pseudo-Selectors:**
+```tsx
+<div style={{
+  // Base styles
+  color: isActive ? activeColor : normalColor,
+  // Only add hover effect when not active
+  ...(!isActive && {
+    '&:hover': {
+      backgroundColor: hoverColor,
+    },
+  }),
+}} />
+```
+
 #### Animations with Inline Keyframes
 **CRITICAL: Frosty supports CSS animations directly in inline styles using the `keyframes` property.**
 
@@ -429,13 +483,14 @@ This approach keeps all styling in JavaScript/TypeScript, maintains type safety,
 3. **Context creation** - Use `createContext<Type>()` without default value, not `createContext<Type | undefined>(undefined)`
 4. **Don't hardcode styles** - Always use `useTheme()` hook for all style values. Never use magic numbers or literal color values.
 5. **Don't inject CSS** - Use inline `keyframes` property for animations instead of document.createElement('style') or DOM manipulation
-6. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`
-7. **Context access** - Always call hooks inside components, not in conditionals
-8. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
-9. **Path separators** - Use forward slashes `/` in all configs, even on Windows
-10. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
-11. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
-12. **StyleProvider maintenance** - When modifying or removing menu components, always check StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) and remove any unused style calculations. Dead code in style providers creates unnecessary performance overhead and maintenance burden.
+6. **Don't use manual hover handlers** - Use `&:hover` pseudo-selectors in inline styles instead of onMouseEnter/onMouseLeave event handlers
+7. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`
+8. **Context access** - Always call hooks inside components, not in conditionals
+9. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
+10. **Path separators** - Use forward slashes `/` in all configs, even on Windows
+11. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
+12. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
+13. **StyleProvider maintenance** - When modifying or removing menu components, always check StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) and remove any unused style calculations. Dead code in style providers creates unnecessary performance overhead and maintenance burden.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export

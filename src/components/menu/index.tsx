@@ -55,20 +55,13 @@ const MenuItem = ({
         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
         overflow: 'hidden',
-      }}
-      onMouseEnter={(e) => {
-        if (!isActive) {
-          e.currentTarget.style.backgroundColor = style.menuItem.hoverBackground;
-          e.currentTarget.style.boxShadow = style.menuItem.hoverShadow;
-          e.currentTarget.style.transform = 'translateX(2px)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isActive) {
-          e.currentTarget.style.backgroundColor = 'transparent';
-          e.currentTarget.style.boxShadow = 'none';
-          e.currentTarget.style.transform = 'translateX(0)';
-        }
+        ...(!isActive && {
+          '&:hover': {
+            backgroundColor: style.menuItem.hoverBackground,
+            boxShadow: style.menuItem.hoverShadow,
+            transform: 'translateX(2px)',
+          },
+        }),
       }}
       onClick={onClick}
     >
@@ -129,20 +122,13 @@ const SchemaList = () => {
                 boxShadow: isActive ? style.listItem.activeShadow : 'none',
                 transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                 position: 'relative',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.backgroundColor = style.listItem.hoverBackground;
-                  e.currentTarget.style.color = style.menuItem.textColor;
-                  e.currentTarget.style.transform = 'translateX(2px)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = style.listItem.textColor;
-                  e.currentTarget.style.transform = 'translateX(0)';
-                }
+                ...(!isActive && {
+                  '&:hover': {
+                    backgroundColor: style.listItem.hoverBackground,
+                    color: style.menuItem.textColor,
+                    transform: 'translateX(2px)',
+                  },
+                }),
               }}
               onClick={() => {
                 location.pushState({}, `/classes/${key}`);
