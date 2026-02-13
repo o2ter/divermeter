@@ -31,12 +31,10 @@ import { ComponentProps, createContext, createPairs, ElementNode, PropsWithChild
 const { Parent, Child } = createPairs();
 
 const Context = createContext<{
-  path: string;
+  path?: string;
   params?: ParamData;
   outlet?: ElementNode;
-}>({
-  path: '',
-});
+}>({});
 
 type RoutesProps = {
 
@@ -66,14 +64,16 @@ export const Route = ({
 }: PropsWithChildren<RouteProps>) => {
   const location = useLocation();
   const parent = useContext(Context);
-  const currentPath = path ? `${_.trimEnd(parent.path, '/')}/${_.trimStart(path, '/')}` : parent.path;
+  const currentPath = parent.path ? `${_.trimEnd(parent.path, '/')}/${_.trimStart(path, '/')}` : path;
   const [matchedIndex, matchedPath] = useMemo(() => [
-    index && match(parent.path)(location.pathname),
+    !!index && !!parent.path && match(parent.path)(location.pathname),
     !!currentPath && match(currentPath)(location.pathname),
   ], [index, location.pathname, parent.path, currentPath]);
   const matched = matchedIndex || matchedPath || undefined;
   const outlet = (
-    <Parent>{children}</Parent>
+    <Context value={{ path: currentPath }}>
+      <Parent>{children}</Parent>
+    </Context>
   );
   return (
     <Child>
@@ -90,19 +90,8 @@ export const Route = ({
   );
 };
 
-export const Outlet = () => {
-  const { outlet, path } = useContext(Context);
-  return (
-    <Context value={{ path }}>
-      {outlet}
-    </Context>
-  );
-};
-
-export const useParams = () => {
-  const { params = {} } = useContext(Context);
-  return params;
-};
+export const Outlet = () => useContext(Context).outlet;
+export const useParams = () => useContext(Context).params ?? {};
 
 export type Page = Omit<ComponentProps<typeof Route>, 'children'> & {
   children?: Page[];
