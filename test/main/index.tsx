@@ -55,9 +55,11 @@ const CustomPage = () => {
       </Modal>
       <Button>Click me</Button>
 
+      <Button variant="subtle" color="primary">Subtle</Button>
       <Button variant="outline" color="primary">Outline</Button>
       <Button variant="ghost" color="success">Ghost</Button>
       <Button variant="link" color="info">Link</Button>
+      <Button variant="unstyled" color="primary">Unstyled</Button>
 
       <Button size="sm">Small</Button>
       <Button size="lg">Large</Button>
