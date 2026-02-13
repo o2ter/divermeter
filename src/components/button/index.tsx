@@ -267,45 +267,35 @@ export const Button = ({
     flexShrink: 0,
   }), [iconSize]);
 
-  const handleClick = (e: MouseEvent) => {
-    if (disabled || loading) {
-      e.preventDefault();
-      return;
-    }
-    onClick?.(e);
-  };
-
-  const handleMouseDown = (e: MouseEvent) => {
-    if (disabled || loading) return;
-    setIsPressed(true);
-    onMouseDown?.(e);
-  };
-
-  const handleMouseUp = (e: MouseEvent) => {
-    if (disabled || loading) return;
-    setIsPressed(false);
-    onMouseUp?.(e);
-  };
-
-  const handleMouseEnter = () => {
-    if (disabled || loading) return;
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    setIsPressed(false);
-  };
-
   return (
     <button
       type={type}
       disabled={disabled || loading}
-      onClick={handleClick}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onClick={function (this, e) {
+        if (disabled || loading) {
+          e.preventDefault();
+          return;
+        }
+        onClick?.call(this, e);
+      }}
+      onMouseDown={function (this, e) {
+        if (disabled || loading) return;
+        setIsPressed(true);
+        onMouseDown?.call(this, e);
+      }}
+      onMouseUp={function (this, e) {
+        if (disabled || loading) return;
+        setIsPressed(false);
+        onMouseUp?.call(this, e);
+      }}
+      onMouseEnter={() => {
+        if (disabled || loading) return;
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setIsPressed(false);
+      }}
       ariaLabel={ariaLabel}
       ariaBusy={loading ? 'true' : undefined}
       ariaDisabled={disabled ? 'true' : undefined}
