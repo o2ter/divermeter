@@ -61,7 +61,6 @@ export const Button = ({
   onMouseDown,
   onMouseUp,
   type = 'button',
-  ariaLabel,
   className,
   style: customStyle,
   ...props
@@ -296,7 +295,6 @@ export const Button = ({
         setIsHovered(false);
         setIsPressed(false);
       }}
-      ariaLabel={ariaLabel}
       ariaBusy={loading ? 'true' : undefined}
       ariaDisabled={disabled ? 'true' : undefined}
       className={className}
