@@ -96,7 +96,7 @@ export const Route = ({
       <Context value={{ path: currentPath, params: matched?.params, outlet }}>
         {matched && (
           <>
-            {title && <head><title>{_.isFunction(title) ? title(matched?.params) : title}</title></head>}
+            {title && !matchedChild && <head><title>{_.isFunction(title) ? title(matched?.params) : title}</title></head>}
             {element}
           </>
         )}
