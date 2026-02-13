@@ -73,15 +73,15 @@ export const Dashboard: ComponentType<{
   pages?: Page[];
 }> = ({ proto, theme, pages }) => (
   <ThemeProvider theme={theme}>
-    <AlertProvider>
-      <ModalProvider>
-        <ProtoProvider proto={proto}>
-          <StyleProvider>
+    <StyleProvider>
+      <AlertProvider>
+        <ModalProvider>
+          <ProtoProvider proto={proto}>
             <Main pages={pages} />
-          </StyleProvider>
-        </ProtoProvider>
-      </ModalProvider>
-    </AlertProvider>
+          </ProtoProvider>
+        </ModalProvider>
+      </AlertProvider>
+    </StyleProvider>
   </ThemeProvider>
 );
 

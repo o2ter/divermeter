@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { useMemo, useState, ComponentType, ComponentProps } from 'frosty';
 import { useTheme } from '../theme';
-import { shadeColor, tintColor, colorContrast, normalizeColor, rgba, getRed, getGreen, getBlue, toHexString } from '@o2ter/colors.js';
+import { useStyle } from '../style';
 
 type ButtonVariant = 'solid' | 'subtle' | 'outline' | 'ghost' | 'link' | 'unstyled';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -54,95 +54,6 @@ export type ButtonProps = ComponentProps<'button'> & {
   rightIcon?: ComponentType<{ style?: any }>;
 };
 
-// Helper to make color transparent
-const transparent = (color: string, alpha: number) => {
-  const normalized = normalizeColor(color);
-  if (!normalized) return color;
-  return toHexString(rgba(
-    getRed(normalized),
-    getGreen(normalized),
-    getBlue(normalized),
-    Math.round(255 * alpha)
-  ), true);
-};
-
-// Generate button colors for each variant
-const getButtonColors = (color: string, theme: ReturnType<typeof useTheme>) => {
-  const contrastColor = theme.colorContrast(color);
-
-  return {
-    solid: {
-      color: contrastColor,
-      backgroundColor: color,
-      borderColor: color,
-    },
-    subtle: {
-      color: shadeColor(color, 0.6),
-      backgroundColor: tintColor(color, 0.8),
-      borderColor: tintColor(color, 0.8),
-    },
-    outline: {
-      color: color,
-      backgroundColor: transparent(color, 0),
-      borderColor: color,
-    },
-    link: {
-      color: color,
-      backgroundColor: 'transparent',
-      borderColor: 'transparent',
-    },
-    ghost: {
-      color: color,
-      backgroundColor: transparent(color, 0),
-      borderColor: 'transparent',
-    },
-    unstyled: {
-      color: color,
-      backgroundColor: 'transparent',
-      borderColor: 'transparent',
-    },
-  };
-};
-
-// Generate focused/activated button colors
-const getButtonFocusedColors = (color: string, theme: ReturnType<typeof useTheme>) => {
-  const contrastColor = theme.colorContrast(color);
-  const darkerColor = shadeColor(color, 0.15);
-
-  return {
-    solid: {
-      color: contrastColor,
-      backgroundColor: darkerColor,
-      borderColor: darkerColor,
-    },
-    subtle: {
-      color: shadeColor(color, 0.7),
-      backgroundColor: tintColor(color, 0.7),
-      borderColor: tintColor(color, 0.7),
-    },
-    outline: {
-      color: darkerColor,
-      backgroundColor: tintColor(color, 0.9),
-      borderColor: darkerColor,
-    },
-    link: {
-      color: darkerColor,
-      backgroundColor: 'transparent',
-      borderColor: 'transparent',
-    },
-    ghost: {
-      color: darkerColor,
-      backgroundColor: tintColor(color, 0.9),
-      borderColor: 'transparent',
-    },
-    unstyled: {
-      color: darkerColor,
-      backgroundColor: 'transparent',
-      borderColor: 'transparent',
-    },
-  };
-};
-
 export const Button = ({
   children,
   variant = 'solid',
@@ -166,6 +77,7 @@ export const Button = ({
   ...props
 }: ButtonProps) => {
   const theme = useTheme();
+  const style = useStyle();
 
   // Track interactive state
   const [state, setState] = useState<ButtonState>({
@@ -177,56 +89,24 @@ export const Button = ({
   // Determine if button is activated
   const isActivated = activated || state.hovered || state.pressed || (_.isNil(activated) && state.focused);
 
-  // Get color from theme
-  const baseColor = useMemo(() => _.get(theme.colors, color, color), [theme.colors, color]);
+  // Get size-specific styles from pre-calculated values
+  const sizeStyles = style.button.sizes[size];
 
-  // Calculate size-specific values
-  const sizeStyles = useMemo(() => {
-    switch (size) {
-      case 'sm':
-        return {
-          paddingTop: theme.spacing.xs,
-          paddingBottom: theme.spacing.xs,
-          paddingLeft: theme.spacing.md,
-          paddingRight: theme.spacing.md,
-          fontSize: theme.fontSize.sm,
-          minHeight: 32,
-        };
-      case 'lg':
-        return {
-          paddingTop: theme.spacing.md,
-          paddingBottom: theme.spacing.md,
-          paddingLeft: theme.spacing.xl,
-          paddingRight: theme.spacing.xl,
-          fontSize: theme.fontSize.lg,
-          minHeight: 48,
-        };
-      case 'md':
-      default:
-        return {
-          paddingTop: theme.spacing.sm,
-          paddingBottom: theme.spacing.sm,
-          paddingLeft: theme.spacing.lg,
-          paddingRight: theme.spacing.lg,
-          fontSize: theme.fontSize.md,
-          minHeight: 40,
-        };
-    }
-  }, [size, theme]);
-
-  // Get button colors for current and activated states
+  // Get button colors
   const colors = useMemo(() => {
-    const fromColors = getButtonColors(baseColor, theme);
-    const toColors = getButtonFocusedColors(baseColor, theme);
-    
-    const variantColors = isActivated ? toColors[variant] : fromColors[variant];
+    // Check if color is a semantic color
+    const semanticColor = color as ButtonColor;
 
-    return {
-      color: variantColors.color,
-      backgroundColor: variantColors.backgroundColor,
-      borderColor: variantColors.borderColor,
-    };
-  }, [baseColor, theme, variant, isActivated]);
+    if (semanticColor in style.button.colors) {
+      // Use pre-calculated colors
+      const colorSet = style.button.colors[semanticColor];
+      return isActivated ? colorSet.activated[variant] : colorSet.base[variant];
+    } else {
+      // For custom colors, generate on the fly
+      const colorSet = style.button.getVariantColors(color);
+      return isActivated ? colorSet.activated[variant] : colorSet.base[variant];
+    }
+  }, [color, variant, isActivated, style]);
 
   // Compute final styles
   const buttonStyles = useMemo(() => {
@@ -245,16 +125,20 @@ export const Button = ({
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row' as const,
-      gap: theme.spacing.sm,
+      gap: style.spacing.sm,
       textAlign: 'center' as const,
 
       // Size
-      ...sizeStyles,
+      paddingTop: sizeStyles.paddingTop,
+      paddingBottom: sizeStyles.paddingBottom,
+      paddingLeft: sizeStyles.paddingLeft,
+      paddingRight: sizeStyles.paddingRight,
       width: fullWidth ? '100%' : 'auto',
+      minHeight: sizeStyles.minHeight,
 
       // Typography
       fontSize: sizeStyles.fontSize,
-      fontWeight: theme.fontWeight.medium,
+      fontWeight: style.fontWeight.medium,
       fontFamily: 'inherit',
       lineHeight: 1.5,
 
@@ -271,7 +155,7 @@ export const Button = ({
 
       // Border radius (not for unstyled variant)
       ...(variant !== 'unstyled' && {
-        borderRadius: theme.borderRadius.md,
+        borderRadius: style.borderRadius.md,
       }),
 
       // Text decoration for link variant
@@ -298,7 +182,7 @@ export const Button = ({
   }, [
     sizeStyles,
     colors,
-    theme,
+    style,
     disabled,
     loading,
     fullWidth,
@@ -306,18 +190,8 @@ export const Button = ({
     isActivated,
   ]);
 
-  // Icon size based on button size
-  const iconSize = useMemo(() => {
-    switch (size) {
-      case 'sm':
-        return 14;
-      case 'lg':
-        return 20;
-      case 'md':
-      default:
-        return 16;
-    }
-  }, [size]);
+  // Icon size from pre-calculated values
+  const iconSize = sizeStyles.iconSize;
 
   const iconStyle = useMemo(() => ({
     width: iconSize,

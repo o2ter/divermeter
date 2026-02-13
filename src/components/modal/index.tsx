@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { createContext, ElementNode, PropsWithChildren, SetStateAction, useContext, useEffect, useMemo, useState } from 'frosty';
-import { useTheme } from '../theme';
+import { useStyle } from '../style';
 
 const Context = createContext<(dispatch: SetStateAction<{ [x: string]: ElementNode; }>) => void>(() => { });
 
@@ -59,7 +59,7 @@ export const ModalProvider = ({
 }: ModalProviderProps) => {
 
   const [elements, setElements] = useState<{ [x: string]: ElementNode }>({});
-  const theme = useTheme();
+  const style = useStyle();
 
   const hasModals = !_.isEmpty(elements);
 
@@ -67,30 +67,10 @@ export const ModalProvider = ({
     <Context value={setElements}>
       {children}
       {hasModals && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: theme.spacing.lg,
-          }}
-        >
+        <div style={style.modal.backdrop}>
           {_.map(elements, (element) => (
-            <div
-              style={{
-                borderRadius: theme.borderRadius.lg,
-                maxWidth: '90%',
-                maxHeight: '90%',
-                overflow: 'auto',
-              }}
-            >{element}
+            <div style={style.modal.content}>
+              {element}
             </div>
           ))}
         </div>

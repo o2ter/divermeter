@@ -23,15 +23,15 @@
 //  THE SOFTWARE.
 //
 
-import { createContext, useContext, useMemo, PropsWithChildren } from 'frosty';
+import { createContext, useContext, useMemo, PropsWithChildren, ElementNode } from 'frosty';
 import { useTheme } from '../theme';
 import { shiftColor, tintColor, shadeColor, mixColor, luminance, normalizeColor, getRed, getGreen, getBlue, rgba, toHexString, colorContrast } from '@o2ter/colors.js';
 
-type MenuStyle = ReturnType<typeof createMenuStyle>;
+type StyleContextType = ReturnType<typeof createStyles>;
 
-const StyleContext = createContext<MenuStyle>();
+const StyleContext = createContext<StyleContextType>();
 
-const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
+const createStyles = (theme: ReturnType<typeof useTheme>) => {
   // Helper to create color with opacity using @o2ter/colors.js
   const withOpacity = (color: string, opacity: number) => {
     const normalized = normalizeColor(color);
@@ -111,12 +111,225 @@ const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
   const borderPrimary = withOpacity(menuTextPrimary, 0.08);
   const borderAccent = withOpacity(accentPrimary, 0.3);
 
+  // ========== Button Styles ==========
+  // Pre-calculate button variant styles for different colors
+  const createButtonVariantColors = (color: string) => {
+    const contrastColor = theme.colorContrast(color);
+    const darkerColor = shadeColor(color, 0.15);
+
+    return {
+      // Base state colors
+      base: {
+        solid: {
+          color: contrastColor,
+          backgroundColor: color,
+          borderColor: color,
+        },
+        subtle: {
+          color: shadeColor(color, 0.6),
+          backgroundColor: tintColor(color, 0.8),
+          borderColor: tintColor(color, 0.8),
+        },
+        outline: {
+          color: color,
+          backgroundColor: withOpacity(color, 0),
+          borderColor: color,
+        },
+        link: {
+          color: color,
+          backgroundColor: 'transparent',
+          borderColor: 'transparent',
+        },
+        ghost: {
+          color: color,
+          backgroundColor: withOpacity(color, 0),
+          borderColor: 'transparent',
+        },
+        unstyled: {
+          color: color,
+          backgroundColor: 'transparent',
+          borderColor: 'transparent',
+        },
+      },
+      // Activated state colors
+      activated: {
+        solid: {
+          color: contrastColor,
+          backgroundColor: darkerColor,
+          borderColor: darkerColor,
+        },
+        subtle: {
+          color: shadeColor(color, 0.7),
+          backgroundColor: tintColor(color, 0.7),
+          borderColor: tintColor(color, 0.7),
+        },
+        outline: {
+          color: darkerColor,
+          backgroundColor: tintColor(color, 0.9),
+          borderColor: darkerColor,
+        },
+        link: {
+          color: darkerColor,
+          backgroundColor: 'transparent',
+          borderColor: 'transparent',
+        },
+        ghost: {
+          color: darkerColor,
+          backgroundColor: tintColor(color, 0.9),
+          borderColor: 'transparent',
+        },
+        unstyled: {
+          color: darkerColor,
+          backgroundColor: 'transparent',
+          borderColor: 'transparent',
+        },
+      },
+    };
+  };
+
+  // Pre-calculate button colors for semantic colors
+  const buttonColors = {
+    primary: createButtonVariantColors(theme.colors.primary),
+    secondary: createButtonVariantColors(theme.colors.secondary),
+    success: createButtonVariantColors(theme.colors.success),
+    info: createButtonVariantColors(theme.colors.info),
+    warning: createButtonVariantColors(theme.colors.warning),
+    error: createButtonVariantColors(theme.colors.error),
+  };
+
+  // Pre-calculate size-specific button styles
+  const buttonSizes = {
+    sm: {
+      paddingTop: theme.spacing.xs,
+      paddingBottom: theme.spacing.xs,
+      paddingLeft: theme.spacing.md,
+      paddingRight: theme.spacing.md,
+      fontSize: theme.fontSize.sm,
+      minHeight: 32,
+      iconSize: 14,
+    },
+    md: {
+      paddingTop: theme.spacing.sm,
+      paddingBottom: theme.spacing.sm,
+      paddingLeft: theme.spacing.lg,
+      paddingRight: theme.spacing.lg,
+      fontSize: theme.fontSize.md,
+      minHeight: 40,
+      iconSize: 16,
+    },
+    lg: {
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.md,
+      paddingLeft: theme.spacing.xl,
+      paddingRight: theme.spacing.xl,
+      fontSize: theme.fontSize.lg,
+      minHeight: 48,
+      iconSize: 20,
+    },
+  };
+
+  // ========== Alert Styles ==========
+  // Pre-calculate alert colors
+  const alertColors = {
+    success: theme.colors.success,
+    info: theme.colors.info,
+    warning: theme.colors.warning,
+    error: theme.colors.error,
+  };
+
+  // Pre-calculate alert background colors with opacity
+  const alertBackgrounds = {
+    success: withOpacity(alertColors.success, 0.9),
+    info: withOpacity(alertColors.info, 0.9),
+    warning: withOpacity(alertColors.warning, 0.9),
+    error: withOpacity(alertColors.error, 0.9),
+  };
+
+  // Pre-calculate alert text colors
+  const alertTextColors = {
+    success: theme.colorContrast(alertColors.success),
+    info: theme.colorContrast(alertColors.info),
+    warning: theme.colorContrast(alertColors.warning),
+    error: theme.colorContrast(alertColors.error),
+  };
+
+  // Pre-calculate default alert icons
+  const createAlertIcon = (type: 'success' | 'info' | 'warning' | 'error'): ElementNode => {
+    const iconSize = 20;
+    const iconProps = {
+      width: iconSize,
+      height: iconSize,
+      viewBox: '0 0 20 20',
+      fill: 'currentColor',
+    };
+
+    switch (type) {
+      case 'success':
+        return (
+          <svg {...iconProps}>
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'info':
+        return (
+          <svg {...iconProps}>
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'warning':
+        return (
+          <svg {...iconProps}>
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'error':
+        return (
+          <svg {...iconProps}>
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        );
+    }
+  };
+
+  const alertIcons = {
+    success: createAlertIcon('success'),
+    info: createAlertIcon('info'),
+    warning: createAlertIcon('warning'),
+    error: createAlertIcon('error'),
+  };
+
+  // ========== Modal Styles ==========
+  const modalStyles = {
+    backdrop: {
+      position: 'fixed' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: theme.spacing.lg,
+    },
+    content: {
+      borderRadius: theme.borderRadius.lg,
+      maxWidth: '90%',
+      maxHeight: '90%',
+      overflow: 'auto' as const,
+    },
+  };
+
   return {
     // Expose theme properties for direct access
     spacing: theme.spacing,
     fontSize: theme.fontSize,
     fontWeight: theme.fontWeight,
     borderRadius: theme.borderRadius,
+
+    // Helper function for custom colors
+    withOpacity,
 
     // Menu container styles with gradient
     menu: {
@@ -171,12 +384,30 @@ const createMenuStyle = (theme: ReturnType<typeof useTheme>) => {
       borderRadius: theme.borderRadius.md,
       activeShadow: `0 1px 4px ${accentGlow}, 0 0 0 1px ${borderAccent}`,
     },
+
+    // Button styles
+    button: {
+      colors: buttonColors,
+      sizes: buttonSizes,
+      getVariantColors: createButtonVariantColors,
+    },
+
+    // Alert styles
+    alert: {
+      colors: alertColors,
+      backgrounds: alertBackgrounds,
+      textColors: alertTextColors,
+      icons: alertIcons,
+    },
+
+    // Modal styles
+    modal: modalStyles,
   };
 };
 
 export const StyleProvider = ({ children }: PropsWithChildren<{}>) => {
   const theme = useTheme();
-  const style = useMemo(() => createMenuStyle(theme), [theme]);
+  const style = useMemo(() => createStyles(theme), [theme]);
   
   return (
     <StyleContext value={style}>

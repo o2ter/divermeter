@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { createContext, ElementNode, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'frosty';
 import { useTheme } from '../theme';
-import { normalizeColor, getRed, getGreen, getBlue, rgba, toHexString } from '@o2ter/colors.js';
+import { useStyle } from '../style';
 
 type AlertType = 'success' | 'info' | 'warning' | 'error';
 type AlertOptions = {
@@ -66,12 +66,13 @@ type AlertBodyProps = {
 
 const AlertBody = ({
   message,
-  style,
+  style: alertStyle,
   onShow,
   onDismiss,
   formatter,
 }: AlertBodyProps) => {
   const theme = useTheme();
+  const style = useStyle();
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -88,74 +89,29 @@ const AlertBody = ({
     });
   }, [onShow, onDismiss]);
 
-  // Determine color based on style
-  const getColor = () => {
-    if (_.isString(style)) {
-      switch (style) {
-        case 'success': return theme.colors.success;
-        case 'info': return theme.colors.info;
-        case 'warning': return theme.colors.warning;
-        case 'error': return theme.colors.error;
-        default: return theme.colors.info;
-      }
+  // Determine color and background based on alert style
+  const { color, backgroundColor, textColor, icon } = useMemo(() => {
+    if (_.isString(alertStyle)) {
+      // Use pre-calculated styles for semantic alert types
+      return {
+        color: style.alert.colors[alertStyle],
+        backgroundColor: style.alert.backgrounds[alertStyle],
+        textColor: style.alert.textColors[alertStyle],
+        icon: style.alert.icons[alertStyle],
+      };
+    } else {
+      // For custom colors, calculate on the fly
+      const customColor = alertStyle.color;
+      const customBg = style.withOpacity(customColor, 0.9);
+      const customText = theme.colorContrast(customColor);
+      return {
+        color: customColor,
+        backgroundColor: customBg,
+        textColor: customText,
+        icon: alertStyle.icon ?? undefined,
+      };
     }
-    return style.color;
-  };
-
-  const color = getColor();
-  const textColor = theme.colorContrast(color);
-
-  // Get default icon based on alert type
-  const getDefaultIcon = (type: AlertType): ElementNode => {
-    const iconSize = 20;
-    const iconProps = {
-      width: iconSize,
-      height: iconSize,
-      viewBox: '0 0 20 20',
-      fill: 'currentColor',
-    };
-
-    switch (type) {
-      case 'success':
-        return (
-          <svg {...iconProps}>
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-        );
-      case 'info':
-        return (
-          <svg {...iconProps}>
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
-        );
-      case 'warning':
-        return (
-          <svg {...iconProps}>
-            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-        );
-      case 'error':
-        return (
-          <svg {...iconProps}>
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-        );
-      default:
-        return null as any;
-    }
-  };
-
-  // Create background with opacity
-  const backgroundColor = (() => {
-    const normalized = normalizeColor(color);
-    if (!normalized) return color;
-    return toHexString(rgba(
-      getRed(normalized),
-      getGreen(normalized),
-      getBlue(normalized),
-      Math.round(255 * 0.9)
-    ), true);
-  })();
+  }, [alertStyle, style, theme]);
 
   // Format message
   const displayMessage = (() => {
@@ -166,19 +122,17 @@ const AlertBody = ({
     return String(message);
   })();
 
-  const icon = _.isString(style) ? getDefaultIcon(style) : (style.icon ?? undefined);
-
   return (
     <div style={{
       backgroundColor,
       color: textColor,
-      padding: `${theme.spacing.md}px ${theme.spacing.lg}px`,
-      marginBottom: theme.spacing.sm,
-      borderRadius: theme.borderRadius.md,
+      padding: `${style.spacing.md}px ${style.spacing.lg}px`,
+      marginBottom: style.spacing.sm,
+      borderRadius: style.borderRadius.md,
       boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing.sm,
+      gap: style.spacing.sm,
       minWidth: '300px',
       maxWidth: '500px',
       opacity: isExiting ? 0 : isVisible ? 1 : 0,
@@ -188,7 +142,7 @@ const AlertBody = ({
       {icon && <div style={{ flexShrink: 0 }}>{icon}</div>}
       <div style={{
         flex: 1,
-        fontSize: theme.fontSize.sm,
+        fontSize: style.fontSize.sm,
         lineHeight: 1.5,
       }}>
         {displayMessage}
@@ -203,8 +157,8 @@ const AlertBody = ({
           border: 'none',
           color: textColor,
           cursor: 'pointer',
-          padding: theme.spacing.xs,
-          fontSize: theme.fontSize.lg,
+          padding: style.spacing.xs,
+          fontSize: style.fontSize.lg,
           lineHeight: 1,
           opacity: 0.7,
           flexShrink: 0,
@@ -226,16 +180,16 @@ export const AlertProvider = ({
 }: AlertProviderProps) => {
 
   const [elements, setElements] = useState<{ [x: string]: ElementNode }>({});
-  const theme = useTheme();
+  const style = useStyle();
 
   const showMessage = useCallback((
     message: any,
-    style: AlertType | Omit<AlertOptions, 'timeout'>,
+    alertStyle: AlertType | Omit<AlertOptions, 'timeout'>,
     timeout?: number,
   ) => {
     if (_.isNil(message)) return;
     if (!_.isString(message) && _.isArrayLike(message)) {
-      _.forEach(message, x => showMessage(x, style, timeout));
+      _.forEach(message, x => showMessage(x, alertStyle, timeout));
       return;
     }
     const id = _.uniqueId();
@@ -245,7 +199,7 @@ export const AlertProvider = ({
         <AlertBody
           key={id}
           message={message}
-          style={style}
+          style={alertStyle}
           onShow={({ dismiss }) => setTimeout(dismiss, timeout ?? defaultTimeout)}
           onDismiss={() => setElements(elements => _.pickBy(elements, (_val, key) => key != id))}
         />
@@ -258,8 +212,8 @@ export const AlertProvider = ({
       {children}
       {!_.isEmpty(elements) && <div style={{
         position: 'fixed',
-        bottom: theme.spacing.lg,
-        right: theme.spacing.lg,
+        bottom: style.spacing.lg,
+        right: style.spacing.lg,
         zIndex: 9999,
         display: 'flex',
         flexDirection: 'column-reverse',
