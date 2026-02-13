@@ -35,11 +35,15 @@ export const BrowserPage = () => {
   type QueryFilter = Parameters<ReturnType<typeof proto.Query>['filter']>[0];
   const [filter, setFilter] = useState<QueryFilter[]>([]);
 
-  const query = useMemo(() => { 
+  const [limit, setLimit] = useState(20);
+  const [offset, setOffset] = useState(0);
+
+  const query = useMemo(() => {
     const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
+    q.limit(limit);
+    if (offset > 0) q.skip(offset);
     return q;
-  }, [className, filter]);
-  
+  }, [className, filter, limit, offset]);
 
   return <div>Classes {className}</div>;
 };
