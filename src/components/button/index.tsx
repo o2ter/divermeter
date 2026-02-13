@@ -57,17 +57,12 @@ export const Button = ({
   loading = false,
   leftIcon: LeftIcon,
   rightIcon: RightIcon,
-  onClick,
-  onMouseDown,
-  onMouseUp,
   type = 'button',
   className,
   style: customStyle,
   ...props
 }: ButtonProps) => {
   const theme = useTheme();
-  const [isHovered, setIsHovered] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
 
   // Get color from theme
   const baseColor = useMemo(() => {
@@ -219,30 +214,17 @@ export const Button = ({
       };
     }
 
-    if (isPressed) {
-      return {
-        ...base,
-        ...variantStyles.active,
-        transform: variant !== 'link' ? 'scale(0.98)' : 'none',
-      };
-    }
-
-    if (isHovered) {
-      return {
-        ...base,
-        ...variantStyles.hover,
-      };
-    }
-
-    return base;
+    return {
+      ...base,
+      '&:active': variantStyles.active,
+      '&:hover': variantStyles.hover,
+    };
   }, [
     sizeStyles,
     variantStyles,
     theme,
     disabled,
     loading,
-    isHovered,
-    isPressed,
     fullWidth,
     variant,
   ]);
@@ -270,31 +252,6 @@ export const Button = ({
     <button
       type={type}
       disabled={disabled || loading}
-      onClick={function (this, e) {
-        if (disabled || loading) {
-          e.preventDefault();
-          return;
-        }
-        onClick?.call(this, e);
-      }}
-      onMouseDown={function (this, e) {
-        if (disabled || loading) return;
-        setIsPressed(true);
-        onMouseDown?.call(this, e);
-      }}
-      onMouseUp={function (this, e) {
-        if (disabled || loading) return;
-        setIsPressed(false);
-        onMouseUp?.call(this, e);
-      }}
-      onMouseEnter={() => {
-        if (disabled || loading) return;
-        setIsHovered(true);
-      }}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setIsPressed(false);
-      }}
       ariaBusy={loading ? 'true' : undefined}
       ariaDisabled={disabled ? 'true' : undefined}
       className={className}
