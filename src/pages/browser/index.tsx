@@ -30,5 +30,5 @@ import { useProto } from '../../proto';
 export const BrowserPage = () => {
   const params = useParams();
   const proto = useProto();
-  return <div>Classes {JSON.stringify(params)}</div>;
+  return <div>Classes {params.schema}</div>;
 };
