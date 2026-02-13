@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { createContext, ElementNode, PropsWithChildren, SetStateAction, useContext, useMemo, useState } from 'frosty';
+import { createContext, ElementNode, PropsWithChildren, SetStateAction, useContext, useEffect, useMemo, useState } from 'frosty';
 import { useTheme } from '../theme';
 
 const Context = createContext<(dispatch: SetStateAction<{ [x: string]: ElementNode; }>) => void>(() => { });
@@ -40,6 +40,12 @@ export const Modal = ({
 
   const id = useMemo(() => _.uniqueId(), []);
   const setElements = useContext(Context);
+
+  useEffect(() => {
+    if (!show) return;
+    setElements((prev) => ({ ...prev, [id]: children as ElementNode }));
+    return () => setElements((prev) => _.omit(prev, id));
+  }, [id, show]);
 
   return <></>
 };
