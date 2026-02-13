@@ -83,16 +83,17 @@ export const ModalProvider = ({
             padding: theme.spacing.lg,
           }}
         >
-          <div
-            style={{
-              borderRadius: theme.borderRadius.lg,
-              maxWidth: '90%',
-              maxHeight: '90%',
-              overflow: 'auto',
-            }}
-          >
-            {_.map(elements, (element) => element)}
-          </div>
+          {_.map(elements, (element) => (
+            <div
+              style={{
+                borderRadius: theme.borderRadius.lg,
+                maxWidth: '90%',
+                maxHeight: '90%',
+                overflow: 'auto',
+              }}
+            >{element}
+            </div>
+          ))}
         </div>
       )}
     </Context>
