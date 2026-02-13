@@ -38,6 +38,7 @@ export const BrowserPage = () => {
 
   const [limit, setLimit] = useState(20);
   const [offset, setOffset] = useState(0);
+  const [sort, setSort] = useState<{ field: string; order: 'asc' | 'desc'; }[]>([]);
 
   const {
     resource,
@@ -45,8 +46,9 @@ export const BrowserPage = () => {
     const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
     q.limit(limit);
     if (offset > 0) q.skip(offset);
+    if (!_.isEmpty(sort)) q.sort(_.reduce(sort, (s, { field, order }) => ({ ...s, [field]: order === 'asc' ? 1 : -1 }), {}));
     return await q.find({ master: true });
-  }, [className, filter, limit, offset]);
+  }, [className, filter, limit, offset, sort]);
 
   return <div>Classes {className}</div>;
 };
