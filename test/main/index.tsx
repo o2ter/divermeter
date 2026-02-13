@@ -69,6 +69,51 @@ const CustomPage = () => {
   );
 }
 
+const SubPage1 = () => {
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Subpage 1</h2>
+      <p>This is the first subpage of the custom page.</p>
+    </div>
+  );
+};
+
+const SubPage2 = () => {
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Subpage 2</h2>
+      <p>This is the second subpage of the custom page.</p>
+    </div>
+  );
+};
+
+const NestedSubPage = () => {
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Nested Subpage</h2>
+      <p>This is a deeply nested subpage (3 levels deep).</p>
+    </div>
+  );
+};
+
+const AnotherPage = () => {
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Another Page</h2>
+      <p>This is another top-level page with its own subpages.</p>
+    </div>
+  );
+};
+
+const AnotherSubPage = () => {
+  return (
+    <div style={{ padding: 20 }}>
+      <h2>Another Subpage</h2>
+      <p>This is a subpage under "Another Page".</p>
+    </div>
+  );
+};
+
 export const Main = () => {
   const location = useLocation();
   const proto = useMemo(() => new ProtoClient({
@@ -87,7 +132,38 @@ export const Main = () => {
             title: 'Custom Page',
             path: '/custom',
             element: <CustomPage />,
-          }
+            children: [
+              {
+                title: 'Subpage 1',
+                path: '/sub1',
+                element: <SubPage1 />,
+              },
+              {
+                title: 'Subpage 2',
+                path: '/sub2',
+                element: <SubPage2 />,
+                children: [
+                  {
+                    title: 'Nested Subpage',
+                    path: '/nested',
+                    element: <NestedSubPage />,
+                  }
+                ],
+              },
+            ],
+          },
+          {
+            title: 'Another Page',
+            path: '/another',
+            element: <AnotherPage />,
+            children: [
+              {
+                title: 'Another Subpage',
+                path: '/sub',
+                element: <AnotherSubPage />,
+              },
+            ],
+          },
         ]}
       />
     </div>

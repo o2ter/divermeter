@@ -170,20 +170,50 @@ export const Menu = ({ pages }: MenuProps) => {
   const isHome = location.pathname === '/';
   const isConfig = location.pathname === '/config';
 
-  const renderPageItem = (page: Page, index: number) => {
+  const isPageActive = (page: Page, parentPath: string = ''): boolean => {
+    if (!page.path && !page.index) return false;
+
+    const currentPath = page.path
+      ? `${_.trimEnd(parentPath, '/')}/${_.trimStart(page.path, '/')}`
+      : parentPath;
+
+    // Check if current page matches
+    const matchedIndex = page.index && match(parentPath)(location.pathname);
+    const matchedPath = !!currentPath && match(currentPath)(location.pathname);
+    const isDirectMatch = !!(matchedIndex || matchedPath);
+
+    // Check if any subpage matches
+    const hasActiveChild = page.children?.some(child => isPageActive(child, currentPath)) ?? false;
+
+    return isDirectMatch || hasActiveChild;
+  };
+
+  const renderPageItem = (page: Page, index: number, parentPath: string = '', depth: number = 0) => {
     if (!page.path || page.index) return null;
 
-    const pagePath = page.path.startsWith('/') ? page.path : `/${page.path}`;
-    const isActive = !!match(pagePath)(location.pathname);
+    const currentPath = `${_.trimEnd(parentPath, '/')}/${_.trimStart(page.path, '/')}`;
+    const isActive = !!match(currentPath)(location.pathname);
+    const hasActiveDescendant = page.children?.some(child => isPageActive(child, currentPath)) ?? false;
     const pageLabel = typeof page.title === 'string' ? page.title : page.path;
+    const hasChildren = page.children && page.children.length > 0;
 
     return (
-      <MenuItem
-        key={`page-${index}`}
-        label={pageLabel}
-        isActive={isActive}
-        onClick={() => location.pushState({}, pagePath)}
-      />
+      <div key={`page-${index}-${depth}`}>
+        <div style={{ paddingLeft: `${depth * style.spacing.md}px` }}>
+          <MenuItem
+            label={pageLabel}
+            isActive={isActive}
+            onClick={() => location.pushState({}, currentPath)}
+          />
+        </div>
+        {hasChildren && (isActive || hasActiveDescendant) && (
+          <div>
+            {_.map(page.children, (child, childIndex) =>
+              renderPageItem(child, childIndex, currentPath, depth + 1)
+            )}
+          </div>
+        )}
+      </div>
     );
   };
 
