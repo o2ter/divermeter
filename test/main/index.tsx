@@ -28,6 +28,7 @@ import Dashboard, { Modal, useAlert } from '../../src';
 import { ProtoClient } from 'proto.io';
 import { useMemo, useState } from 'frosty';
 import { useLocation } from 'frosty/web';
+import { Button } from '../../src/components/button';
 
 const CustomPage = () => {
   const {
@@ -52,6 +53,21 @@ const CustomPage = () => {
           <button onClick={() => setShowModal(false)}>Close Modal</button>
         </div>
       </Modal>
+      <Button>Click me</Button>
+
+      <Button variant="outline" color="primary">Outline</Button>
+      <Button variant="ghost" color="success">Ghost</Button>
+      <Button variant="link" color="info">Link</Button>
+
+      <Button size="sm">Small</Button>
+      <Button size="lg">Large</Button>
+
+      <Button loading>Loading...</Button>
+      <Button disabled>Disabled</Button>
+
+      <Button leftIcon={() => <span>X</span>}>With Icon</Button>
+
+      <Button fullWidth>Full Width</Button>
     </>
   );
 }
