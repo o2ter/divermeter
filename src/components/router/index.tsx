@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { useLocation } from 'frosty/web';
 import { match, ParamData } from 'path-to-regexp';
-import { ComponentProps, createContext, createPairs, ElementNode, PropsWithChildren, useContext, useMemo } from 'frosty';
+import { ComponentNode, ComponentProps, createContext, createPairs, ElementNode, PropsWithChildren, useContext, useMemo } from 'frosty';
 
 const { Parent, Child } = createPairs();
 
@@ -58,6 +58,15 @@ type RouteProps = PropsWithChildren<{
   element?: ElementNode;
 }>;
 
+const collectRoutes = (element: ElementNode): ComponentNode[] => {
+  if (!element || _.isString(element) || _.isNumber(element) || _.isBoolean(element)) return [];
+  if (typeof element === 'bigint') return [];
+  if (Symbol.iterator in element) {
+    return _.flatMap([...element], x => collectRoutes(x));
+  }
+  return _.isObject(element) && element.type === Route ? [element] : [];
+};
+
 export const Route = ({
   title,
   path,
@@ -67,12 +76,16 @@ export const Route = ({
 }: RouteProps) => {
   const location = useLocation();
   const parent = useContext(Context);
-  const currentPath = parent.path ? `${_.trimEnd(parent.path, '/')}/${_.trimStart(path, '/')}` : path;
+  const currentPath = `${_.trimEnd(parent.path, '/')}/${_.trimStart(path, '/')}`;
   const [matchedIndex, matchedPath] = useMemo(() => [
     !!index && !!parent.path && match(parent.path)(location.pathname),
     !!currentPath && match(currentPath)(location.pathname),
   ], [index, location.pathname, parent.path, currentPath]);
-  const matched = matchedIndex || matchedPath || undefined;
+  const matchedChild = collectRoutes(children).find(route => {
+    const routePath = `${_.trimEnd(currentPath, '/')}/${_.trimStart(route.props.path, '/')}`;
+    return routePath && match(routePath)(location.pathname);
+  });
+  const matched = matchedIndex || matchedPath || matchedChild || undefined;
   const outlet = (
     <Context value={{ path: currentPath }}>
       <Parent>{children}</Parent>
