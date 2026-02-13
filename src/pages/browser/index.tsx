@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { useParams } from '../../components/router';
 import { useProto } from '../../proto';
-import { useState } from 'frosty';
+import { useMemo, useState } from 'frosty';
 
 export const BrowserPage = () => {
   const { schema: className } = useParams() as { schema: string; };
@@ -35,7 +35,7 @@ export const BrowserPage = () => {
   type QueryFilter = Parameters<ReturnType<typeof proto.Query>['filter']>[0];
   const [filter, setFilter] = useState<QueryFilter[]>([]);
 
-
+  const query = useMemo(() => _.reduce(filter, (query, f) => query.filter(f), proto.Query(className)), [className, filter]);
   
 
   return <div>Classes {className}</div>;
