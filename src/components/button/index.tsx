@@ -35,7 +35,7 @@ type ButtonColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'e
 export type ButtonProps = ComponentProps<'button'> & {
   // Appearance
   variant?: ButtonVariant;
-  color?: ButtonColor;
+  color?: ButtonColor | (string & {});
   size?: ButtonSize;
   fullWidth?: boolean;
   
@@ -65,9 +65,7 @@ export const Button = ({
   const theme = useTheme();
 
   // Get color from theme
-  const baseColor = useMemo(() => {
-    return _.get(theme.colors, color) as string;
-  }, [theme.colors, color]);
+  const baseColor = useMemo(() => _.get(theme.colors, color, color), [theme.colors, color]);
 
   // Calculate size-specific values
   const sizeStyles = useMemo(() => {
