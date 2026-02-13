@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { useParams } from '../../components/router';
 import { useProto } from '../../proto';
-import { useMemo, useState } from 'frosty';
+import { useMemo, useResource, useState } from 'frosty';
 
 export const BrowserPage = () => {
   const { schema: className } = useParams() as { schema: string; };
@@ -38,11 +38,13 @@ export const BrowserPage = () => {
   const [limit, setLimit] = useState(20);
   const [offset, setOffset] = useState(0);
 
-  const query = useMemo(() => {
+  const {
+    resource,
+  } = useResource(async () => {
     const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
     q.limit(limit);
     if (offset > 0) q.skip(offset);
-    return q;
+    return await q.find({ master: true });
   }, [className, filter, limit, offset]);
 
   return <div>Classes {className}</div>;
