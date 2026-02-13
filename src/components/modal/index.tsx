@@ -26,6 +26,7 @@
 import _ from 'lodash';
 import { createContext, ElementNode, PropsWithChildren, SetStateAction, useContext, useEffect, useMemo, useState } from 'frosty';
 import { useTheme } from '../theme';
+import { normalizeColor, rgba, getRed, getGreen, getBlue, toHexString } from '@o2ter/colors.js';
 
 const Context = createContext<(dispatch: SetStateAction<{ [x: string]: ElementNode; }>) => void>(() => { });
 
@@ -61,9 +62,39 @@ export const ModalProvider = ({
   const [elements, setElements] = useState<{ [x: string]: ElementNode }>({});
   const theme = useTheme();
 
+  const hasModals = !_.isEmpty(elements);
+
   return (
     <Context value={setElements}>
       {children}
+      {hasModals && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: theme.spacing.lg,
+          }}
+        >
+          <div
+            style={{
+              borderRadius: theme.borderRadius.lg,
+              maxWidth: '90%',
+              maxHeight: '90%',
+              overflow: 'auto',
+            }}
+          >
+            {_.map(elements, (element) => element)}
+          </div>
+        </div>
+      )}
     </Context>
   );
 };

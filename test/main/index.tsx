@@ -24,9 +24,9 @@
 //
 
 import _ from 'lodash';
-import Dashboard, { useAlert } from '../../src';
+import Dashboard, { Modal, useAlert } from '../../src';
 import { ProtoClient } from 'proto.io';
-import { useMemo } from 'frosty';
+import { useMemo, useState } from 'frosty';
 import { useLocation } from 'frosty/web';
 
 const CustomPage = () => {
@@ -36,6 +36,7 @@ const CustomPage = () => {
     showWarning,
     showError,
   } = useAlert();
+  const [showModal, setShowModal] = useState(false);
   return (
     <>
       <div style={{ padding: 20 }}>This is a custom page added through the Dashboard's pages prop.</div>
@@ -43,6 +44,14 @@ const CustomPage = () => {
       <button onClick={() => showInfo('This is an info message!')}>Show Info Alert</button>
       <button onClick={() => showWarning('This is a warning message!')}>Show Warning Alert</button>
       <button onClick={() => showError('This is an error message!')}>Show Error Alert</button>
+      <button onClick={() => setShowModal(true)}>Show Modal</button>
+      <Modal show={showModal}>
+        <div style={{ backgroundColor: 'white', padding: 20, borderRadius: 4 }}>
+          <h1>Custom Modal</h1>
+          <p>This is a custom modal content.</p>
+          <button onClick={() => setShowModal(false)}>Close Modal</button>
+        </div>
+      </Modal>
     </>
   );
 }
