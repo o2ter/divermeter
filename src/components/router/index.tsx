@@ -36,24 +36,27 @@ const Context = createContext<{
   outlet?: ElementNode;
 }>({});
 
-type RoutesProps = {
-
-};
+type RoutesProps = PropsWithChildren<{
+  path?: string;
+}>;
 
 export const Routes = ({
+  path,
   children,
-}: PropsWithChildren<RoutesProps>) => {
+}: RoutesProps) => {
   return (
-    <Parent>{children}</Parent>
+    <Context value={{ path }}>
+      <Parent>{children}</Parent>
+    </Context>
   );
 };
 
-type RouteProps = {
+type RouteProps = PropsWithChildren<{
   title?: string | ((params?: ParamData) => string);
   path?: string;
   index?: boolean;
   element?: ElementNode;
-};
+}>;
 
 export const Route = ({
   title,
@@ -61,7 +64,7 @@ export const Route = ({
   index,
   element,
   children,
-}: PropsWithChildren<RouteProps>) => {
+}: RouteProps) => {
   const location = useLocation();
   const parent = useContext(Context);
   const currentPath = parent.path ? `${_.trimEnd(parent.path, '/')}/${_.trimStart(path, '/')}` : path;
