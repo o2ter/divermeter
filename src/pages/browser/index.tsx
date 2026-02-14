@@ -51,10 +51,10 @@ const encodeValue = (value: any, space = 2) => {
     if (value instanceof Decimal) return `Decimal('${value.toString()}')`;
     if (_.isArray(value)) return _.isEmpty(value) ? '[]' : `[${newline}${_.map(value, v => (
       `${_.padStart('', padding, ' ')}${_encodeValue(v, space, padding + space)}`
-    )).join(`,${newline}`)}${newline}${_.padStart('', padding - space, ' ')}]`;
+    )).join(`,${newline || ' '}`)}${newline}${_.padStart('', padding - space, ' ')}]`;
     return _.isEmpty(value) ? '{}' : `{${newline}${_.map(value as object, (v, k) => (
       `${_.padStart('', padding, ' ')}${k.match(normalName) ? k : `"${k.replace(/[\\"]/g, '\\$&')}"`}: ${_encodeValue(v, space, padding + space)}`
-    )).join(`,${newline}`)}${newline}${_.padStart('', padding - space, ' ')}}`;
+    )).join(`,${newline || ' '}`)}${newline}${_.padStart('', padding - space, ' ')}}`;
   };
   return _encodeValue(value, space, space);
 };
