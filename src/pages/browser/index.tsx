@@ -136,6 +136,12 @@ export const BrowserPage = () => {
             }))}
             columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
             startRowNumber={offset + 1}
+            allowEditForCell={(row, col) => {
+              const columnKey = _.keys(schema.fields)[col];
+              // System fields that cannot be edited
+              const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
+              return !systemFields.includes(columnKey);
+            }}
             onColumnWidthChange={(col, width) => {
               const columnKey = _.keys(schema.fields)[col];
               setColumnWidth(prev => ({ ...prev, [columnKey]: width }));
