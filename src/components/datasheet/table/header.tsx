@@ -127,7 +127,7 @@ export const DataSheetHeader = <T extends object, C extends Column>({
               style={{
                 position: 'relative',
                 border: `1px solid ${borderColor}`,
-                borderLeft: 0,
+                borderLeft: rowNumbers || col !== 0 ? 0 : `1px solid ${borderColor}`,
                 borderBottomColor: isRowSelected(0) || isCellSelected(0, col) ? selectedBorderColor : borderColor,
                 backgroundColor: headerBg,
                 minWidth: width ?? columnMinWidth,
