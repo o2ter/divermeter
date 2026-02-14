@@ -23,7 +23,6 @@
 //  THE SOFTWARE.
 //
 
-import _ from 'lodash';
 import { ElementNode, Ref } from 'frosty';
 
 export type Position = { row: number; col: number; };

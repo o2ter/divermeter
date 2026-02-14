@@ -60,7 +60,6 @@ export const DataSheetHeader = <T extends object, C extends Column>({
   const headerBg = style.datasheet.headerBg;
   const borderColor = style.datasheet.borderColor;
   const selectedBorderColor = style.datasheet.selectedBorderColor;
-  const resizeHandleColor = style.datasheet.resizeHandleColor;
   const resizeHandleHoverColor = style.datasheet.resizeHandleHoverColor;
 
   const {

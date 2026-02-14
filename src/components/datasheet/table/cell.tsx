@@ -23,7 +23,6 @@
 //  THE SOFTWARE.
 //
 
-import _ from 'lodash';
 import { PropsWithChildren, useMemo } from 'frosty';
 
 type DataSheetCellProps = PropsWithChildren<{

@@ -311,7 +311,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
   // Create harmonious datasheet colors derived from theme
   const datasheetHeaderBg = mixColor(theme.colors.primary, '#F6F8FF', 0.05);
   const datasheetBorderColor = mixColor(theme.colors.primary, '#DDD', 0.1);
-  const datasheetResizeHandleColor = mixColor(theme.colors.primary, '#888', 0.3);
   const datasheetBodyBg = theme.colorContrast(theme.colors.primary) === '#ffffff'
     ? '#ffffff'
     : mixColor(theme.colors.primary, '#ffffff', 0.02);
@@ -325,7 +324,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
     headerBg: datasheetHeaderBg,
     borderColor: datasheetBorderColor,
     selectedBorderColor: theme.colors.primary,
-    resizeHandleColor: datasheetResizeHandleColor,
     resizeHandleHoverColor: theme.colors.primary,
     bodyBg: datasheetBodyBg,
     evenRowBg: datasheetEvenRowBg,
@@ -364,8 +362,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
       activeBackground: activeBackground,
       hoverBackground: hoverBackground,
       accentBorder: accentPrimary,
-      accentGlow: accentGlow,
-      borderWidth: 0,
       borderRadius: theme.borderRadius.md,
       activeShadow: `0 2px 8px ${accentGlow}, 0 0 0 1px ${borderAccent}`,
       hoverShadow: `0 1px 4px ${withOpacity(menuTextPrimary, 0.08)}`,

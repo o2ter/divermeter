@@ -23,7 +23,6 @@
 //  THE SOFTWARE.
 //
 
-import _ from 'lodash';
 import { PropsWithChildren, useMemo } from 'frosty';
 import { useDatasheetContext } from '../context';
 import { DataSheetCell } from './cell';
