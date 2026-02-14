@@ -142,7 +142,18 @@ export const BrowserPage = () => {
           {schema && <DataSheet
             key={className}
             data={resource}
-            columns={_.keys(schema.fields)}
+            columns={_.map(schema.fields, (v, k) => ({
+              key: k,
+              label: (
+                <span>
+                  {k}
+                  <span style={{
+                    color: 'gray',
+                    paddingLeft: 4,
+                  }}>({_.isString(v) ? v : v.type})</span>
+                </span>
+              ),
+            }))}
             columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
             startRowNumber={offset + 1}
             onColumnWidthChange={(col, width) => {
