@@ -29,8 +29,10 @@ import { QueryFilter, TObject, useProto, useProtoSchema } from '../../proto';
 import { _useCallbacks, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
 import { TableCell } from './cell';
+import { useTheme } from '../../components/theme';
 
 export const BrowserPage = () => {
+  const theme = useTheme();
   const { schema: className } = useParams() as { schema: string; };
   const proto = useProto();
   const { [className]: schema } = useProtoSchema();
@@ -61,10 +63,15 @@ export const BrowserPage = () => {
     handleUpdateItem,
   } = _useCallbacks({
     handleUpdateItem: async (item: TObject, columnKey: string, value: any) => {
-      const cloned = item.clone();
-      cloned.set(columnKey, value);
-      await cloned.save({ master: true });
-      setResource((prev) => _.map(prev, i => i === item ? cloned : i));
+      try {
+        const cloned = item.clone();
+        cloned.set(columnKey, value);
+        await cloned.save({ master: true });
+        setResource((prev) => _.map(prev, i => i === item ? cloned : i));
+      } catch (error) {
+        console.error('Failed to update item:', error);
+        // TODO: Add error notification UI
+      }
     },
   });
 
@@ -76,7 +83,28 @@ export const BrowserPage = () => {
       width: '100%',
       alignItems: 'stretch',
     }}>
-      <div>Classes {className}</div>
+      <div style={{
+        padding: `${theme.spacing.lg}px ${theme.spacing.xl}px`,
+        borderBottom: `1px solid ${theme.colors['primary-200']}`,
+        backgroundColor: theme.colors['primary-100'],
+      }}>
+        <h2 style={{
+          margin: 0,
+          fontSize: theme.fontSize.lg,
+          fontWeight: theme.fontWeight.semibold,
+          color: theme.colors.primary,
+        }}>
+          {className}
+        </h2>
+        <div style={{
+          marginTop: theme.spacing.xs,
+          fontSize: theme.fontSize.sm,
+          color: theme.colorContrast(theme.colors['primary-100']),
+          opacity: 0.7,
+        }}>
+          {resource.length} {resource.length === 1 ? 'record' : 'records'}
+        </div>
+      </div>
       <div style={{
         flex: 1,
         position: 'relative',
@@ -97,8 +125,9 @@ export const BrowserPage = () => {
                 <span>
                   {k}
                   <span style={{
-                    color: 'gray',
-                    paddingLeft: 4,
+                    color: theme.colorContrast(theme.colors['primary-100']),
+                    opacity: 0.5,
+                    paddingLeft: theme.spacing.xs,
                   }}>({_.isString(v) ? v : v.type})</span>
                 </span>
               ),
@@ -120,10 +149,21 @@ export const BrowserPage = () => {
               />
             )}
             onStartEditing={(row, col) => {
-              setEditingValue(undefined);
+              const columnKey = _.keys(schema.fields)[col];
+              const currentValue = resource[row].get(columnKey);
+              setEditingValue(currentValue);
             }}
             onEndEditing={(row, col) => {
+              const columnKey = _.keys(schema.fields)[col];
+              const item = resource[row];
+              const currentValue = item.get(columnKey);
 
+              // Only save if value changed
+              if (!_.isEqual(editingValue, currentValue)) {
+                handleUpdateItem(item, columnKey, editingValue);
+              }
+
+              setEditingValue(undefined);
             }}
           />}
         </div>

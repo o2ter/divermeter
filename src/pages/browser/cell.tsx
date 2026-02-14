@@ -69,6 +69,87 @@ export const TableCell = ({
   } as const;
 
   const value = item.get(column);
+
+  // Editing mode
+  if (isEditing) {
+    const inputStyle = {
+      width: '100%',
+      height: '100%',
+      border: 'none',
+      outline: 'none',
+      padding: 0,
+      margin: 0,
+      fontSize: 'inherit',
+      fontFamily: 'inherit',
+      backgroundColor: 'transparent',
+    };
+
+    switch (type) {
+      case 'string':
+        return (
+          <input
+            type="text"
+            style={inputStyle}
+            value={editingValue ?? value ?? ''}
+            onChange={(e) => setEditingValue?.(e.currentTarget.value)}
+            autofocus
+          />
+        );
+      case 'number':
+        return (
+          <input
+            type="number"
+            style={inputStyle}
+            value={editingValue ?? value ?? ''}
+            onChange={(e) => setEditingValue?.(parseFloat(e.currentTarget.value))}
+            autofocus
+          />
+        );
+      case 'boolean':
+        return (
+          <select
+            style={inputStyle}
+            value={editingValue ?? (value ? 'true' : 'false')}
+            onChange={(e) => setEditingValue?.(e.currentTarget.value === 'true')}
+            autofocus
+          >
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </select>
+        );
+      case 'date':
+        return (
+          <input
+            type="datetime-local"
+            style={inputStyle}
+            value={editingValue ? new Date(editingValue).toISOString().slice(0, 16) : (value ? new Date(value).toISOString().slice(0, 16) : '')}
+            onChange={(e) => setEditingValue?.(new Date(e.currentTarget.value))}
+            autofocus
+          />
+        );
+      default:
+        // For complex types, use textarea with JSON
+        return (
+          <textarea
+            style={{ ...inputStyle, resize: 'none' }}
+            value={editingValue !== undefined ? encodeValue(editingValue, 0) : encodeValue(value, 0)}
+            onChange={(e) => {
+              try {
+                // Try to parse the value
+                const parsed = eval(`(${e.currentTarget.value})`);
+                setEditingValue?.(parsed);
+              } catch {
+                // If parsing fails, store the raw string
+                setEditingValue?.(e.currentTarget.value);
+              }
+            }}
+            autofocus
+          />
+        );
+    }
+  }
+
+  // Display mode
   if (_.isNil(value)) {
     return <div style={cellStyle}>null</div>;
   } else {
