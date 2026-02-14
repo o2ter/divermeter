@@ -470,6 +470,125 @@ This approach keeps all styling in JavaScript/TypeScript, maintains type safety,
 - Props with children: `PropsWithChildren<Props>`
 - No `React.FC` or `React.ReactNode` (use frosty equivalents)
 
+### Event Handlers Pattern: _useCallbacks + useEffect
+
+**CRITICAL: Frosty uses `_useCallbacks` for stable event handler references with proper dependency tracking.**
+
+When setting up document-level or persistent event listeners, use this pattern:
+
+#### The Pattern
+```tsx
+import { _useCallbacks, useEffect, useRef } from 'frosty';
+import { useDocument } from 'frosty/web';
+
+const MyComponent = ({ onAction, data }) => {
+  const ref = useRef<HTMLElement>();
+  const doc = useDocument();
+
+  // 1. Define all handlers in _useCallbacks with their dependencies
+  const {
+    handleClick,
+    handleKeyDown,
+    handleMouseMove,
+  } = _useCallbacks({
+    handleClick: (e: MouseEvent) => {
+      // Handler has access to current props/state via closure
+      if (data.length > 0) {
+        onAction?.(data[0]);
+      }
+    },
+    handleKeyDown: (e: KeyboardEvent) => {
+      // Another handler with prop dependencies
+      console.log('Key pressed:', e.key);
+    },
+    handleMouseMove: (e: MouseEvent) => {
+      // Handler can access refs
+      if (ref.current?.contains(e.target as Node)) {
+        // Do something
+      }
+    },
+  });
+
+  // 2. Register listeners with empty dependency array
+  useEffect(() => {
+    doc.addEventListener('click', handleClick);
+    doc.addEventListener('keydown', handleKeyDown);
+    doc.addEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      doc.removeEventListener('click', handleClick);
+      doc.removeEventListener('keydown', handleKeyDown);
+      doc.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []); // Empty deps - _useCallbacks handles updates
+
+  return <div ref={ref}>Content</div>;
+};
+```
+
+#### Key Points
+- **Use `_useCallbacks`** to define event handlers that need access to current props/state
+- **Handlers automatically update** - `_useCallbacks` manages dependencies internally
+- **useEffect with empty deps** - Register listeners once, they always call latest handler version
+- **Always clean up** - Return cleanup function from useEffect to remove listeners
+- **Document-level listeners** - Use `useDocument()` from `frosty/web` for document events
+- **Ref access in handlers** - Handlers can safely access refs without causing re-registration
+
+#### Why This Pattern?
+- **Prevents listener thrashing** - Listeners aren't removed/re-added on every render
+- **Always current** - Handlers have access to latest props/state without re-registration
+- **Memory safe** - Cleanup function ensures no listener leaks
+- **Type-safe** - Full TypeScript support for event types
+
+#### Real Example
+See [src/components/datasheet/index.tsx](src/components/datasheet/index.tsx) for a complete implementation:
+```tsx
+const {
+  handleMouseDown,
+  handleMouseUp,
+  handleCopy,
+  handlePaste,
+  handleKeyDown,
+} = _useCallbacks({
+  handleMouseDown: (e: MouseEvent) => {
+    setState(currentState => {
+      // Access latest state via functional update
+      if (!_.isNil(currentState.editing)) {
+        // Complex logic with current state
+      }
+      return newState;
+    });
+  },
+  // ... more handlers
+});
+
+useEffect(() => {
+  doc.addEventListener('mousedown', handleMouseDown);
+  doc.addEventListener('mouseup', handleMouseUp);
+  doc.addEventListener('copy', handleCopy);
+  doc.addEventListener('paste', handlePaste);
+  doc.addEventListener('keydown', handleKeyDown);
+  
+  return () => {
+    doc.removeEventListener('mousedown', handleMouseDown);
+    doc.removeEventListener('mouseup', handleMouseUp);
+    doc.removeEventListener('copy', handleCopy);
+    doc.removeEventListener('paste', handlePaste);
+    doc.removeEventListener('keydown', handleKeyDown);
+  };
+}, []); // Handlers update automatically via _useCallbacks
+```
+
+#### When NOT to Use This Pattern
+- **Simple inline handlers** - Use regular inline functions for onClick, onChange, etc.
+- **Direct element events** - For events on JSX elements, use inline handlers
+- **Single-use callbacks** - Use `useCallback` for memoizing individual callbacks
+
+This pattern is specifically for:
+- Document-level or window-level event listeners
+- Event listeners that need to be registered once but access changing data
+- Complex event handling logic that needs current state/props
+
 ### Proto.io Integration
 - Dashboard requires `ProtoClient` as prop: `<Dashboard proto={protoClient} />`
 - Schema fetched asynchronously via `proto.schema({ master: true })`
@@ -491,6 +610,7 @@ This approach keeps all styling in JavaScript/TypeScript, maintains type safety,
 11. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
 12. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
 13. **StyleProvider maintenance** - When modifying or removing menu components, always check StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) and remove any unused style calculations. Dead code in style providers creates unnecessary performance overhead and maintenance burden.
+14. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
@@ -500,5 +620,6 @@ This approach keeps all styling in JavaScript/TypeScript, maintains type safety,
 - [src/components/spinner/index.tsx](src/components/spinner/index.tsx) - Reusable spinner component (example of inline keyframes)
 - [src/components/router/index.tsx](src/components/router/index.tsx) - Custom router implementation
 - [src/components/menu/index.tsx](src/components/menu/index.tsx) - Dynamic menu from schema
+- [src/components/datasheet/index.tsx](src/components/datasheet/index.tsx) - DataSheet component (example of _useCallbacks + useEffect pattern for event listeners)
 - [test/server.ts](test/server.ts) - Example proto.io service setup
 - [rollup.config.mjs](rollup.config.mjs) - Build configuration
