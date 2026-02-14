@@ -140,6 +140,7 @@ export const BrowserPage = () => {
           }}
         >
           {schema && <DataSheet
+            key={className}
             data={resource}
             columns={_.keys(schema.fields)}
             columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
