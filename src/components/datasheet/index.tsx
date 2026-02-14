@@ -43,6 +43,7 @@ export const DataSheet = <T extends object>({
     <DatasheetContext value={value}>
       <table>
         <thead>
+          {rowNumbers && <th></th>}
           {_.map(columns, (column, index) => (
             <DataSheetHeader key={index} column={column} />
           ))}
@@ -50,6 +51,7 @@ export const DataSheet = <T extends object>({
         <tbody>
           {_.map(data, (row, rowIndex) => (
             <tr key={rowIndex}>
+              {rowNumbers && <td>{(startRowNumber || 1) + rowIndex}</td>}
               {_.map(columns, (column, columnIndex) => (
                 <DataSheetCell
                   key={columnIndex}
