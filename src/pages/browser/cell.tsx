@@ -63,6 +63,7 @@ export const TableCell = ({
 }: TableCellProps) => {
   const theme = useTheme();
   const field = schema.fields[column];
+  const isSecure = schema.secureFields?.includes(column);
   const type = _.isString(field) ? field : field.type;
 
   const cellStyle = {
@@ -169,8 +170,12 @@ export const TableCell = ({
   }
 
   // Display mode
+  if (isSecure) {
+    return <div style={cellStyle}>(hidden)</div>;
+  }
+
   if (_.isNil(value)) {
-    return <div style={cellStyle}>null</div>;
+    return <div style={cellStyle}>(null)</div>;
   } else {
     switch (type) {
       case 'string':
