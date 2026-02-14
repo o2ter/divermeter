@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { Column, DatasheetProps } from './types';
-import { useMemo, useState, useEffect, useRef, useCallback } from 'frosty';
+import { useMemo, useState, useEffect, useRef, _useCallbacks } from 'frosty';
 import { useDocument } from 'frosty/web';
 import { DatasheetStateProvider, useDatasheetContext, selectionKeys } from './context';
 import { DataSheetHeader } from './table/header';
@@ -85,9 +85,11 @@ const DataSheetTable = <T extends object, C extends Column>({
     extraData,
   }), [data.length, columns.length, extraData]);
 
-  // Handle clicks outside the table to clear selection
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
+  const {
+    handleMouseDown,
+    handleMouseUp,
+  } = _useCallbacks({
+    handleMouseDown: (e: MouseEvent) => {
       // Use functional setState to always get latest state
       setState(currentState => {
         if (!_.isNil(currentState.editing)) {
@@ -107,9 +109,8 @@ const DataSheetTable = <T extends object, C extends Column>({
         }
         return currentState;
       });
-    };
-
-    const handleMouseUp = (e: MouseEvent) => {
+    },
+    handleMouseUp: (e: MouseEvent) => {
       setState(currentState => {
         if (!_.isEmpty((currentState as any).selectingRows)) {
           return {
@@ -124,49 +125,54 @@ const DataSheetTable = <T extends object, C extends Column>({
         }
         return currentState;
       });
-    };
+    },
+  });
 
-    if (!doc) return;
+  // Handle clicks outside the table to clear selection
+  useEffect(() => {
     doc.addEventListener('mousedown', handleMouseDown);
     doc.addEventListener('mouseup', handleMouseUp);
     return () => {
       doc.removeEventListener('mousedown', handleMouseDown);
       doc.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [setState, onEndEditing, doc]);
+  }, []);
 
-  // Clipboard and keyboard handling
-  useEffect(() => {
-    const encodeClipboard = (e: ClipboardEvent | KeyboardEvent, clipboardData: any[][]) => {
-      const _encoders = {
-        ...defaultEncoders,
-        ...encoders ?? {},
-      };
-      if ('clipboardData' in e && e.clipboardData) {
-        for (const [format, encoder] of _.toPairs(_encoders)) {
-          const result = encoder(clipboardData);
-          if (typeof result === 'string') {
-            e.clipboardData.setData(format, result);
-          }
-        }
-      } else if (navigator.clipboard && navigator.clipboard.write) {
-        const items: Record<string, Blob> = {};
-        for (const [format, encoder] of _.toPairs(_encoders)) {
-          const result = encoder(clipboardData);
-          if (typeof result === 'string') {
-            items[format] = new Blob([result], { type: format });
-          } else if (result && typeof result === 'object' && 'size' in result) {
-            items[format] = result as Blob;
-          }
-        }
-        navigator.clipboard.write([new ClipboardItem(items)]);
-      }
-    }
-
-    const handleCopy = (e: ClipboardEvent) => {
+  const {
+    handleCopy,
+    handlePaste,
+    handleKeyDown,
+  } = _useCallbacks({
+    handleCopy: (e: ClipboardEvent) => {
       if (!allowSelection) return;
       const selectedRows = state.selectedRows?.sort().filter(x => x < data.length) ?? [];
       const columnKeys = _.map(columns, col => _.isString(col) ? col : col.key);
+
+      const encodeClipboard = (e: ClipboardEvent | KeyboardEvent, clipboardData: any[][]) => {
+        const _encoders = {
+          ...defaultEncoders,
+          ...encoders ?? {},
+        };
+        if ('clipboardData' in e && e.clipboardData) {
+          for (const [format, encoder] of _.toPairs(_encoders)) {
+            const result = encoder(clipboardData);
+            if (typeof result === 'string') {
+              e.clipboardData.setData(format, result);
+            }
+          }
+        } else if (navigator.clipboard && navigator.clipboard.write) {
+          const items: Record<string, Blob> = {};
+          for (const [format, encoder] of _.toPairs(_encoders)) {
+            const result = encoder(clipboardData);
+            if (typeof result === 'string') {
+              items[format] = new Blob([result], { type: format });
+            } else if (result && typeof result === 'object' && 'size' in result) {
+              items[format] = result as Blob;
+            }
+          }
+          navigator.clipboard.write([new ClipboardItem(items)]);
+        }
+      };
 
       if (!_.isEmpty(selectedRows)) {
         e.preventDefault();
@@ -193,9 +199,8 @@ const DataSheetTable = <T extends object, C extends Column>({
           encodeClipboard(e, _data);
         }
       }
-    }
-
-    const handlePaste = (e: ClipboardEvent) => {
+    },
+    handlePaste: (e: ClipboardEvent) => {
       if (!allowSelection) return;
       const selectedRows = state.selectedRows?.sort() ?? [];
       const clipboard = e.clipboardData && !_.isEmpty(e.clipboardData.types) ? e.clipboardData : navigator.clipboard;
@@ -208,10 +213,35 @@ const DataSheetTable = <T extends object, C extends Column>({
         e.preventDefault();
         if (_.isFunction(onPasteCells)) onPasteCells(state.selectedCells, clipboard);
       }
-    }
-
-    const handleKeyDown = (e: KeyboardEvent) => {
+    },
+    handleKeyDown: (e: KeyboardEvent) => {
       if (!allowSelection) return;
+
+      const encodeClipboard = (e: ClipboardEvent | KeyboardEvent, clipboardData: any[][]) => {
+        const _encoders = {
+          ...defaultEncoders,
+          ...encoders ?? {},
+        };
+        if ('clipboardData' in e && e.clipboardData) {
+          for (const [format, encoder] of _.toPairs(_encoders)) {
+            const result = encoder(clipboardData);
+            if (typeof result === 'string') {
+              e.clipboardData.setData(format, result);
+            }
+          }
+        } else if (navigator.clipboard && navigator.clipboard.write) {
+          const items: Record<string, Blob> = {};
+          for (const [format, encoder] of _.toPairs(_encoders)) {
+            const result = encoder(clipboardData);
+            if (typeof result === 'string') {
+              items[format] = new Blob([result], { type: format });
+            } else if (result && typeof result === 'object' && 'size' in result) {
+              items[format] = result as Blob;
+            }
+          }
+          navigator.clipboard.write([new ClipboardItem(items)]);
+        }
+      };
 
       // Handle copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
@@ -272,9 +302,11 @@ const DataSheetTable = <T extends object, C extends Column>({
           if (_.isFunction(onDeleteCells)) onDeleteCells(state.selectedCells);
         }
       }
-    };
+    },
+  });
 
-    if (!doc) return;
+  // Clipboard and keyboard handling
+  useEffect(() => {
     doc.addEventListener('copy', handleCopy);
     doc.addEventListener('paste', handlePaste);
     doc.addEventListener('keydown', handleKeyDown);
@@ -283,7 +315,7 @@ const DataSheetTable = <T extends object, C extends Column>({
       doc.removeEventListener('paste', handlePaste);
       doc.removeEventListener('keydown', handleKeyDown);
     };
-  }, [state.selectedRows, state.selectedCells, dataSignature, allowSelection, encodeValue, encoders, onCopyRows, onCopyCells, onPasteRows, onPasteCells, onDeleteRows, onDeleteCells, doc]);
+  }, []);
 
   return (
     <table
