@@ -35,7 +35,7 @@ export const DataSheet = <T extends object>({
   columns,
   rowNumbers,
   startRowNumber,
-  ...props
+  renderItem,
 }: DatasheetProps<T>) => {
   const [state, setState] = useState<DataSheetState>({});
   const value = useMemo(() => ({ state, setState }), [state]);
@@ -51,7 +51,14 @@ export const DataSheet = <T extends object>({
           {_.map(data, (row, rowIndex) => (
             <tr key={rowIndex}>
               {_.map(columns, (column, columnIndex) => (
-                <DataSheetCell key={columnIndex} data={row} column={column} />
+                <DataSheetCell
+                  key={columnIndex}
+                  data={row}
+                  column={column}
+                  rowIdx={rowIndex}
+                  columnIdx={columnIndex}
+                  renderItem={renderItem}
+                />
               ))}
             </tr>
           ))}

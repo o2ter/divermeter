@@ -29,8 +29,11 @@ import { ElementNode, ExtendedCSSProperties, PropsWithChildren, StyleProp } from
 export type Position = { row: number; col: number; };
 export type Range<T> = { start: T; end: T; };
 
-export type TableCellItemProps<T> = {
-  item?: T;
+export type Column<T extends object> = Extract<keyof T, string> | { key: Extract<keyof T, string>; label: ElementNode; };
+
+export type TableCellItemProps<T extends object> = {
+  item: T;
+  column: Column<T>;
   rowIdx: number;
   columnIdx: number;
   isEditing: boolean;
@@ -49,7 +52,7 @@ type DataSheetStyleProps = {
 
 export type DatasheetProps<T extends object> = DataSheetStyleProps & {
   data: T[];
-  columns: (Extract<keyof T, string> | { key: keyof T; label: ElementNode; })[];
+  columns: Column<T>[];
   encoders?: Record<string, (data: any[][]) => string | Blob | PromiseLike<string | Blob>>;
   encodeValue?: (data: T[keyof T]) => any;
   allowSelection?: boolean;
@@ -62,7 +65,7 @@ export type DatasheetProps<T extends object> = DataSheetStyleProps & {
   stickyRowNumbers?: boolean;
   showEmptyLastRow?: boolean;
   highlightColor?: string;
-  renderItem: (x: Omit<TableCellItemProps<T[keyof T]>, 'renderItem'>) => ElementNode;
+  renderItem: (x: Omit<TableCellItemProps<T>, 'renderItem'>) => ElementNode;
   onColumnWidthChange?: (col: number, width: number) => void;
   onSelectionChanged?: VoidFunction;
   onDeleteRows?: (rows: number[]) => void;

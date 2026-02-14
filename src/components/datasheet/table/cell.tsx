@@ -24,19 +24,32 @@
 //
 
 import _ from 'lodash';
-import { DatasheetProps } from '../types';
+import { Column, DatasheetProps } from '../types';
 
 type DataSheetCellProps<T extends object> = {
   data: T;
-  column: DatasheetProps<T>['columns'][number];
+  rowIdx: number;
+  columnIdx: number;
+  column: Column<T>;
+  renderItem: DatasheetProps<T>['renderItem'];
 };
 
 export const DataSheetCell = <T extends object>({
-  data,
+  data: item,
   column,
+  rowIdx,
+  columnIdx,
+  renderItem,
 }: DataSheetCellProps<T>) => {
   return (
     <td>
+      {renderItem({
+        item,
+        column,
+        rowIdx,
+        columnIdx,
+        isEditing: false,
+      })}
     </td>
   )
 };

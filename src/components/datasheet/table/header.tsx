@@ -24,10 +24,10 @@
 //
 
 import _ from 'lodash';
-import { DatasheetProps } from '../types';
+import { Column } from '../types';
 
 type DataSheetHeaderProps<T extends object> = {
-  column: DatasheetProps<T>['columns'][number];
+  column: Column<T>;
 };
 
 export const DataSheetHeader = <T extends object>({
