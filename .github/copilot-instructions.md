@@ -1,7 +1,7 @@
-# DiVerMeter - Copilot Instructions
+# Divermeter - Copilot Instructions
 
 ## Project Overview
-DiVerMeter is a **Frosty-based** dashboard library for proto.io (backend-as-a-service). It provides an admin UI for browsing database schemas, managing classes, and viewing configurations. Built as a distributable npm package.
+Divermeter is a **Frosty-based** dashboard library for proto.io (backend-as-a-service). It provides an admin UI for browsing database schemas, managing classes, and viewing configurations. Built as a distributable npm package.
 
 **CRITICAL: This is NOT a React project.** Do not import from 'react' or use React patterns.
 
@@ -594,6 +594,148 @@ This pattern is specifically for:
 - Schema fetched asynchronously via `proto.schema({ master: true })`
 - Menu dynamically lists schemas from proto backend
 - Pages route to `/classes/:schema` for browsing specific schemas
+
+## Code Quality & Maintenance Guidelines
+
+### Using StyleProvider for Component Styles
+
+**CRITICAL: When creating or modifying components with styles, always use the StyleProvider system.**
+
+#### When to Add Styles to StyleProvider
+Add component-specific styles to StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) when:
+- Component needs multiple derived colors from the theme
+- Styles are used across multiple parts of a component
+- Complex color calculations are required (mixing, opacity, luminance-based logic)
+- Component will be reused and needs consistent theming
+
+#### StyleProvider Pattern
+```tsx
+// In src/components/style/index.tsx
+const createStyles = (theme: ReturnType<typeof useTheme>) => {
+  // Calculate component-specific styles
+  const myComponentBg = mixColor(theme.colors.primary, '#F6F8FF', 0.05);
+  const myComponentBorder = mixColor(theme.colors.primary, '#DDD', 0.1);
+  
+  return {
+    // ... other styles
+    myComponent: {
+      background: myComponentBg,
+      borderColor: myComponentBorder,
+      hoverBackground: withOpacity(theme.colors.primary, 0.1),
+    },
+  };
+};
+
+// In your component
+import { useStyle } from '../style';
+
+const MyComponent = () => {
+  const style = useStyle();
+  
+  return (
+    <div style={{
+      backgroundColor: style.myComponent.background,
+      borderColor: style.myComponent.borderColor,
+      '&:hover': {
+        backgroundColor: style.myComponent.hoverBackground,
+      },
+    }}>
+      Content
+    </div>
+  );
+};
+```
+
+#### Benefits of StyleProvider
+- **Performance**: Styles calculated once, cached, and reused
+- **Consistency**: All components use same color derivation logic
+- **Maintainability**: Theme changes automatically propagate to all components
+- **Type Safety**: Full TypeScript support for style properties
+
+### Code Cleanliness Checklist
+
+Before submitting code, verify:
+
+#### 1. No Hardcoded Values
+- [ ] No hardcoded colors (e.g., `'#FF5722'`, `'white'`, `'rgba(0,0,0,0.5)'`)
+- [ ] No hardcoded spacing values (use `theme.spacing.*`)
+- [ ] No hardcoded font sizes (use `theme.fontSize.*`)
+- [ ] No magic numbers in styles
+
+#### 2. No Unused Code
+- [ ] Remove unused imports (e.g., `useMemo`, `useState` if not used)
+- [ ] Remove unused variables and constants
+- [ ] Remove commented-out code
+- [ ] Remove debug console.log statements
+
+#### 3. Consistent Style Pattern
+- [ ] All components with styles import and call `useTheme()`
+- [ ] Components with complex styles use `useStyle()` and StyleProvider
+- [ ] Color manipulations use `@o2ter/colors.js` functions
+- [ ] Pseudo-selectors (`&:hover`) used instead of manual event handlers for styling
+
+#### 4. StyleProvider Maintenance
+When modifying or removing components:
+- [ ] Check if their styles in StyleProvider are still being used
+- [ ] Remove unused style properties to prevent bloat
+- [ ] Update style calculations if theme dependencies change
+- [ ] Keep StyleProvider lean with only actively used styles
+
+### Example: Converting Hardcoded Styles to StyleProvider
+
+**Before (Hardcoded):**
+```tsx
+const MyComponent = () => {
+  const borderColor = mixColor(theme.colors.primary, '#DDD', 0.1);
+  const bg = 'white';
+  const hoverBg = 'rgba(33, 133, 208, 0.15)';
+  
+  return <div style={{ borderColor, backgroundColor: bg }} />;
+};
+```
+
+**After (Using StyleProvider):**
+```tsx
+// In src/components/style/index.tsx
+const myComponentBorder = mixColor(theme.colors.primary, '#DDD', 0.1);
+const myComponentBg = theme.colorContrast(theme.colors.primary) === '#ffffff' 
+  ? '#ffffff' 
+  : mixColor(theme.colors.primary, '#ffffff', 0.02);
+const myComponentHoverBg = withOpacity(theme.colors.tint, 0.15);
+
+return {
+  myComponent: {
+    borderColor: myComponentBorder,
+    bg: myComponentBg,
+    hoverBg: myComponentHoverBg,
+  },
+};
+
+// In component
+import { useStyle } from '../style';
+
+const MyComponent = () => {
+  const style = useStyle();
+  
+  return (
+    <div style={{
+      borderColor: style.myComponent.borderColor,
+      backgroundColor: style.myComponent.bg,
+      '&:hover': {
+        backgroundColor: style.myComponent.hoverBg,
+      },
+    }} />
+  );
+};
+```
+
+### Refactoring Workflow
+1. **Identify hardcoded values** - Search for hex colors, rgba, hardcoded numbers
+2. **Add to StyleProvider** - Calculate derived colors in `createStyles()`
+3. **Update components** - Replace hardcoded values with `style.*` references
+4. **Remove unused imports** - Clean up color manipulation imports from components
+5. **Test** - Verify no compilation errors and visual consistency
+6. **Verify** - Check that all components respond to theme changes
 
 ## Common Pitfalls
 
