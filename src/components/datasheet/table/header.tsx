@@ -1,5 +1,5 @@
 //
-//  table.tsx
+//  header.tsx
 //
 //  The MIT License
 //  Copyright (c) 2021 - 2026 O2ter Limited. All rights reserved.
@@ -24,16 +24,18 @@
 //
 
 import _ from 'lodash';
-import { DatasheetProps } from './types';
+import { DatasheetProps } from '../types';
 
+type DataSheetHeaderProps<T extends object> = {
+  column: DatasheetProps<T>['columns'][number];
+};
 
-export const Table = <T extends object>({
-  ...props
-}: DatasheetProps<T>) => {
-
+export const DataSheetHeader = <T extends object>({
+  column,
+}: DataSheetHeaderProps<T>) => {
   return (
-    <table>
-      
-    </table>
-  );
+    <th>
+      {_.isString(column) ? column : column.label}
+    </th>
+  )
 };

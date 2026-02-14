@@ -1,5 +1,5 @@
 //
-//  index.tsx
+//  cell.tsx
 //
 //  The MIT License
 //  Copyright (c) 2021 - 2026 O2ter Limited. All rights reserved.
@@ -24,31 +24,4 @@
 //
 
 import _ from 'lodash';
-import { DatasheetProps } from './types';
-import { useMemo, useState } from 'frosty';
-import { DatasheetContext, DataSheetState } from './context';
-import { DataSheetHeader } from './table/header';
-
-export const DataSheet = <T extends object>({
-  data,
-  columns,
-  rowNumbers,
-  ...props
-}: DatasheetProps<T>) => {
-  const [state, setState] = useState<DataSheetState>({});
-  const value = useMemo(() => ({ state, setState }), [state]);
-  return (
-    <DatasheetContext value={value}>
-      <table>
-        <thead>
-          {_.map(columns, (column, index) => (
-            <DataSheetHeader key={index} column={column} />
-          ))}
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
-    </DatasheetContext>
-  )
-};
-
+import { DatasheetProps } from '../types';
