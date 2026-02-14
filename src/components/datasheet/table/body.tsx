@@ -86,6 +86,9 @@ export const DataSheetBody = <T extends object, C extends Column>({
   }, [setState]);
 
   const handleMouseOver = useCallback((e: MouseEvent) => {
+    // Only continue selection if the primary mouse button is pressed
+    if (e.buttons !== 1) return;
+
     const element = e.target as HTMLElement;
     const cell = element.closest('td');
     if (_.isNil(cell)) return;
