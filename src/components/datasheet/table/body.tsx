@@ -35,7 +35,6 @@ import { useCallback } from 'frosty';
 type DataSheetBodyProps<T extends object, C extends Column> = {
   data: T[];
   columns: C[];
-  rowNumbers?: boolean;
   startRowNumber?: number;
   renderItem: DatasheetProps<T, C>['renderItem'];
   allowSelection?: boolean;
@@ -48,8 +47,7 @@ type DataSheetBodyProps<T extends object, C extends Column> = {
 export const DataSheetBody = <T extends object, C extends Column>({
   data,
   columns,
-  rowNumbers,
-  startRowNumber = 1,
+  startRowNumber,
   renderItem,
   allowSelection,
   allowEditForCell,
@@ -130,7 +128,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
     >
       {_.map(data, (items, row) => (
         <tr key={row}>
-          {rowNumbers === true && (
+          {!_.isNil(startRowNumber) && (
             <RowNumberCell
               row={row}
               highlightColor={highlightColor}
@@ -149,7 +147,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
                 col={col}
                 highlightColor={highlightColor}
                 allowEditForCell={allowEditForCell}
-                rowNumbers={rowNumbers}
+                rowNumbers={!_.isNil(startRowNumber)}
               >
                 <span style={{ fontFamily: 'monospace' }}>{' '}</span>
                 <div
@@ -179,7 +177,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
       ))}
       {showEmptyLastRow === true && (
         <tr>
-          {rowNumbers === true && (
+          {!_.isNil(startRowNumber) && (
             <RowNumberCell
               row={data.length}
               highlightColor={highlightColor}
@@ -193,7 +191,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
               col={col}
               highlightColor={highlightColor}
               allowEditForCell={false}
-              rowNumbers={rowNumbers}
+              rowNumbers={!_.isNil(startRowNumber)}
             >
               <span style={{ fontFamily: 'monospace' }}>{' '}</span>
             </BodyCell>

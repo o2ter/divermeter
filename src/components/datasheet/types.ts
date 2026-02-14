@@ -47,7 +47,6 @@ export type DatasheetProps<T extends object, C extends Column> = {
   allowEditForCell?: boolean | ((row: number, col: number) => boolean);
   columnWidth?: number[];
   columnMinWidth?: number;
-  rowNumbers?: boolean;
   startRowNumber?: number;
   stickyHeader?: boolean;
   stickyRowNumbers?: boolean;

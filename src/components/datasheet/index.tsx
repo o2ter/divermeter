@@ -57,8 +57,7 @@ const DataSheetTable = <T extends object, C extends Column>({
   allowEditForCell = true,
   columnWidth,
   columnMinWidth = 64,
-  rowNumbers = true,
-  startRowNumber = 1,
+  startRowNumber,
   stickyHeader = true,
   stickyRowNumbers = true,
   showEmptyLastRow,
@@ -339,7 +338,7 @@ const DataSheetTable = <T extends object, C extends Column>({
     >
       <DataSheetHeader
         columns={columns}
-        rowNumbers={rowNumbers}
+        rowNumbers={!_.isNil(startRowNumber)}
         stickyHeader={stickyHeader}
         stickyRowNumbers={stickyRowNumbers}
         columnWidth={columnWidth}
@@ -349,7 +348,6 @@ const DataSheetTable = <T extends object, C extends Column>({
       <DataSheetBody
         data={data}
         columns={columns}
-        rowNumbers={rowNumbers}
         startRowNumber={startRowNumber}
         renderItem={renderItem}
         allowSelection={allowSelection}
