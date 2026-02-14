@@ -102,11 +102,31 @@ const DataSheetTable = <T extends object, C extends Column>({
         if (!_.isNil(currentState.editing)) {
           // If we're editing and click is outside the editing cell, end editing
           const cell = (e.target as HTMLElement).closest('td');
+
+          // Check if we clicked outside the table or if we clicked a different cell
           if (!cell || !isChildNode(tableRef.current, e.target, doc)) {
+            // Clicked completely outside the table
             if (_.isFunction(onEndEditing)) {
               onEndEditing(currentState.editing.row, currentState.editing.col);
             }
             return _.omit(currentState, 'editing');
+          } else {
+            // Clicked within the table - check if it's a different cell
+            const clickedRow = cell.getAttribute('data-row');
+            const clickedCol = cell.getAttribute('data-col');
+
+            if (clickedRow !== null && clickedCol !== null) {
+              const row = parseInt(clickedRow, 10);
+              const col = parseInt(clickedCol, 10);
+
+              // If clicking a different cell, end editing
+              if (row !== currentState.editing.row || col !== currentState.editing.col) {
+                if (_.isFunction(onEndEditing)) {
+                  onEndEditing(currentState.editing.row, currentState.editing.col);
+                }
+                return _.omit(currentState, 'editing');
+              }
+            }
           }
         }
         if (!_.isEmpty((currentState as any).selectingRows) || !_.isEmpty((currentState as any).selectingCells)) {
