@@ -35,6 +35,7 @@ type BodyCellProps = PropsWithChildren<{
   rowNumbers?: boolean;
   highlightColor: string;
   allowEditForCell?: boolean | ((row: number, col: number) => boolean);
+  onStartEditing?: (row: number, col: number) => void;
 }>;
 
 export const BodyCell = ({
@@ -43,6 +44,7 @@ export const BodyCell = ({
   rowNumbers,
   highlightColor,
   allowEditForCell,
+  onStartEditing,
   children,
 }: BodyCellProps) => {
   const { state, setState, isRowSelected, isCellSelected, isCellEditing } = useDataSheetContext();
@@ -86,6 +88,9 @@ export const BodyCell = ({
   const handleDoubleClick = () => {
     if (allowEdit) {
       setState({ editing: { row, col } });
+      if (_.isFunction(onStartEditing)) {
+        onStartEditing(row, col);
+      }
     }
   };
 

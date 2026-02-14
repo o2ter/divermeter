@@ -42,6 +42,7 @@ type DataSheetBodyProps<T extends object, C extends Column> = {
   stickyRowNumbers?: boolean;
   showEmptyLastRow?: boolean;
   highlightColor: string;
+  onStartEditing?: (row: number, col: number) => void;
 };
 
 export const DataSheetBody = <T extends object, C extends Column>({
@@ -54,6 +55,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
   stickyRowNumbers,
   showEmptyLastRow,
   highlightColor,
+  onStartEditing,
 }: DataSheetBodyProps<T, C>) => {
   const { state, setState, isCellEditing } = useDataSheetContext();
   const theme = useTheme();
@@ -148,6 +150,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
                 highlightColor={highlightColor}
                 allowEditForCell={allowEditForCell}
                 rowNumbers={!_.isNil(startRowNumber)}
+                onStartEditing={onStartEditing}
               >
                 <span style={{
                   fontFamily: 'monospace',

@@ -380,6 +380,7 @@ const DataSheetTable = <T extends object, C extends Column>({
         stickyRowNumbers={stickyRowNumbers}
         showEmptyLastRow={showEmptyLastRow}
         highlightColor={effectiveHighlightColor}
+        onStartEditing={onStartEditing && ((row, col) => onStartEditing(row, col, handler))}
       />
     </table>
   );
