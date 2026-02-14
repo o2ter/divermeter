@@ -76,7 +76,7 @@ export const RowNumberCell = ({
   const selectedCellStyle = useMemo(() => ({
     ...stickyStyle,
     border: `1px double ${selectedBorderColor}`,
-    borderTop: row === 0 ? `1px double ${selectedBorderColor}` : 0,
+    borderTop: 0,
     backgroundColor: headerBg,
     minWidth: 50,
     width: 50,
