@@ -88,6 +88,9 @@ const DataSheetTable = <T extends object, C extends Column>({
   const {
     handleMouseDown,
     handleMouseUp,
+    handleCopy,
+    handlePaste,
+    handleKeyDown,
   } = _useCallbacks({
     handleMouseDown: (e: MouseEvent) => {
       // Use functional setState to always get latest state
@@ -126,23 +129,6 @@ const DataSheetTable = <T extends object, C extends Column>({
         return currentState;
       });
     },
-  });
-
-  // Handle clicks outside the table to clear selection
-  useEffect(() => {
-    doc.addEventListener('mousedown', handleMouseDown);
-    doc.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      doc.removeEventListener('mousedown', handleMouseDown);
-      doc.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, []);
-
-  const {
-    handleCopy,
-    handlePaste,
-    handleKeyDown,
-  } = _useCallbacks({
     handleCopy: (e: ClipboardEvent) => {
       if (!allowSelection) return;
       const selectedRows = state.selectedRows?.sort().filter(x => x < data.length) ?? [];
@@ -305,12 +291,16 @@ const DataSheetTable = <T extends object, C extends Column>({
     },
   });
 
-  // Clipboard and keyboard handling
+  // Register all event listeners
   useEffect(() => {
+    doc.addEventListener('mousedown', handleMouseDown);
+    doc.addEventListener('mouseup', handleMouseUp);
     doc.addEventListener('copy', handleCopy);
     doc.addEventListener('paste', handlePaste);
     doc.addEventListener('keydown', handleKeyDown);
     return () => {
+      doc.removeEventListener('mousedown', handleMouseDown);
+      doc.removeEventListener('mouseup', handleMouseUp);
       doc.removeEventListener('copy', handleCopy);
       doc.removeEventListener('paste', handlePaste);
       doc.removeEventListener('keydown', handleKeyDown);
