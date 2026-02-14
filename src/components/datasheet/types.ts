@@ -24,31 +24,21 @@
 //
 
 import _ from 'lodash';
-import { ElementNode, ExtendedCSSProperties, PropsWithChildren, StyleProp } from 'frosty';
+import { ElementNode, ExtendedCSSProperties } from 'frosty';
 
 export type Position = { row: number; col: number; };
 export type Range<T> = { start: T; end: T; };
 
 export type Column = string | { key: string; label: ElementNode; };
 
-type DataSheetStyleProps = {
-  style?: StyleProp<ExtendedCSSProperties>;
-  headerContainerStyle?: StyleProp<ExtendedCSSProperties>;
-  headerItemContainerStyle?: StyleProp<ExtendedCSSProperties>;
-  rowContainerStyle?: StyleProp<ExtendedCSSProperties>;
-  itemContainerStyle?: StyleProp<ExtendedCSSProperties>;
-  selectedItemContainerStyle?: StyleProp<ExtendedCSSProperties>;
-  contentContainerStyle?: StyleProp<ExtendedCSSProperties>;
-};
-
-export type DatasheetProps<T extends object, C extends Column> = DataSheetStyleProps & {
+export type DatasheetProps<T extends object, C extends Column> = {
   data: T[];
   columns: C[];
   encoders?: Record<string, (data: any[][]) => string | Blob | PromiseLike<string | Blob>>;
   encodeValue?: (data: T[keyof T]) => any;
   allowSelection?: boolean;
   allowEditForCell?: boolean | ((row: number, col: number) => boolean);
-  columnWidth: number[];
+  columnWidth?: number[];
   columnMinWidth?: number;
   rowNumbers?: boolean;
   startRowNumber?: number;
@@ -57,8 +47,10 @@ export type DatasheetProps<T extends object, C extends Column> = DataSheetStyleP
   showEmptyLastRow?: boolean;
   highlightColor?: string;
   renderItem: (x: {
-    item: T;
+    item: T[keyof T];
+    row: T;
     column: C;
+    columnKey: string;
     rowIdx: number;
     columnIdx: number;
     isEditing: boolean;

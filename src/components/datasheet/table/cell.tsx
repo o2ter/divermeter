@@ -24,36 +24,46 @@
 //
 
 import _ from 'lodash';
-import { Column, DatasheetProps } from '../types';
-import { useStyle } from '../../style';
+import { PropsWithChildren, useMemo } from 'frosty';
+import { useTheme } from '../../theme';
+import { mixColor, normalizeColor, rgba, getRed, getGreen, getBlue, toHexString } from '@o2ter/colors.js';
 
-type DataSheetCellProps<T extends object, C extends Column> = {
-  data: T;
-  rowIdx: number;
-  columnIdx: number;
-  column: C;
-  isEditing: boolean;
-  renderItem: DatasheetProps<T, C>['renderItem'];
-};
+type DataSheetCellProps = PropsWithChildren<{
+  selected?: boolean;
+  highlightColor: string;
+  isEditing?: boolean;
+  style?: any;
+  selectedStyle?: any;
+  'data-row'?: number;
+  'data-col'?: number;
+  onDoubleClick?: () => void;
+}>;
 
-export const DataSheetCell = <T extends object, C extends Column>({
-  data: item,
-  column,
-  rowIdx,
-  columnIdx,
+export const DataSheetCell = ({
+  style,
+  selectedStyle,
+  selected,
+  highlightColor,
   isEditing,
-  renderItem,
-}: DataSheetCellProps<T, C>) => {
-  const style = useStyle();
+  children,
+  ...props
+}: DataSheetCellProps) => {
+  const theme = useTheme();
+
+  const cellStyle = useMemo(() => ({
+    ...style,
+    zIndex: isEditing === true ? 10 : 0,
+    boxShadow: selected ? `inset 0 -100vh ${highlightColor}` : undefined,
+  }), [style, isEditing, selected, highlightColor]);
+
+  const finalStyle = selected ? { ...cellStyle, ...selectedStyle } : cellStyle;
+
   return (
-    <td>
-      {renderItem({
-        item,
-        column,
-        rowIdx,
-        columnIdx,
-        isEditing,
-      })}
+    <td
+      style={finalStyle}
+      {...props}
+    >
+      {children}
     </td>
-  )
+  );
 };

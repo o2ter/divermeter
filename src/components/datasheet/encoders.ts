@@ -1,5 +1,5 @@
 //
-//  context.ts
+//  encoders.ts
 //
 //  The MIT License
 //  Copyright (c) 2021 - 2026 O2ter Limited. All rights reserved.
@@ -24,25 +24,19 @@
 //
 
 import _ from 'lodash';
-import { createContext, SetStateAction, useContext } from 'frosty';
-import { DatasheetProps, Position, Range } from './types';
 
-export type DataSheetState = {
-  selectedCells?: Range<Position>;
-  selectedRows?: number[];
-  shiftKey?: boolean;
-  metaKey?: boolean;
-  editing?: Position;
+const encodeValue = (x: any) => {
+  if (_.isNil(x)) return '';
+  if (_.isNumber(x) || _.isBoolean(x) || _.isString(x)) return `${x}`;
+  if (_.isDate(x)) return x.toLocaleString();
+  return JSON.stringify(x);
+}
+
+const tsvFormatRows = (data: string[][]) => {
+  return _.map(data, row => row.join('\t')).join('\n');
+}
+
+export const defaultEncoders = {
+  'text/plain': (data: any[][]) => tsvFormatRows(_.map(data, row => _.map(row, val => encodeValue(val)))),
+  'application/json': (data: any[][]) => JSON.stringify(data),
 };
-
-type DatasheetContextType = {
-  state: DataSheetState;
-  setState: (dispatch: SetStateAction<DataSheetState>) => void;
-};
-
-export const DatasheetContext = createContext<DatasheetContextType>({
-  state: {},
-  setState: () => { },
-});
-
-export const useDatasheetContext = () => useContext(DatasheetContext);
