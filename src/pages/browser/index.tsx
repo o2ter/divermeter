@@ -81,7 +81,7 @@ export const BrowserPage = () => {
     <div>
       <div>Classes {className}</div>
       <div>
-        <DataSheet
+        {schema && <DataSheet
           data={resource}
           columns={_.keys(schema.fields)}
           columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
@@ -95,7 +95,7 @@ export const BrowserPage = () => {
               isEditing={isEditing}
             />
           )}
-        />
+        />}
       </div>
     </div>
   );
