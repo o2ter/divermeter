@@ -62,8 +62,6 @@ export const RowNumberCell = ({
     backgroundColor: headerBg,
     borderRightColor: isRowSelected(row) || isCellSelected(row, 0) ? selectedBorderColor : borderColor,
     borderBottomColor: isRowSelected(row) || isRowSelected(row + 1) ? selectedBorderColor : borderColor,
-    minWidth: 50,
-    width: 50,
     paddingLeft: theme.spacing.sm,
     paddingRight: theme.spacing.sm,
     fontSize: theme.fontSize.sm,

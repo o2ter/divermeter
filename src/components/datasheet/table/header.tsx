@@ -110,8 +110,6 @@ export const DataSheetHeader = <C extends Column>({
             border: `1px solid ${borderColor}`,
             backgroundColor: headerBg,
             borderBottomColor: isRowSelected(0) ? selectedBorderColor : borderColor,
-            minWidth: 50,
-            width: 50,
             paddingLeft: theme.spacing.sm,
             paddingRight: theme.spacing.sm,
             fontSize: theme.fontSize.sm,
