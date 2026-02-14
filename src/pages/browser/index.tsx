@@ -29,19 +29,19 @@ import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../p
 import { _useCallbacks, useMemo, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
 
+type TableCellProps = {
+  item: TObject;
+  column: string;
+  schema: TSchema;
+  isEditing: boolean;
+};
+
 const TableCell = ({
   item,
   column,
   schema,
   isEditing,
-  onUpdate,
-}: {
-  item: TObject;
-  column: string;
-  schema: TSchema;
-    isEditing: boolean;
-  onUpdate?: (value: any) => void;
-  }) => {
+}: TableCellProps) => {
   const field = schema.fields[column];
   const type = _.isString(field) ? field : field.type;
 
@@ -142,9 +142,11 @@ export const BrowserPage = () => {
                 column={columnKey}
                 schema={schema}
                 isEditing={isEditing}
-                onUpdate={(value) => handleUpdateItem(row, columnKey, value)}
               />
             )}
+            onEndEditing={(row, col) => {
+
+            }}
           />}
         </div>
       </div>
