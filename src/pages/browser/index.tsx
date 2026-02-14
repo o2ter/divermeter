@@ -29,7 +29,17 @@ import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../p
 import { useMemo, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
 
-const TableCell = ({ item, column, schema }: { item: TObject; column: string; schema: TSchema }) => {
+const TableCell = ({
+  item,
+  column,
+  schema,
+  isEditing,
+}: {
+  item: TObject;
+  column: string;
+  schema: TSchema;
+  isEditing: boolean;
+}) => {
   return <div></div>;
 };
 
@@ -64,11 +74,12 @@ export const BrowserPage = () => {
           data={resource}
           columns={_.keys(schema.fields)}
           columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
-          renderItem={({ item, column }) => (
+          renderItem={({ item, column, isEditing }) => (
             <TableCell
               item={item}
               column={column}
               schema={schema}
+              isEditing={isEditing}
             />
           )}
         />
