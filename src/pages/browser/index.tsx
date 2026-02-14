@@ -85,6 +85,8 @@ export const BrowserPage = () => {
           data={resource}
           columns={_.keys(schema.fields)}
           columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
+          rowNumbers
+          startRowNumber={offset}
           renderItem={({ item, column, isEditing }) => (
             <TableCell
               item={item}
