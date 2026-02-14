@@ -1,5 +1,5 @@
 //
-//  index.tsx
+//  table.tsx
 //
 //  The MIT License
 //  Copyright (c) 2021 - 2026 O2ter Limited. All rights reserved.
@@ -25,19 +25,15 @@
 
 import _ from 'lodash';
 import { DatasheetProps } from './types';
-import { useMemo, useState } from 'frosty';
-import { DatasheetContext, DataSheetState } from './context';
-import { Table } from './table';
 
-export const DataSheet = <T extends object>({
+
+export const Table = <T extends object>({
   ...props
 }: DatasheetProps<T>) => {
-  const [state, setState] = useState<DataSheetState>({});
-  const value = useMemo(() => ({ state, setState }), [state]);
-  return (
-    <DatasheetContext value={value}>
-      <Table {...props} />
-    </DatasheetContext>
-  )
-};
 
+  return (
+    <table>
+      
+    </table>
+  );
+};

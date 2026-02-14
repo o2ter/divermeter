@@ -47,7 +47,7 @@ type DataSheetStyleProps = {
   contentContainerStyle?: StyleProp<ExtendedCSSProperties>;
 };
 
-export type DatasheetProps<T extends object> = PropsWithChildren<DataSheetStyleProps & {
+export type DatasheetProps<T extends object> = DataSheetStyleProps & {
   data: T[];
   columns: (Extract<keyof T, string> | { key: keyof T; label: ElementNode; })[];
   encoders?: Record<string, (data: any[][]) => string | Blob | PromiseLike<string | Blob>>;
@@ -72,4 +72,4 @@ export type DatasheetProps<T extends object> = PropsWithChildren<DataSheetStyleP
   onPasteRows?: (rows: number[], clipboard: DataTransfer | Clipboard) => void;
   onPasteCells?: (cells: Range<Position>, clipboard: DataTransfer | Clipboard) => void;
   onEndEditing?: (row: number, col: number) => void;
-}>;
+};
