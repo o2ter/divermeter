@@ -124,18 +124,29 @@ const DataSheetTable = <T extends object, C extends Column>({
     },
     handleMouseUp: (e: MouseEvent) => {
       setState(currentState => {
+        let hasSelectionChanged = false;
+        let newState = currentState;
+
         if (!_.isEmpty((currentState as any).selectingRows)) {
-          return {
+          hasSelectionChanged = true;
+          newState = {
             ..._.omit(currentState, ...selectionKeys, 'editing'),
             selectedRows: (currentState as any).selectingRows,
           };
         } else if (!_.isEmpty((currentState as any)._selectingCells)) {
-          return {
+          hasSelectionChanged = true;
+          newState = {
             ..._.omit(currentState, ...selectionKeys, 'editing'),
             selectedCells: (currentState as any)._selectingCells,
           };
         }
-        return currentState;
+
+        if (hasSelectionChanged && _.isFunction(onSelectionChanged)) {
+          // Call after state update in next tick
+          setTimeout(() => onSelectionChanged(), 0);
+        }
+
+        return newState;
       });
     },
     handleCopy: (e: ClipboardEvent) => {
@@ -334,6 +345,7 @@ const DataSheetTable = <T extends object, C extends Column>({
         stickyRowNumbers={stickyRowNumbers}
         columnWidth={columnWidth}
         columnMinWidth={columnMinWidth}
+        onColumnWidthChange={onColumnWidthChange}
       />
       <DataSheetBody
         data={data}

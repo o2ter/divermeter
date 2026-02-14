@@ -36,6 +36,7 @@ type DataSheetHeaderProps<T extends object, C extends Column> = {
   stickyRowNumbers?: boolean;
   columnWidth?: number[];
   columnMinWidth?: number;
+  onColumnWidthChange?: (col: number, width: number) => void;
 };
 
 export const DataSheetHeader = <T extends object, C extends Column>({
@@ -45,6 +46,7 @@ export const DataSheetHeader = <T extends object, C extends Column>({
   stickyRowNumbers,
   columnWidth,
   columnMinWidth = 64,
+  onColumnWidthChange,
 }: DataSheetHeaderProps<T, C>) => {
   const { state, isRowSelected, isCellSelected } = useDatasheetContext();
   const theme = useTheme();
