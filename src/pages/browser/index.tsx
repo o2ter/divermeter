@@ -42,17 +42,26 @@ const TableCell = ({
   }) => {
   const field = schema.fields[column];
   const type = _.isString(field) ? field : field.type;
+
+  const cellStyle = {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  } as const;
+
   switch (type) {
     case 'string':
-      return <div>{item.get(column)}</div>;
+      return <div style={cellStyle}>{item.get(column)}</div>;
     case 'number':
-      return <div>{item.get(column)}</div>;
+      return <div style={cellStyle}>{item.get(column)}</div>;
+    case 'decimal':
+      return <div style={cellStyle}>{item.get(column)?.toString()}</div>;
     case 'boolean':
-      return <div>{item.get(column) ? 'true' : 'false'}</div>;
+      return <div style={cellStyle}>{item.get(column) ? 'true' : 'false'}</div>;
     case 'date':
-      return <div>{item.get(column)?.toLocaleString()}</div>;
+      return <div style={cellStyle}>{item.get(column)?.toLocaleString()}</div>;
     default:
-      return <div>{JSON.stringify(item.get(column))}</div>;
+      return <div style={cellStyle}>{JSON.stringify(item.get(column))}</div>;
   }
 };
 
