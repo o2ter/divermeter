@@ -5,6 +5,53 @@ Divermeter is a **Frosty-based** dashboard library for proto.io (backend-as-a-se
 
 **CRITICAL: This is NOT a React project.** Do not import from 'react' or use React patterns.
 
+## General Development Principles
+
+### Always Verify Library APIs - Never Assume
+
+**CRITICAL: Always check the actual documentation and implementation of libraries before using them. Do not make assumptions based on similar libraries.**
+
+Key guidelines:
+
+1. **Different libraries have different APIs** - Even if two libraries serve similar purposes (e.g., Frosty vs React), their APIs can be fundamentally different.
+
+2. **Check before implementing**:
+   - Read the library's documentation
+   - Look at existing usage patterns in the codebase
+   - Search for similar implementations in the project
+   - When in doubt, examine the library's source code or type definitions
+
+3. **Common assumption pitfalls**:
+   - **Frosty ≠ React**: While both use JSX, their context APIs, hook behaviors, and patterns differ significantly
+   - **Router implementations**: Custom routers (like ours) have different navigation methods than React Router
+   - **Styling libraries**: Each has unique patterns for pseudo-selectors, animations, and responsive design
+   - **State management**: Don't assume Redux/Zustand patterns apply to other solutions
+
+4. **When learning a new library**:
+   - Start with the library's getting started guide
+   - Review type definitions for accurate API signatures
+   - Look for official examples and migration guides
+   - Test small examples before large implementations
+
+**Example of API differences - Frosty vs React:**
+```tsx
+// ❌ WRONG: Assuming React's context API
+import { createContext } from 'frosty';
+const MyContext = createContext<Type | undefined>(undefined);
+const MyProvider = ({ children }) => (
+  <MyContext.Provider value={value}>{children}</MyContext.Provider>
+);
+
+// ✅ CORRECT: Using Frosty's actual context API
+import { createContext } from 'frosty';
+const MyContext = createContext<Type>();  // No default value
+const MyProvider = ({ children }) => (
+  <MyContext value={value}>{children}</MyContext>  {/* No .Provider */}
+);
+```
+
+This principle applies to ALL libraries - always verify before implementing.
+
 ## Architecture & Key Dependencies
 
 ### JSX Runtime: Frosty (Not React)
@@ -756,20 +803,21 @@ const MyComponent = () => {
 
 ## Common Pitfalls
 
-1. **Don't import from 'react'** - Use `frosty` instead
-2. **Don't use React context pattern** - Frosty uses `<Context value={...}>` directly, NOT `<Context.Provider value={...}>`
-3. **Context creation** - Use `createContext<Type>()` without default value, not `createContext<Type | undefined>(undefined)`
-4. **Don't hardcode styles** - Always use `useTheme()` hook for all style values. Never use magic numbers or literal color values.
-5. **Don't inject CSS** - Use inline `keyframes` property for animations instead of document.createElement('style') or DOM manipulation
-6. **Don't use manual hover handlers** - Use `&:hover` pseudo-selectors in inline styles instead of onMouseEnter/onMouseLeave event handlers
-7. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`
-8. **Context access** - Always call hooks inside components, not in conditionals
-9. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
-10. **Path separators** - Use forward slashes `/` in all configs, even on Windows
-11. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
-12. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
-13. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
-14. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
+1. **Don't assume library APIs** - ALWAYS verify the actual API documentation before use. Libraries with similar purposes (like Frosty vs React) often have fundamentally different APIs. Check the docs, examine existing code patterns, and review type definitions. Never assume a library works like another one you know.
+2. **Don't import from 'react'** - Use `frosty` instead. Frosty has its own implementation of hooks, context, and JSX runtime.
+3. **Don't use React context pattern** - Frosty uses `<Context value={...}>` directly, NOT `<Context.Provider value={...}>`. This is a fundamental API difference.
+4. **Context creation** - Use `createContext<Type>()` without default value, not `createContext<Type | undefined>(undefined)`. Frosty's context API differs from React.
+5. **Don't hardcode styles** - Always use `useTheme()` hook for all style values. Never use magic numbers or literal color values.
+6. **Don't inject CSS** - Use inline `keyframes` property for animations instead of document.createElement('style') or DOM manipulation
+7. **Don't use manual hover handlers** - Use `&:hover` pseudo-selectors in inline styles instead of onMouseEnter/onMouseLeave event handlers
+8. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`. Our custom router has different APIs than React Router.
+9. **Context access** - Always call hooks inside components, not in conditionals
+10. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
+11. **Path separators** - Use forward slashes `/` in all configs, even on Windows
+12. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
+13. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
+14. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
+15. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
