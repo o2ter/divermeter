@@ -31,15 +31,6 @@ export type Range<T> = { start: T; end: T; };
 
 export type Column<T extends object> = Extract<keyof T, string> | { key: Extract<keyof T, string>; label: ElementNode; };
 
-export type TableCellItemProps<T extends object> = {
-  item: T;
-  column: Column<T>;
-  rowIdx: number;
-  columnIdx: number;
-  isEditing: boolean;
-  renderItem: (x: Omit<TableCellItemProps<T>, 'renderItem'>) => ElementNode;
-}
-
 type DataSheetStyleProps = {
   style?: StyleProp<ExtendedCSSProperties>;
   headerContainerStyle?: StyleProp<ExtendedCSSProperties>;
@@ -65,7 +56,13 @@ export type DatasheetProps<T extends object> = DataSheetStyleProps & {
   stickyRowNumbers?: boolean;
   showEmptyLastRow?: boolean;
   highlightColor?: string;
-  renderItem: (x: Omit<TableCellItemProps<T>, 'renderItem'>) => ElementNode;
+  renderItem: (x: {
+    item: T;
+    column: Column<T>;
+    rowIdx: number;
+    columnIdx: number;
+    isEditing: boolean;
+  }) => ElementNode;
   onColumnWidthChange?: (col: number, width: number) => void;
   onSelectionChanged?: VoidFunction;
   onDeleteRows?: (rows: number[]) => void;
