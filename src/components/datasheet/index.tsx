@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { Column, DataSheetProps } from './types';
-import { useEffect, useRef, _useCallbacks, useRefHandle } from 'frosty';
+import { useEffect, useRef, _useCallbacks, useRefHandle, useMemo } from 'frosty';
 import { useDocument } from 'frosty/web';
 import { DataSheetStateProvider, useDataSheetContext, selectionKeys } from './context';
 import { DataSheetHeader } from './table/header';
@@ -82,13 +82,14 @@ const DataSheetTable = <T extends object, C extends Column>({
 
   const effectiveHighlightColor = highlightColor ?? style.datasheet.highlightColor;
 
-  useRefHandle(ref, () => ({
+  const handler = useMemo(() => ({
     get editing() { return !_.isNil(state.editing) },
     get selectedRows() { return _.isEmpty(state.selectedCells) ? state.selectedRows ?? [] : [] },
     get selectedCells() { return state.selectedCells; },
     clearSelection,
     endEditing,
   }), [state]);
+  useRefHandle(ref, () => handler, [handler]);
 
   const {
     handleMouseDown,
@@ -108,7 +109,7 @@ const DataSheetTable = <T extends object, C extends Column>({
           if (!cell || !isChildNode(tableRef.current, e.target, doc)) {
             // Clicked completely outside the table
             if (_.isFunction(onEndEditing)) {
-              onEndEditing(currentState.editing.row, currentState.editing.col);
+              onEndEditing(currentState.editing.row, currentState.editing.col, handler);
             }
             return _.omit(currentState, 'editing');
           } else {
@@ -123,7 +124,7 @@ const DataSheetTable = <T extends object, C extends Column>({
               // If clicking a different cell, end editing
               if (row !== currentState.editing.row || col !== currentState.editing.col) {
                 if (_.isFunction(onEndEditing)) {
-                  onEndEditing(currentState.editing.row, currentState.editing.col);
+                  onEndEditing(currentState.editing.row, currentState.editing.col, handler);
                 }
                 return _.omit(currentState, 'editing');
               }
@@ -200,7 +201,7 @@ const DataSheetTable = <T extends object, C extends Column>({
         e.preventDefault();
         if (_.isFunction(onCopyRows)) {
           const _data = _.map(selectedRows, row => _.pick(data[row], columnKeys as any));
-          onCopyRows(selectedRows, _data);
+          onCopyRows(selectedRows, _data, handler);
         } else {
           const _encodeValue = encodeValue ?? ((v: any) => v);
           const _data = _.map(selectedRows, row => _.map(columnKeys, col => _encodeValue(data[row]?.[col as keyof T])));
@@ -214,7 +215,7 @@ const DataSheetTable = <T extends object, C extends Column>({
         const _cols = _.range(selectedCells.start.col, selectedCells.end.col + 1);
         if (_.isFunction(onCopyCells)) {
           const _data = _.map(_rows, row => _.pick(data[row], _.map(_cols, col => columnKeys[col]) as any));
-          onCopyCells(selectedCells, _data);
+          onCopyCells(selectedCells, _data, handler);
         } else {
           const _encodeValue = encodeValue ?? ((v: any) => v);
           const _data = _.map(_rows, row => _.map(_cols, col => _encodeValue(data[row]?.[columnKeys[col] as keyof T])));
@@ -229,11 +230,11 @@ const DataSheetTable = <T extends object, C extends Column>({
 
       if (!_.isEmpty(selectedRows)) {
         e.preventDefault();
-        if (_.isFunction(onPasteRows)) onPasteRows(selectedRows, clipboard);
+        if (_.isFunction(onPasteRows)) onPasteRows(selectedRows, clipboard, handler);
       }
       if (!_.isEmpty(state.selectedCells)) {
         e.preventDefault();
-        if (_.isFunction(onPasteCells)) onPasteCells(state.selectedCells, clipboard);
+        if (_.isFunction(onPasteCells)) onPasteCells(state.selectedCells, clipboard, handler);
       }
     },
     handleKeyDown: (e: KeyboardEvent) => {
@@ -274,7 +275,7 @@ const DataSheetTable = <T extends object, C extends Column>({
           e.preventDefault();
           if (_.isFunction(onCopyRows)) {
             const _data = _.map(selectedRows, row => _.pick(data[row], columnKeys as any));
-            onCopyRows(selectedRows, _data);
+            onCopyRows(selectedRows, _data, handler);
           } else {
             const _encodeValue = encodeValue ?? ((v: any) => v);
             const _data = _.map(selectedRows, row => _.map(columnKeys, col => _encodeValue(data[row]?.[col as keyof T])));
@@ -288,7 +289,7 @@ const DataSheetTable = <T extends object, C extends Column>({
           const _cols = _.range(selectedCells.start.col, selectedCells.end.col + 1);
           if (_.isFunction(onCopyCells)) {
             const _data = _.map(_rows, row => _.pick(data[row], _.map(_cols, col => columnKeys[col]) as any));
-            onCopyCells(selectedCells, _data);
+            onCopyCells(selectedCells, _data, handler);
           } else {
             const _encodeValue = encodeValue ?? ((v: any) => v);
             const _data = _.map(_rows, row => _.map(_cols, col => _encodeValue(data[row]?.[columnKeys[col] as keyof T])));
@@ -304,11 +305,11 @@ const DataSheetTable = <T extends object, C extends Column>({
 
         if (!_.isEmpty(selectedRows)) {
           e.preventDefault();
-          if (_.isFunction(onPasteRows)) onPasteRows(selectedRows, clipboard);
+          if (_.isFunction(onPasteRows)) onPasteRows(selectedRows, clipboard, handler);
         }
         if (!_.isEmpty(state.selectedCells)) {
           e.preventDefault();
-          if (_.isFunction(onPasteCells)) onPasteCells(state.selectedCells, clipboard);
+          if (_.isFunction(onPasteCells)) onPasteCells(state.selectedCells, clipboard, handler);
         }
       }
 
@@ -317,11 +318,11 @@ const DataSheetTable = <T extends object, C extends Column>({
         const selectedRows = state.selectedRows?.sort().filter(x => x < data.length) ?? [];
         if (!_.isEmpty(selectedRows)) {
           e.preventDefault();
-          if (_.isFunction(onDeleteRows)) onDeleteRows(selectedRows);
+          if (_.isFunction(onDeleteRows)) onDeleteRows(selectedRows, handler);
         }
         if (!_.isEmpty(state.selectedCells)) {
           e.preventDefault();
-          if (_.isFunction(onDeleteCells)) onDeleteCells(state.selectedCells);
+          if (_.isFunction(onDeleteCells)) onDeleteCells(state.selectedCells, handler);
         }
       }
     },
@@ -364,13 +365,13 @@ const DataSheetTable = <T extends object, C extends Column>({
         stickyRowNumbers={stickyRowNumbers}
         columnWidth={columnWidth}
         columnMinWidth={columnMinWidth}
-        onColumnWidthChange={onColumnWidthChange}
+        onColumnWidthChange={onColumnWidthChange && ((col, width) => onColumnWidthChange(col, width, handler))}
       />
       <DataSheetBody
         data={data}
         columns={columns}
         startRowNumber={startRowNumber}
-        renderItem={renderItem}
+        renderItem={(x) => renderItem(x, handler)}
         allowSelection={allowSelection}
         allowEditForCell={allowEditForCell}
         stickyRowNumbers={stickyRowNumbers}

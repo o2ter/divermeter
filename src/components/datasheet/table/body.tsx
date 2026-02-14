@@ -24,19 +24,19 @@
 //
 
 import _ from 'lodash';
-import { Column, DataSheetProps } from '../types';
+import { Column, DataSheetProps, RanderItemParams } from '../types';
 import { useDataSheetContext } from '../context';
 import { useTheme } from '../../theme';
 import { useStyle } from '../../style';
 import { RowNumberCell } from './rowNumberCell';
 import { BodyCell } from './bodyCell';
-import { useCallback } from 'frosty';
+import { ElementNode, useCallback } from 'frosty';
 
 type DataSheetBodyProps<T extends object, C extends Column> = {
   data: T[];
   columns: C[];
   startRowNumber?: number;
-  renderItem: DataSheetProps<T, C>['renderItem'];
+  renderItem: (x: RanderItemParams<T, C>) => ElementNode;
   allowSelection?: boolean;
   allowEditForCell?: boolean | ((row: number, col: number) => boolean);
   stickyRowNumbers?: boolean;

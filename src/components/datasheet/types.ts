@@ -30,14 +30,26 @@ export type Range<T> = { start: T; end: T; };
 
 export type Column = string | { key: string; label: ElementNode; };
 
+export type DataSheetRef = {
+  readonly editing: boolean;
+  readonly selectedRows: number[];
+  readonly selectedCells: Range<Position> | undefined;
+  clearSelection: () => void;
+  endEditing: () => void;
+};
+
+export type RanderItemParams<T extends object, C extends Column> = {
+  item: T[keyof T];
+  row: T;
+  column: C;
+  columnKey: string;
+  rowIdx: number;
+  columnIdx: number;
+  isEditing: boolean;
+};
+
 export type DataSheetProps<T extends object, C extends Column> = {
-  ref?: Ref<{
-    readonly editing: boolean;
-    readonly selectedRows: number[];
-    readonly selectedCells: Range<Position> | undefined;
-    clearSelection: () => void;
-    endEditing: () => void;
-  }>;
+  ref?: Ref<DataSheetRef>;
   data: T[];
   columns: C[];
   encoders?: Record<string, (data: any[][]) => string | Blob | PromiseLike<string | Blob>>;
@@ -51,23 +63,15 @@ export type DataSheetProps<T extends object, C extends Column> = {
   stickyRowNumbers?: boolean;
   showEmptyLastRow?: boolean;
   highlightColor?: string;
-  renderItem: (x: {
-    item: T[keyof T];
-    row: T;
-    column: C;
-    columnKey: string;
-    rowIdx: number;
-    columnIdx: number;
-    isEditing: boolean;
-  }) => ElementNode;
-  onColumnWidthChange?: (col: number, width: number) => void;
+  renderItem: (x: RanderItemParams<T, C>, ref: DataSheetRef) => ElementNode;
+  onColumnWidthChange?: (col: number, width: number, ref: DataSheetRef) => void;
   onSelectionChanged?: VoidFunction;
-  onDeleteRows?: (rows: number[]) => void;
-  onDeleteCells?: (cells: Range<Position>) => void;
-  onCopyRows?: (rows: number[], data: Pick<T, keyof T>[]) => void;
-  onCopyCells?: (cells: Range<Position>, data: Pick<T, keyof T>[]) => void;
-  onPasteRows?: (rows: number[], clipboard: DataTransfer | Clipboard) => void;
-  onPasteCells?: (cells: Range<Position>, clipboard: DataTransfer | Clipboard) => void;
-  onStartEditing?: (row: number, col: number) => void;
-  onEndEditing?: (row: number, col: number) => void;
+  onDeleteRows?: (rows: number[], ref: DataSheetRef) => void;
+  onDeleteCells?: (cells: Range<Position>, ref: DataSheetRef) => void;
+  onCopyRows?: (rows: number[], data: Pick<T, keyof T>[], ref: DataSheetRef) => void;
+  onCopyCells?: (cells: Range<Position>, data: Pick<T, keyof T>[], ref: DataSheetRef) => void;
+  onPasteRows?: (rows: number[], clipboard: DataTransfer | Clipboard, ref: DataSheetRef) => void;
+  onPasteCells?: (cells: Range<Position>, clipboard: DataTransfer | Clipboard, ref: DataSheetRef) => void;
+  onStartEditing?: (row: number, col: number, ref: DataSheetRef) => void;
+  onEndEditing?: (row: number, col: number, ref: DataSheetRef) => void;
 };
