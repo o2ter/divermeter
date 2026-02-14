@@ -182,7 +182,7 @@ export const Button = ({
       disabled={disabled}
       ariaDisabled={disabled ? 'true' : undefined}
       className={className}
-      style={{ ...buttonStyles, ...customStyle }}
+      style={[buttonStyles, customStyle]}
       onMouseEnter={(e) => {
         setState(s => ({ ...s, hovered: true }));
         if (onMouseEnter) onMouseEnter.call(e.currentTarget, e);
