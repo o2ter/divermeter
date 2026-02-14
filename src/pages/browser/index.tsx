@@ -30,9 +30,11 @@ import { _useCallbacks, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
 import { TableCell } from './cell';
 import { useTheme } from '../../components/theme';
+import { useAlert } from '../../components/alert';
 
 export const BrowserPage = () => {
   const theme = useTheme();
+  const alert = useAlert();
   const { schema: className } = useParams() as { schema: string; };
   const proto = useProto();
   const { [className]: schema } = useProtoSchema();
@@ -70,7 +72,7 @@ export const BrowserPage = () => {
         setResource((prev) => _.map(prev, i => i === item ? cloned : i));
       } catch (error) {
         console.error('Failed to update item:', error);
-        // TODO: Add error notification UI
+        alert.showError(error instanceof Error ? error.message : 'Failed to update item');
       }
     },
   });
