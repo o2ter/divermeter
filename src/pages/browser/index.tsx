@@ -47,8 +47,8 @@ const encodeValue = (value: any, space = 2) => {
     if (_.isBoolean(value)) return value ? 'true' : 'false';
     if (_.isNumber(value)) return value.toString();
     if (_.isString(value)) return JSON.stringify(value);
-    if (_.isDate(value)) return `new Date('${value.toISOString()}')`;
-    if (value instanceof Decimal) return `new Decimal('${value.toString()}')`;
+    if (_.isDate(value)) return `ISODate('${value.toISOString()}')`;
+    if (value instanceof Decimal) return `Decimal('${value.toString()}')`;
     if (_.isArray(value)) return _.isEmpty(value) ? '[]' : `[${newline}${_.map(value, v => (
       `${_.padStart('', padding, ' ')}${_encodeValue(v, space, padding + space)}`
     )).join(`,${newline}`)}${newline}${_.padStart('', padding - space, ' ')}]`;
