@@ -31,7 +31,7 @@ import { useStyle } from '../../style';
 import { _useCallbacks, useEffect, useState } from 'frosty';
 import { useDocument } from 'frosty/web';
 
-type DataSheetHeaderProps<T extends object, C extends Column> = {
+type DataSheetHeaderProps<C extends Column> = {
   columns: C[];
   rowNumbers?: boolean;
   stickyHeader?: boolean;
@@ -41,7 +41,7 @@ type DataSheetHeaderProps<T extends object, C extends Column> = {
   onColumnWidthChange?: (col: number, width: number) => void;
 };
 
-export const DataSheetHeader = <T extends object, C extends Column>({
+export const DataSheetHeader = <C extends Column>({
   columns,
   rowNumbers,
   stickyHeader,
@@ -49,7 +49,7 @@ export const DataSheetHeader = <T extends object, C extends Column>({
   columnWidth,
   columnMinWidth = 64,
   onColumnWidthChange,
-}: DataSheetHeaderProps<T, C>) => {
+}: DataSheetHeaderProps<C>) => {
   const { state, isRowSelected, isCellSelected } = useDatasheetContext();
   const theme = useTheme();
   const style = useStyle();
