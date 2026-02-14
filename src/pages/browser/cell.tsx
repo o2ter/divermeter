@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { Decimal } from 'proto.io';
-import { TObject, TSchema } from '../../proto';
+import { TObject, TSchema, useProto } from '../../proto';
 import { useTheme } from '../../components/theme';
 import { normalizeColor, getRed, getGreen, getBlue, rgba, toHexString } from '@o2ter/colors.js';
 
@@ -85,6 +85,8 @@ export const TableCell = ({
   const field = schema.fields[column];
   const isSecure = schema.secureFields?.includes(column);
   const type = typeOf(field);
+
+  const proto = useProto();
 
   const value = item.get(column);
 
@@ -201,6 +203,19 @@ export const TableCell = ({
             style={inputStyle}
             value={editingValue ? new Date(editingValue).toISOString().slice(0, 16) : (value ? new Date(value).toISOString().slice(0, 16) : '')}
             onInput={(e) => setEditingValue?.(new Date(e.currentTarget.value))}
+            autofocus
+          />
+        );
+      case 'pointer':
+        return (
+          <input
+            type="text"
+            style={inputStyle}
+            value={editingValue?.id ?? value?.id ?? ''}
+            onInput={(e) => {
+              if (_.isString(field) || field.type !== 'pointer' || !field.target) return;
+              setEditingValue?.(proto.Object(field.target, e.currentTarget.value));
+            }}
             autofocus
           />
         );
