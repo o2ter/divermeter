@@ -30,7 +30,7 @@
     "@o2ter/colors.js": "^1.0.2",
     "codemirror": "^6.0.2",
     "d3-dsv": "^3.0.1",
-    "frosty": "^0.0.142",
+    "frosty": "^0.0.143",
     "lodash": "^4.17.21",
     "path-to-regexp": "^8.3.0"
   },
