@@ -61,7 +61,7 @@ export const RowNumberCell = ({
     border: `1px solid ${borderColor}`,
     borderTop: 0,
     backgroundColor: headerBg,
-    borderRightColor: isRowSelected(row) ? selectedBorderColor : borderColor,
+    borderRightColor: isRowSelected(row) || isCellSelected(row, 0) ? selectedBorderColor : borderColor,
     borderBottomColor: isRowSelected(row) || isRowSelected(row + 1) ? selectedBorderColor : borderColor,
     minWidth: 50,
     width: 50,
@@ -71,7 +71,7 @@ export const RowNumberCell = ({
     textAlign: 'center' as const,
     cursor: state.editing ? 'default' : 'pointer',
     userSelect: 'none' as const,
-  }), [row, isRowSelected(row), isRowSelected(row + 1), state.editing, stickyStyle]);
+  }), [row, isRowSelected(row), isRowSelected(row + 1), isCellSelected(row, 0), state.editing, stickyStyle]);
 
   const selectedCellStyle = useMemo(() => ({
     ...stickyStyle,
