@@ -25,11 +25,11 @@
 
 import _ from 'lodash';
 import { useParams } from '../../components/router';
-import { QueryFilter, TSchema, useProto, useProtoSchema } from '../../proto';
+import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
 import { useMemo, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
 
-const TableCell = ({ item, column, schema }: { item: any; column: string; schema: TSchema }) => {
+const TableCell = ({ item, column, schema }: { item: TObject; column: string; schema: TSchema }) => {
   return <div></div>;
 };
 

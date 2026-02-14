@@ -53,4 +53,5 @@ export const useProto = () => useContext(Context)!.proto;
 export const useProtoSchema = () => useContext(Context)!.schema;
 
 export type QueryFilter = Parameters<ReturnType<ReturnType<typeof useProto>['Query']>['filter']>[0];
+export type TObject = ReturnType<ReturnType<typeof useProto>['Object']>;
 export type TSchema = ReturnType<typeof useProtoSchema>[string];
