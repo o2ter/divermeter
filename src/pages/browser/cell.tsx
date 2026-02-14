@@ -172,6 +172,16 @@ export const TableCell = ({
             autofocus
           />
         );
+      case 'decimal':
+        return (
+          <input
+            type="number"
+            style={inputStyle}
+            value={editingValue ?? value ?? ''}
+            onChange={(e) => setEditingValue?.(Decimal(e.currentTarget.value))}
+            autofocus
+          />
+        );
       case 'boolean':
         return (
           <select
