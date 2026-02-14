@@ -66,12 +66,6 @@ export const TableCell = ({
   const isSecure = schema.secureFields?.includes(column);
   const type = _.isString(field) ? field : field.type;
 
-  const cellStyle = {
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  } as const;
-
   const value = item.get(column);
 
   // Helper to create color with opacity
@@ -85,6 +79,37 @@ export const TableCell = ({
       Math.round(255 * opacity)
     ), true);
   };
+
+  // Get color based on value type
+  const getTypeColor = () => {
+    if (isSecure || _.isNil(value)) {
+      return 'lightgray'; // Slate gray for null/hidden
+    }
+    switch (type) {
+      case 'string':
+        return 'darkred'; // Soft coral for strings
+      case 'number':
+      case 'decimal':
+        return 'mediumblue'; // Sky blue for numbers
+      case 'boolean':
+        return 'darkblue'; // Light blue for booleans
+      case 'date':
+        return 'darkslateblue'; // Orange for dates
+      case 'pointer':
+      case 'relation':
+        return 'rebeccapurple'; // Teal for references
+      default:
+        return 'gray'; // Slate gray for complex types (objects/arrays)
+    }
+  };
+
+  const cellStyle = {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    color: getTypeColor(),
+    fontFamily: type === 'string' ? 'inherit' : 'monospace',
+  } as const;
 
   // Editing mode
   if (isEditing) {
