@@ -24,8 +24,52 @@
 //
 
 import _ from 'lodash';
-import { PropsWithChildren } from 'frosty';
+import { ElementNode, ExtendedCSSProperties, PropsWithChildren, StyleProp } from 'frosty';
 
-export type DatasheetProps = PropsWithChildren<{
+export type Position = { row: number; col: number; };
+export type Range<T> = { start: T; end: T; };
 
+export type TableCellItemProps<T> = {
+  item?: T;
+  rowIdx: number;
+  columnIdx: number;
+  isEditing: boolean;
+  renderItem: (x: Omit<TableCellItemProps<T>, 'renderItem'>) => ElementNode;
+}
+
+type DataSheetStyleProps = {
+  style?: StyleProp<ExtendedCSSProperties>;
+  headerContainerStyle?: StyleProp<ExtendedCSSProperties>;
+  headerItemContainerStyle?: StyleProp<ExtendedCSSProperties>;
+  rowContainerStyle?: StyleProp<ExtendedCSSProperties>;
+  itemContainerStyle?: StyleProp<ExtendedCSSProperties>;
+  selectedItemContainerStyle?: StyleProp<ExtendedCSSProperties>;
+  contentContainerStyle?: StyleProp<ExtendedCSSProperties>;
+};
+
+export type DatasheetProps<T extends object> = PropsWithChildren<DataSheetStyleProps & {
+  data: T[];
+  columns: (Extract<keyof T, string> | { key: keyof T; label: ElementNode; })[];
+  encoders?: Record<string, (data: any[][]) => string | Blob | PromiseLike<string | Blob>>;
+  encodeValue?: (data: T[keyof T]) => any;
+  allowSelection?: boolean;
+  allowEditForCell?: boolean | ((row: number, col: number) => boolean);
+  columnWidth: number[];
+  columnMinWidth?: number;
+  rowNumbers?: boolean;
+  startRowNumber?: number;
+  stickyHeader?: boolean;
+  stickyRowNumbers?: boolean;
+  showEmptyLastRow?: boolean;
+  highlightColor?: string;
+  renderItem: (x: Omit<TableCellItemProps<T[keyof T]>, 'renderItem'>) => ElementNode;
+  onColumnWidthChange?: (col: number, width: number) => void;
+  onSelectionChanged?: VoidFunction;
+  onDeleteRows?: (rows: number[]) => void;
+  onDeleteCells?: (cells: Range<Position>) => void;
+  onCopyRows?: (rows: number[], data: Pick<T, keyof T>[]) => void;
+  onCopyCells?: (cells: Range<Position>, data: Pick<T, keyof T>[]) => void;
+  onPasteRows?: (rows: number[], clipboard: DataTransfer | Clipboard) => void;
+  onPasteCells?: (cells: Range<Position>, clipboard: DataTransfer | Clipboard) => void;
+  onEndEditing?: (row: number, col: number) => void;
 }>;

@@ -28,9 +28,10 @@ import { DatasheetProps } from './types';
 import { useMemo } from 'frosty';
 import { DatasheetContext } from './context';
 
-export const Datasheet = ({
-  children
-}: DatasheetProps) => {
+export const Datasheet = <T extends object>({
+  children,
+  ...props
+}: DatasheetProps<T>) => {
 
   const value = useMemo(() => ({
 
