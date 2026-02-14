@@ -44,14 +44,15 @@ src/
 3. **StyleProvider** ([src/components/style/index.tsx](src/components/style/index.tsx)): Caches derived styles and component-specific configurations
    - Hook: `useStyle()` - Returns cached style calculations based on theme
    - Provides derived colors (borders, dividers, interactive states, text colors)
-   - Component-specific styles: menuItem, menuHeader, divider, listItem
+   - Component-specific styles: menuItem, menuHeader, divider, listItem, button, alert, modal, datasheet
    - Uses `@o2ter/colors.js` for dynamic color derivations from theme
-   - Currently used primarily in menu components, but provides general-purpose UI styles
-   - **IMPORTANT: Maintain StyleProvider** - When modifying components or removing features:
-     - Check if styles in StyleProvider are still being used
-     - Remove unused style properties and calculations to avoid bloat
-     - Update style calculations when theme dependencies change
-     - Keep StyleProvider lean and only include actively used styles
+   - Currently used across menu, button, alert, modal, and datasheet components
+   - **CRITICAL: Always audit and clean up StyleProvider when modifying components:**
+     - Before removing any component or feature, check if it has styles in StyleProvider
+     - Remove unused style properties and their intermediate calculation variables
+     - Search codebase for `style.componentName.*` to verify property usage
+     - Keep StyleProvider lean - unused styles add computation overhead on every render
+     - See "StyleProvider Maintenance" section in Code Quality guidelines for audit process
 
 **See "Context Providers Pattern" section below for how to create new providers correctly in Frosty.**
 
@@ -675,11 +676,27 @@ Before submitting code, verify:
 - [ ] Pseudo-selectors (`&:hover`) used instead of manual event handlers for styling
 
 #### 4. StyleProvider Maintenance
+**CRITICAL: Always audit StyleProvider when modifying or removing components/features.**
+
 When modifying or removing components:
 - [ ] Check if their styles in StyleProvider are still being used
 - [ ] Remove unused style properties to prevent bloat
 - [ ] Update style calculations if theme dependencies change
 - [ ] Keep StyleProvider lean with only actively used styles
+- [ ] Search for property usage across codebase: `grep -r "style\.componentName\.propertyName" src/`
+- [ ] Remove any intermediate calculation variables that are no longer needed
+
+**Why This Matters:**
+- Unused styles add unnecessary computation overhead on every theme change
+- Dead code in StyleProvider creates maintenance burden
+- Bloated style objects increase memory footprint
+- Future developers may think unused properties are required
+
+**How to Audit:**
+1. **Search for usage**: Use grep/search to find `style.componentName.*` patterns
+2. **Check intermediate variables**: Look for variables only used to calculate removed properties
+3. **Remove calculations**: Delete color mixing, opacity, and other derivations for unused properties
+4. **Test**: Verify no compilation errors and visual consistency remains
 
 ### Example: Converting Hardcoded Styles to StyleProvider
 
@@ -751,14 +768,14 @@ const MyComponent = () => {
 10. **Path separators** - Use forward slashes `/` in all configs, even on Windows
 11. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
 12. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
-13. **StyleProvider maintenance** - When modifying or removing menu components, always check StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) and remove any unused style calculations. Dead code in style providers creates unnecessary performance overhead and maintenance burden.
+13. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
 14. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
 - [src/proto.tsx](src/proto.tsx) - Proto context and providers
 - [src/components/theme/index.tsx](src/components/theme/index.tsx) - Complete theming system (ThemeProvider, useTheme, ThemeSettings type)
-- [src/components/style/index.tsx](src/components/style/index.tsx) - StyleProvider for cached menu styles (example of Frosty context pattern)
+- [src/components/style/index.tsx](src/components/style/index.tsx) - StyleProvider for cached component styles (menu, button, alert, modal, datasheet) - ALWAYS audit when modifying components
 - [src/components/spinner/index.tsx](src/components/spinner/index.tsx) - Reusable spinner component (example of inline keyframes)
 - [src/components/router/index.tsx](src/components/router/index.tsx) - Custom router implementation
 - [src/components/menu/index.tsx](src/components/menu/index.tsx) - Dynamic menu from schema
