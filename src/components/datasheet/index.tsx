@@ -329,9 +329,12 @@ const DataSheetTable = <T extends object, C extends Column>({
       style={{
         borderCollapse: 'separate',
         borderSpacing: 0,
-        userSelect: 'none',
         fontSize: theme.fontSize.sm,
         fontFamily: 'system-ui, -apple-system, sans-serif',
+        userSelect: 'none',
+        msUserSelect: 'none',
+        MozUserSelect: 'none',
+        WebkitUserSelect: 'none',
       }}
     >
       <DataSheetHeader
