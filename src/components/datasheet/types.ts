@@ -57,8 +57,8 @@ export type DatasheetProps<T extends object, C extends Column> = DataSheetStyleP
   showEmptyLastRow?: boolean;
   highlightColor?: string;
   renderItem: (x: {
-    item: T;
-    column: C;
+    item: NoInfer<T>;
+    column: NoInfer<C>;
     rowIdx: number;
     columnIdx: number;
     isEditing: boolean;
