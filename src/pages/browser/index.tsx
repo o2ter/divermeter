@@ -25,82 +25,10 @@
 
 import _ from 'lodash';
 import { useParams } from '../../components/router';
-import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
+import { QueryFilter, TObject, useProto, useProtoSchema } from '../../proto';
 import { _useCallbacks, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
-import { Decimal } from 'proto.io';
-
-type TableCellProps = {
-  item: TObject;
-  column: string;
-  schema: TSchema;
-  isEditing: boolean;
-  editingValue?: any;
-  setEditingValue?: (value: any) => void;
-};
-
-const encodeValue = (value: any, space = 2) => {
-  const normalName = /^[a-z_][a-z\d_]\w*$/gi;
-  const _encodeValue = (value: any, space: number, padding: number): string => {
-    const newline = space ? '\n' : '';
-    if (_.isNil(value)) return 'null';
-    if (_.isBoolean(value)) return value ? 'true' : 'false';
-    if (_.isNumber(value)) return value.toString();
-    if (_.isString(value)) return JSON.stringify(value);
-    if (_.isDate(value)) return `ISODate('${value.toISOString()}')`;
-    if (value instanceof Decimal) return `Decimal('${value.toString()}')`;
-    if (_.isArray(value)) return _.isEmpty(value) ? '[]' : `[${newline}${_.map(value, v => (
-      `${_.padStart('', padding, ' ')}${_encodeValue(v, space, padding + space)}`
-    )).join(`,${newline || ' '}`)}${newline}${_.padStart('', padding - space, ' ')}]`;
-    return _.isEmpty(value) ? '{}' : `{${newline}${_.map(value as object, (v, k) => (
-      `${_.padStart('', padding, ' ')}${k.match(normalName) ? k : `"${k.replace(/[\\"]/g, '\\$&')}"`}: ${_encodeValue(v, space, padding + space)}`
-    )).join(`,${newline || ' '}`)}${newline}${_.padStart('', padding - space, ' ')}}`;
-  };
-  return _encodeValue(value, space, space);
-};
-
-const TableCell = ({
-  item,
-  column,
-  schema,
-  isEditing,
-  editingValue,
-  setEditingValue,
-}: TableCellProps) => {
-  const field = schema.fields[column];
-  const type = _.isString(field) ? field : field.type;
-
-  const cellStyle = {
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  } as const;
-
-  const value = item.get(column);
-  if (_.isNil(value)) {
-    return <div style={cellStyle}>null</div>;
-  } else {
-    switch (type) {
-      case 'string':
-        return <div style={cellStyle}>{value}</div>;
-      case 'number':
-        return <div style={cellStyle}>{value}</div>;
-      case 'decimal':
-        return <div style={cellStyle}>{value?.toString()}</div>;
-      case 'boolean':
-        return <div style={cellStyle}>{value ? 'true' : 'false'}</div>;
-      case 'date':
-        return <div style={cellStyle}>{value?.toLocaleString()}</div>;
-      case 'pointer':
-        return <div style={cellStyle}>{value?.id}</div>;
-      case 'relation':
-        return <div style={cellStyle}>{_.map(value, (v: TObject) => v.id).join(', ')}</div>;
-      default:
-        return <div style={cellStyle}>{encodeValue(value, 0)}</div>;
-    }
-  }
-
-};
+import { TableCell } from './cell';
 
 export const BrowserPage = () => {
   const { schema: className } = useParams() as { schema: string; };
