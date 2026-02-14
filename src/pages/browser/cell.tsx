@@ -60,6 +60,24 @@ const encodeValue = (value: any, space = 2) => {
   return _encodeValue(value, space, space);
 };
 
+export const verifyValue = (value: any) => {
+  if (_.isNil(value) || _.isBoolean(value) || _.isNumber(value) || _.isString(value) || _.isDate(value)) return;
+  if (value instanceof Decimal) return;
+  if (_.isArray(value)) {
+    for (const item of value) {
+      verifyValue(item);
+    }
+    return;
+  }
+  if (_.isPlainObject(value)) {
+    for (const v of _.values(value)) {
+      verifyValue(v);
+    }
+    return;
+  }
+  throw Error('Invalid value');
+};
+
 export const TableCell = ({
   item, column, schema, isEditing, editingValue, setEditingValue,
 }: TableCellProps) => {
@@ -186,6 +204,7 @@ export const TableCell = ({
               try {
                 // Try to parse the value
                 const parsed = eval(`(${e.currentTarget.value})`);
+                verifyValue(parsed);
                 setEditingValue?.(parsed);
               } catch {
                 // If parsing fails, store the raw string
