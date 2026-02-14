@@ -52,61 +52,43 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
 
   // Create harmonious color palette following color theory
   const primary = theme.colors.primary;
+  const secondary = theme.colors.secondary;
 
-  // Create sophisticated menu background with gradient
+  // Derive menu background from user's selected colors
+  // Mix primary with secondary for a harmonious background
   const menuBgBase = isLight
-    ? mixColor(primary, '#fafbfc', 0.03)  // Very subtle tint for light colors
+    ? tintColor(mixColor(primary, secondary, 0.5), 0.95)  // Very light tint for light themes
     : isDark
-      ? mixColor(primary, '#1a1d23', 0.08)  // Dark, rich background
-      : mixColor(primary, '#f8f9fa', 0.05); // Neutral mid-tone
-
-  const menuBgGradientStart = menuBgBase;
-  const menuBgGradientEnd = isLight
-    ? tintColor(menuBgBase, 0.02)
-    : isDark
-      ? shadeColor(menuBgBase, 0.05)
-      : tintColor(menuBgBase, 0.01);
+      ? shadeColor(mixColor(primary, secondary, 0.5), 0.95)  // Very dark shade for dark themes
+      : tintColor(mixColor(primary, secondary, 0.5), 0.9); // Light tint for mid-tones
 
   // Create text colors with proper contrast
   const menuTextPrimary = theme.colorContrast(menuBgBase);
-  const menuTextSecondary = withOpacity(menuTextPrimary, 0.65);
-  const menuTextMuted = withOpacity(menuTextPrimary, 0.45);
+  const menuTextSecondary = withOpacity(menuTextPrimary, 0.6);
+  const menuTextMuted = withOpacity(menuTextPrimary, 0.4);
 
-  // Create active and hover states using color theory
+  // Create flat, modern active and hover states
   const activeBackground = isLight
-    ? mixColor(primary, '#ffffff', 0.85)  // Soft highlight for light themes
+    ? withOpacity(primary, 0.08)  // Subtle flat tint
     : isDark
-      ? mixColor(primary, '#2d3748', 0.7)  // Rich, saturated for dark themes
-      : mixColor(primary, '#f0f4f8', 0.75); // Balanced for mid-tones
+      ? withOpacity(tintColor(primary, 0.2), 0.15)  // Bright accent for dark
+      : withOpacity(primary, 0.1); // Clean highlight
 
   const hoverBackground = isLight
-    ? withOpacity(primary, 0.06)
+    ? withOpacity(primary, 0.04)
     : isDark
-      ? withOpacity(tintColor(primary, 0.3), 0.12)
-      : withOpacity(primary, 0.08);
+      ? withOpacity(tintColor(primary, 0.2), 0.08)
+      : withOpacity(primary, 0.05);
 
-  // Create modern accent colors using primary and complement
-  const accentPrimary = isLight
-    ? shadeColor(primary, 0.1)  // Slightly darker for visibility
-    : isDark
-      ? tintColor(primary, 0.2)  // Lighter for contrast
-      : primary;
+  // Create modern minimal accent
+  const accentPrimary = primary;
 
-  const accentGlow = withOpacity(accentPrimary, 0.4);
+  // Modern active text - use theme's contrast color for maximum visibility
+  // This uses contrastDark/contrastLight from theme settings based on menu background
+  const activeTextFinal = menuTextPrimary;
 
-  // Active text color with proper contrast against active background
-  const activeTextColor = isLight
-    ? shadeColor(primary, 0.5)  // Much darker shade for light themes
-    : isDark
-      ? tintColor(primary, 0.4)  // Lighter tint for dark themes
-      : shadeColor(primary, 0.2); // Slightly darker for mid-tones
-
-  // Ensure active text has sufficient contrast - use colorContrast as fallback
-  const activeTextFinal = colorContrast(activeBackground, activeTextColor, menuTextPrimary);
-
-  // Modern border colors
-  const borderPrimary = withOpacity(menuTextPrimary, 0.08);
-  const borderAccent = withOpacity(accentPrimary, 0.3);
+  // Minimal border colors
+  const borderPrimary = withOpacity(menuTextPrimary, 0.06);
 
   // ========== Button Styles ==========
   // Pre-calculate button variant styles for different colors
@@ -341,56 +323,50 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
     // Helper function for custom colors
     withOpacity,
 
-    // Menu container styles with gradient
+    // Menu container - flat modern design
     menu: {
-      background: `linear-gradient(180deg, ${menuBgGradientStart} 0%, ${menuBgGradientEnd} 100%)`,
+      background: menuBgBase,
       textColor: menuTextPrimary,
       borderColor: borderPrimary,
-      shadow: isLight
-        ? '0 0 0 1px rgba(0, 0, 0, 0.04)'
-        : '0 0 0 1px rgba(255, 255, 255, 0.05)',
     },
-    // Modern menu item styles
+    // Minimal modern menu item
     menuItem: {
-      padding: `${theme.spacing.md}px ${theme.spacing.lg}px`,
+      padding: `${theme.spacing.sm}px ${theme.spacing.lg}px`,
       margin: `${theme.spacing.xs}px ${theme.spacing.md}px`,
       fontSize: theme.fontSize.sm,
-      fontWeight: theme.fontWeight.medium,
-      activeFontWeight: theme.fontWeight.semibold,
+      fontWeight: theme.fontWeight.normal,
+      activeFontWeight: theme.fontWeight.medium,
       textColor: menuTextPrimary,
       activeTextColor: activeTextFinal,
       activeBackground: activeBackground,
       hoverBackground: hoverBackground,
       accentBorder: accentPrimary,
-      borderRadius: theme.borderRadius.md,
-      activeShadow: `0 2px 8px ${accentGlow}, 0 0 0 1px ${borderAccent}`,
-      hoverShadow: `0 1px 4px ${withOpacity(menuTextPrimary, 0.08)}`,
+      borderRadius: 0,  // Sharp, modern edges
     },
-    // Menu header with modern typography
+    // Clean menu header
     menuHeader: {
-      padding: `${theme.spacing.md}px ${theme.spacing.lg}px ${theme.spacing.xs}px`,
+      padding: `${theme.spacing.sm}px ${theme.spacing.lg}px ${theme.spacing.xs}px`,
       fontSize: theme.fontSize.xs,
       fontWeight: theme.fontWeight.semibold,
-      letterSpacing: '0.8px',
+      letterSpacing: '0.05em',
       textColor: menuTextMuted,
     },
-    // Subtle modern divider
+    // Minimal flat divider
     divider: {
-      margin: `${theme.spacing.lg}px ${theme.spacing.lg}px`,
+      margin: `${theme.spacing.md}px ${theme.spacing.lg}px`,
       height: 1,
-      background: `linear-gradient(90deg, transparent 0%, ${borderPrimary} 50%, transparent 100%)`,
+      background: borderPrimary,
     },
-    // List item styles
+    // Compact list item
     listItem: {
-      padding: `${theme.spacing.sm + 2}px ${theme.spacing.lg}px`,
-      margin: `2px ${theme.spacing.md}px`,
+      padding: `${theme.spacing.sm}px ${theme.spacing.lg}px`,
+      margin: `${theme.spacing.xs}px ${theme.spacing.md}px`,
       fontSize: theme.fontSize.sm,
       fontWeight: theme.fontWeight.normal,
       textColor: menuTextSecondary,
       activeTextColor: activeTextFinal,
       hoverBackground: hoverBackground,
-      borderRadius: theme.borderRadius.md,
-      activeShadow: `0 1px 4px ${accentGlow}, 0 0 0 1px ${borderAccent}`,
+      borderRadius: 0,  // Sharp, modern edges
     },
 
     // Button styles

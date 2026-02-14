@@ -51,35 +51,18 @@ const MenuItem = ({
         color: isActive ? style.menuItem.activeTextColor : style.menuItem.textColor,
         backgroundColor: isActive ? style.menuItem.activeBackground : 'transparent',
         borderRadius: `${style.menuItem.borderRadius}px`,
-        boxShadow: isActive ? style.menuItem.activeShadow : 'none',
-        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'background-color 0.15s ease, color 0.15s ease',
         position: 'relative',
-        overflow: 'hidden',
+        borderLeft: isActive ? `2px solid ${style.menuItem.accentBorder}` : '2px solid transparent',
         ...(!isActive && {
           '&:hover': {
             backgroundColor: style.menuItem.hoverBackground,
-            boxShadow: style.menuItem.hoverShadow,
-            transform: 'translateX(2px)',
           },
         }),
       }}
       onClick={onClick}
     >
-      {isActive && (
-        <div style={{
-          position: 'absolute',
-          left: 0,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: '3px',
-          height: '60%',
-          backgroundColor: style.menuItem.accentBorder,
-          borderRadius: '0 2px 2px 0',
-        }} />
-      )}
-      <div style={{ paddingLeft: isActive ? `${style.spacing.sm}px` : '0', transition: 'padding 0.25s ease' }}>
-        {label}
-      </div>
+      {label}
     </div>
   );
 };
@@ -119,14 +102,13 @@ const SchemaList = () => {
                 color: isActive ? style.listItem.activeTextColor : style.listItem.textColor,
                 backgroundColor: isActive ? style.menuItem.activeBackground : 'transparent',
                 borderRadius: `${style.listItem.borderRadius}px`,
-                boxShadow: isActive ? style.listItem.activeShadow : 'none',
-                transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'background-color 0.15s ease, color 0.15s ease',
                 position: 'relative',
+                borderLeft: isActive ? `2px solid ${style.menuItem.accentBorder}` : '2px solid transparent',
                 ...(!isActive && {
                   '&:hover': {
                     backgroundColor: style.listItem.hoverBackground,
                     color: style.menuItem.textColor,
-                    transform: 'translateX(2px)',
                   },
                 }),
               }}
@@ -134,24 +116,7 @@ const SchemaList = () => {
                 location.pushState({}, `/classes/${key}`);
               }}
             >
-              {isActive && (
-                <div style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '3px',
-                  height: '50%',
-                  backgroundColor: style.menuItem.accentBorder,
-                  borderRadius: '0 2px 2px 0',
-                }} />
-              )}
-              <div style={{
-                paddingLeft: isActive ? `${style.spacing.sm}px` : '0',
-                transition: 'padding 0.25s ease',
-              }}>
-                {key}
-              </div>
+              {key}
             </div>
           );
         })}
@@ -224,7 +189,6 @@ export const Menu = ({ pages }: MenuProps) => {
       height: '100%',
       background: style.menu.background,
       borderRight: `1px solid ${style.menu.borderColor}`,
-      boxShadow: style.menu.shadow,
     }}>
       <div style={{
         flex: 1,
