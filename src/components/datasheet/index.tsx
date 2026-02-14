@@ -29,6 +29,7 @@ import { useMemo, useState } from 'frosty';
 import { DatasheetContext, DataSheetState } from './context';
 import { DataSheetHeader } from './table/header';
 import { DataSheetCell } from './table/cell';
+import { useStyle } from '../style';
 
 export const DataSheet = <T extends object, C extends Column>({
   data,
@@ -37,6 +38,7 @@ export const DataSheet = <T extends object, C extends Column>({
   startRowNumber,
   renderItem,
 }: DatasheetProps<T, C>) => {
+  const style = useStyle();
   const [state, setState] = useState<DataSheetState>({});
   const value = useMemo(() => ({ state, setState }), [state]);
   return (
@@ -60,6 +62,7 @@ export const DataSheet = <T extends object, C extends Column>({
                   rowIdx={rowIndex}
                   columnIdx={columnIndex}
                   renderItem={renderItem}
+                  isEditing={false}
                 />
               ))}
             </tr>

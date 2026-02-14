@@ -25,6 +25,7 @@
 
 import _ from 'lodash';
 import { Column } from '../types';
+import { useStyle } from '../../style';
 
 type DataSheetHeaderProps<T extends object> = {
   column: Column;
@@ -33,6 +34,7 @@ type DataSheetHeaderProps<T extends object> = {
 export const DataSheetHeader = <T extends object>({
   column,
 }: DataSheetHeaderProps<T>) => {
+  const style = useStyle();
   return (
     <th>
       {_.isString(column) ? column : column.label}

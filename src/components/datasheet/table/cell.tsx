@@ -25,12 +25,14 @@
 
 import _ from 'lodash';
 import { Column, DatasheetProps } from '../types';
+import { useStyle } from '../../style';
 
 type DataSheetCellProps<T extends object, C extends Column> = {
   data: T;
   rowIdx: number;
   columnIdx: number;
   column: C;
+  isEditing: boolean;
   renderItem: DatasheetProps<T, C>['renderItem'];
 };
 
@@ -39,8 +41,10 @@ export const DataSheetCell = <T extends object, C extends Column>({
   column,
   rowIdx,
   columnIdx,
+  isEditing,
   renderItem,
 }: DataSheetCellProps<T, C>) => {
+  const style = useStyle();
   return (
     <td>
       {renderItem({
@@ -48,7 +52,7 @@ export const DataSheetCell = <T extends object, C extends Column>({
         column,
         rowIdx,
         columnIdx,
-        isEditing: false,
+        isEditing,
       })}
     </td>
   )
