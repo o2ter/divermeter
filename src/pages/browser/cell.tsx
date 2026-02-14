@@ -158,7 +158,7 @@ export const TableCell = ({
             type="text"
             style={inputStyle}
             value={editingValue ?? value ?? ''}
-            onChange={(e) => setEditingValue?.(e.currentTarget.value)}
+            onInput={(e) => setEditingValue?.(e.currentTarget.value)}
             autofocus
           />
         );
@@ -168,7 +168,7 @@ export const TableCell = ({
             type="number"
             style={inputStyle}
             value={editingValue ?? value ?? ''}
-            onChange={(e) => setEditingValue?.(parseFloat(e.currentTarget.value))}
+            onInput={(e) => setEditingValue?.(parseFloat(e.currentTarget.value))}
             autofocus
           />
         );
@@ -178,7 +178,7 @@ export const TableCell = ({
             type="number"
             style={inputStyle}
             value={editingValue ?? value ?? ''}
-            onChange={(e) => setEditingValue?.(Decimal(e.currentTarget.value))}
+            onInput={(e) => setEditingValue?.(Decimal(e.currentTarget.value))}
             autofocus
           />
         );
@@ -187,7 +187,7 @@ export const TableCell = ({
           <select
             style={inputStyle}
             value={editingValue ?? (value ? 'true' : 'false')}
-            onChange={(e) => setEditingValue?.(e.currentTarget.value === 'true')}
+            onInput={(e) => setEditingValue?.(e.currentTarget.value === 'true')}
             autofocus
           >
             <option value="true">true</option>
@@ -200,7 +200,7 @@ export const TableCell = ({
             type="datetime-local"
             style={inputStyle}
             value={editingValue ? new Date(editingValue).toISOString().slice(0, 16) : (value ? new Date(value).toISOString().slice(0, 16) : '')}
-            onChange={(e) => setEditingValue?.(new Date(e.currentTarget.value))}
+            onInput={(e) => setEditingValue?.(new Date(e.currentTarget.value))}
             autofocus
           />
         );
@@ -210,7 +210,7 @@ export const TableCell = ({
           <textarea
             style={{ ...inputStyle, resize: 'both', minHeight: '60px' }}
             value={editingValue !== undefined ? encodeValue(editingValue, 0) : encodeValue(value, 0)}
-            onChange={(e) => {
+            onInput={(e) => {
               try {
                 // Try to parse the value
                 const parsed = eval(`(${e.currentTarget.value})`);
