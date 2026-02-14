@@ -60,6 +60,10 @@ const TableCell = ({
       return <div style={cellStyle}>{item.get(column) ? 'true' : 'false'}</div>;
     case 'date':
       return <div style={cellStyle}>{item.get(column)?.toLocaleString()}</div>;
+    case 'pointer':
+      return <div style={cellStyle}>{item.get(column)?.id}</div>;
+    case 'relation':
+      return <div style={cellStyle}>{_.map(item.get(column), (v: TObject) => v.id).join(', ')}</div>;
     default:
       return <div style={cellStyle}>{JSON.stringify(item.get(column))}</div>;
   }
