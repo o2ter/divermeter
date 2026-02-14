@@ -24,14 +24,25 @@
 //
 
 import _ from 'lodash';
-import { createContext, useContext } from 'frosty';
+import { createContext, SetStateAction, useContext } from 'frosty';
+import { DatasheetProps, Position, Range } from './types';
+
+export type DataSheetState = {
+  selectedCells?: Range<Position>;
+  selectedRows?: number[];
+  shiftKey?: boolean;
+  metaKey?: boolean;
+  editing?: Position;
+};
 
 type DatasheetContextType = {
-
+  state: DataSheetState;
+  setState: (dispatch: SetStateAction<DataSheetState>) => void;
 };
 
 export const DatasheetContext = createContext<DatasheetContextType>({
-
+  state: {},
+  setState: () => { },
 });
 
 export const useDatasheetContext = () => useContext(DatasheetContext);

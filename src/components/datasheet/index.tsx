@@ -25,18 +25,15 @@
 
 import _ from 'lodash';
 import { DatasheetProps } from './types';
-import { useMemo } from 'frosty';
-import { DatasheetContext } from './context';
+import { useMemo, useState } from 'frosty';
+import { DatasheetContext, DataSheetState } from './context';
 
 export const Datasheet = <T extends object>({
   children,
   ...props
 }: DatasheetProps<T>) => {
-
-  const value = useMemo(() => ({
-
-  }), []);
-
+  const [state, setState] = useState<DataSheetState>({});
+  const value = useMemo(() => ({ state, setState }), [state]);
   return (
     <DatasheetContext value={value}>
       {children}
