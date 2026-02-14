@@ -68,5 +68,6 @@ export type DataSheetProps<T extends object, C extends Column> = {
   onCopyCells?: (cells: Range<Position>, data: Pick<T, keyof T>[]) => void;
   onPasteRows?: (rows: number[], clipboard: DataTransfer | Clipboard) => void;
   onPasteCells?: (cells: Range<Position>, clipboard: DataTransfer | Clipboard) => void;
+  onStartEditing?: (row: number, col: number) => void;
   onEndEditing?: (row: number, col: number) => void;
 };

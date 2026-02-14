@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
-import { _useCallbacks, useMemo, useResource, useState } from 'frosty';
+import { _useCallbacks, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
 
 type TableCellProps = {
@@ -55,24 +55,30 @@ const TableCell = ({
     whiteSpace: 'nowrap',
   } as const;
 
-  switch (type) {
-    case 'string':
-      return <div style={cellStyle}>{item.get(column)}</div>;
-    case 'number':
-      return <div style={cellStyle}>{item.get(column)}</div>;
-    case 'decimal':
-      return <div style={cellStyle}>{item.get(column)?.toString()}</div>;
-    case 'boolean':
-      return <div style={cellStyle}>{item.get(column) ? 'true' : 'false'}</div>;
-    case 'date':
-      return <div style={cellStyle}>{item.get(column)?.toLocaleString()}</div>;
-    case 'pointer':
-      return <div style={cellStyle}>{item.get(column)?.id}</div>;
-    case 'relation':
-      return <div style={cellStyle}>{_.map(item.get(column), (v: TObject) => v.id).join(', ')}</div>;
-    default:
-      return <div style={cellStyle}>{JSON.stringify(item.get(column))}</div>;
+  const value = item.get(column);
+  if (_.isNil(value)) {
+    return <div style={cellStyle}>null</div>;
+  } else {
+    switch (type) {
+      case 'string':
+        return <div style={cellStyle}>{value}</div>;
+      case 'number':
+        return <div style={cellStyle}>{value}</div>;
+      case 'decimal':
+        return <div style={cellStyle}>{value?.toString()}</div>;
+      case 'boolean':
+        return <div style={cellStyle}>{value ? 'true' : 'false'}</div>;
+      case 'date':
+        return <div style={cellStyle}>{value?.toLocaleString()}</div>;
+      case 'pointer':
+        return <div style={cellStyle}>{value?.id}</div>;
+      case 'relation':
+        return <div style={cellStyle}>{_.map(value, (v: TObject) => v.id).join(', ')}</div>;
+      default:
+        return <div style={cellStyle}>{JSON.stringify(value)}</div>;
+    }
   }
+
 };
 
 export const BrowserPage = () => {
@@ -152,6 +158,9 @@ export const BrowserPage = () => {
                 setEditingValue={setEditingValue}
               />
             )}
+            onStartEditing={(row, col) => {
+              setEditingValue(undefined);
+            }}
             onEndEditing={(row, col) => {
 
             }}

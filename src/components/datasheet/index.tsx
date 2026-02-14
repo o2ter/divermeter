@@ -71,6 +71,7 @@ const DataSheetTable = <T extends object, C extends Column>({
   onCopyCells,
   onPasteRows,
   onPasteCells,
+  onStartEditing,
   onEndEditing,
 }: DataSheetProps<T, C>) => {
   const { state, setState, clearSelection, endEditing } = useDataSheetContext();
