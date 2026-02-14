@@ -39,8 +39,19 @@ const TableCell = ({
   column: string;
   schema: TSchema;
   isEditing: boolean;
-}) => {
-  return <div></div>;
+  }) => {
+  const field = schema.fields[column];
+  const type = _.isString(field) ? field : field.type;
+  switch (type) {
+    case 'string':
+      return <div>{item.get(column)}</div>;
+    case 'number':
+      return <div>{item.get(column)}</div>;
+    case 'boolean':
+      return <div>{item.get(column) ? 'true' : 'false'}</div>;
+    default:
+      return <div>{JSON.stringify(item.get(column))}</div>;
+  }
 };
 
 export const BrowserPage = () => {
