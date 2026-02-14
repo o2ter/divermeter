@@ -34,6 +34,8 @@ type TableCellProps = {
   column: string;
   schema: TSchema;
   isEditing: boolean;
+  editingValue?: any;
+  setEditingValue?: (value: any) => void;
 };
 
 const TableCell = ({
@@ -41,6 +43,8 @@ const TableCell = ({
   column,
   schema,
   isEditing,
+  editingValue,
+  setEditingValue,
 }: TableCellProps) => {
   const field = schema.fields[column];
   const type = _.isString(field) ? field : field.type;
@@ -96,6 +100,8 @@ export const BrowserPage = () => {
     return await q.find({ master: true });
   }, [className, filter, limit, offset, sort]);
 
+  const [editingValue, setEditingValue] = useState<any>();
+
   const {
     handleUpdateItem,
   } = _useCallbacks({
@@ -142,6 +148,8 @@ export const BrowserPage = () => {
                 column={columnKey}
                 schema={schema}
                 isEditing={isEditing}
+                editingValue={editingValue}
+                setEditingValue={setEditingValue}
               />
             )}
             onEndEditing={(row, col) => {
