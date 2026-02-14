@@ -235,7 +235,7 @@ import {
 } from '@o2ter/colors.js';
 
 // Mix two colors (weight: 0 = all color2, 1 = all color1)
-const mixed = mixColor(theme.colors.primary, theme.colors.secondary, 0.5);
+const mixed = mixColor(theme.colors.primary, '#fafbfc', 0.5);
 
 // Shift color lighter (negative) or darker (positive)
 const lighter = shiftColor(theme.colors.primary, -0.3); // Lighten

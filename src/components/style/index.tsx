@@ -52,20 +52,18 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
 
   // Create harmonious color palette following color theory
   const primary = theme.colors.primary;
-  const secondary = theme.colors.secondary;
 
-  // Derive menu background from user's selected colors
-  // Mix primary with secondary for a harmonious background
+  // Create sophisticated menu background with gradient
   const menuBgBase = isLight
-    ? tintColor(mixColor(primary, secondary, 0.5), 0.95)  // Very light tint for light themes
+    ? mixColor(primary, '#fafbfc', 0.03)  // Very subtle tint for light colors
     : isDark
-      ? shadeColor(mixColor(primary, secondary, 0.5), 0.95)  // Very dark shade for dark themes
-      : tintColor(mixColor(primary, secondary, 0.5), 0.9); // Light tint for mid-tones
+      ? mixColor(primary, '#1a1d23', 0.08)  // Dark, rich background
+      : mixColor(primary, '#f8f9fa', 0.05); // Neutral mid-tone
 
   // Create text colors with proper contrast
   const menuTextPrimary = theme.colorContrast(menuBgBase);
-  const menuTextSecondary = withOpacity(menuTextPrimary, 0.6);
-  const menuTextMuted = withOpacity(menuTextPrimary, 0.4);
+  const menuTextSecondary = withOpacity(menuTextPrimary, 0.65);
+  const menuTextMuted = withOpacity(menuTextPrimary, 0.45);
 
   // Create flat, modern active and hover states
   const activeBackground = isLight
@@ -169,7 +167,6 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
   // Pre-calculate button colors for semantic colors
   const buttonColors = {
     primary: createButtonVariantColors(theme.colors.primary),
-    secondary: createButtonVariantColors(theme.colors.secondary),
     success: createButtonVariantColors(theme.colors.success),
     info: createButtonVariantColors(theme.colors.info),
     warning: createButtonVariantColors(theme.colors.warning),
