@@ -28,7 +28,7 @@ import { PropsWithChildren, useMemo } from 'frosty';
 import { useDatasheetContext } from '../context';
 import { DataSheetCell } from './cell';
 import { useTheme } from '../../theme';
-import { mixColor, normalizeColor, rgba, getRed, getGreen, getBlue, toHexString } from '@o2ter/colors.js';
+import { useStyle } from '../../style';
 
 type BodyCellProps = PropsWithChildren<{
   row: number;
@@ -48,11 +48,12 @@ export const BodyCell = ({
 }: BodyCellProps) => {
   const { state, setState, isRowSelected, isCellSelected, isCellEditing } = useDatasheetContext();
   const theme = useTheme();
+  const style = useStyle();
 
-  const borderColor = mixColor(theme.colors.primary, '#DDD', 0.1);
-  const selectedBorderColor = theme.colors.primary;
-  const evenRowBg = 'white';
-  const oddRowBg = mixColor(theme.colors.primary, '#F6F8FF', 0.05);
+  const borderColor = style.datasheet.borderColor;
+  const selectedBorderColor = style.datasheet.selectedBorderColor;
+  const evenRowBg = style.datasheet.evenRowBg;
+  const oddRowBg = style.datasheet.oddRowBg;
 
   const cellStyle = useMemo(() => ({
     padding: 0,

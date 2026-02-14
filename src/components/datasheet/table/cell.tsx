@@ -25,8 +25,6 @@
 
 import _ from 'lodash';
 import { PropsWithChildren, useMemo } from 'frosty';
-import { useTheme } from '../../theme';
-import { mixColor, normalizeColor, rgba, getRed, getGreen, getBlue, toHexString } from '@o2ter/colors.js';
 
 type DataSheetCellProps = PropsWithChildren<{
   selected?: boolean;
@@ -48,8 +46,6 @@ export const DataSheetCell = ({
   children,
   ...props
 }: DataSheetCellProps) => {
-  const theme = useTheme();
-
   const cellStyle = useMemo(() => ({
     ...style,
     zIndex: isEditing === true ? 10 : 0,

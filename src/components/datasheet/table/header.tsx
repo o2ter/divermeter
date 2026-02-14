@@ -24,11 +24,11 @@
 //
 
 import _ from 'lodash';
-import { Column, DatasheetProps } from '../types';
+import { Column } from '../types';
 import { useDatasheetContext } from '../context';
 import { useTheme } from '../../theme';
-import { mixColor, shadeColor, tintColor } from '@o2ter/colors.js';
-import { _useCallbacks, useEffect, useState, useRef } from 'frosty';
+import { useStyle } from '../../style';
+import { _useCallbacks, useEffect, useState } from 'frosty';
 import { useDocument } from 'frosty/web';
 
 type DataSheetHeaderProps<T extends object, C extends Column> = {
@@ -52,15 +52,16 @@ export const DataSheetHeader = <T extends object, C extends Column>({
 }: DataSheetHeaderProps<T, C>) => {
   const { state, isRowSelected, isCellSelected } = useDatasheetContext();
   const theme = useTheme();
+  const style = useStyle();
   const doc = useDocument();
 
   const [resizing, setResizing] = useState<{ col: number; startX: number; startWidth: number } | null>(null);
 
-  const headerBg = mixColor(theme.colors.primary, '#F6F8FF', 0.05);
-  const borderColor = mixColor(theme.colors.primary, '#DDD', 0.1);
-  const selectedBorderColor = theme.colors.primary;
-  const resizeHandleColor = mixColor(theme.colors.primary, '#888', 0.3);
-  const resizeHandleHoverColor = theme.colors.primary;
+  const headerBg = style.datasheet.headerBg;
+  const borderColor = style.datasheet.borderColor;
+  const selectedBorderColor = style.datasheet.selectedBorderColor;
+  const resizeHandleColor = style.datasheet.resizeHandleColor;
+  const resizeHandleHoverColor = style.datasheet.resizeHandleHoverColor;
 
   const {
     handleMouseMove,

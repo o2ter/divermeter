@@ -307,6 +307,32 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
     },
   };
 
+  // ========== Datasheet Styles ==========
+  // Create harmonious datasheet colors derived from theme
+  const datasheetHeaderBg = mixColor(theme.colors.primary, '#F6F8FF', 0.05);
+  const datasheetBorderColor = mixColor(theme.colors.primary, '#DDD', 0.1);
+  const datasheetResizeHandleColor = mixColor(theme.colors.primary, '#888', 0.3);
+  const datasheetBodyBg = theme.colorContrast(theme.colors.primary) === '#ffffff'
+    ? '#ffffff'
+    : mixColor(theme.colors.primary, '#ffffff', 0.02);
+  const datasheetEvenRowBg = datasheetBodyBg;
+  const datasheetOddRowBg = mixColor(theme.colors.primary, datasheetBodyBg === '#ffffff' ? '#F6F8FF' : datasheetBodyBg, 0.05);
+
+  // Create default highlight color from theme.colors.tint with proper opacity
+  const datasheetHighlightColor = withOpacity(theme.colors.tint, 0.15);
+
+  const datasheetStyles = {
+    headerBg: datasheetHeaderBg,
+    borderColor: datasheetBorderColor,
+    selectedBorderColor: theme.colors.primary,
+    resizeHandleColor: datasheetResizeHandleColor,
+    resizeHandleHoverColor: theme.colors.primary,
+    bodyBg: datasheetBodyBg,
+    evenRowBg: datasheetEvenRowBg,
+    oddRowBg: datasheetOddRowBg,
+    highlightColor: datasheetHighlightColor,
+  };
+
   return {
     // Expose theme properties for direct access
     spacing: theme.spacing,
@@ -387,6 +413,9 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
 
     // Modal styles
     modal: modalStyles,
+
+    // Datasheet styles
+    datasheet: datasheetStyles,
   };
 };
 

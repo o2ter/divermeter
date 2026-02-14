@@ -25,8 +25,9 @@
 
 import _ from 'lodash';
 import { Column, DatasheetProps } from '../types';
-import { useDatasheetContext, selectionKeys } from '../context';
+import { useDatasheetContext } from '../context';
 import { useTheme } from '../../theme';
+import { useStyle } from '../../style';
 import { RowNumberCell } from './rowNumberCell';
 import { BodyCell } from './bodyCell';
 import { useCallback } from 'frosty';
@@ -58,6 +59,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
 }: DataSheetBodyProps<T, C>) => {
   const { state, setState, isCellEditing } = useDatasheetContext();
   const theme = useTheme();
+  const style = useStyle();
 
   const handleMouseDown = useCallback((e: MouseEvent) => {
     const element = e.target as HTMLElement;
@@ -122,7 +124,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
 
   return (
     <tbody
-      style={{ backgroundColor: 'white' }}
+      style={{ backgroundColor: style.datasheet.bodyBg }}
       onMouseDown={allowSelection && !state.editing ? handleMouseDown : undefined}
       onMouseOver={allowSelection && !state.editing ? handleMouseOver : undefined}
     >

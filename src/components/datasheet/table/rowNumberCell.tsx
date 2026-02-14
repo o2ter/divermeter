@@ -28,7 +28,7 @@ import { PropsWithChildren, useMemo } from 'frosty';
 import { useDatasheetContext } from '../context';
 import { DataSheetCell } from './cell';
 import { useTheme } from '../../theme';
-import { mixColor } from '@o2ter/colors.js';
+import { useStyle } from '../../style';
 
 type RowNumberCellProps = PropsWithChildren<{
   row: number;
@@ -44,10 +44,11 @@ export const RowNumberCell = ({
 }: RowNumberCellProps) => {
   const { state, isRowSelected, isCellSelected } = useDatasheetContext();
   const theme = useTheme();
+  const style = useStyle();
 
-  const borderColor = mixColor(theme.colors.primary, '#DDD', 0.1);
-  const selectedBorderColor = theme.colors.primary;
-  const headerBg = mixColor(theme.colors.primary, '#F6F8FF', 0.05);
+  const borderColor = style.datasheet.borderColor;
+  const selectedBorderColor = style.datasheet.selectedBorderColor;
+  const headerBg = style.datasheet.headerBg;
 
   const stickyStyle = stickyRowNumbers ? {
     position: 'sticky' as const,

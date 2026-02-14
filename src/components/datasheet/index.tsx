@@ -25,14 +25,14 @@
 
 import _ from 'lodash';
 import { Column, DatasheetProps } from './types';
-import { useMemo, useState, useEffect, useRef, _useCallbacks, useRefHandle } from 'frosty';
+import { useEffect, useRef, _useCallbacks, useRefHandle } from 'frosty';
 import { useDocument } from 'frosty/web';
 import { DatasheetStateProvider, useDatasheetContext, selectionKeys } from './context';
 import { DataSheetHeader } from './table/header';
 import { DataSheetBody } from './table/body';
 import { useTheme } from '../theme';
+import { useStyle } from '../style';
 import { defaultEncoders } from './encoders';
-import { normalizeColor, rgba, getRed, getGreen, getBlue, toHexString } from '@o2ter/colors.js';
 
 const isChildNode = (parent?: Node | null, node?: Node | EventTarget | null, doc?: Document) => {
   if (!parent || !doc) return false;
@@ -77,23 +77,10 @@ const DataSheetTable = <T extends object, C extends Column>({
   const { state, setState, clearSelection, endEditing } = useDatasheetContext();
   const tableRef = useRef<HTMLTableElement>();
   const theme = useTheme();
+  const style = useStyle();
   const doc = useDocument();
 
-  // Convert theme.colors.tint to rgba with 0.15 opacity for highlight
-  const defaultHighlightColor = useMemo(() => {
-    const normalized = normalizeColor(theme.colors.tint);
-    if (normalized) {
-      return toHexString(rgba(
-        getRed(normalized),
-        getGreen(normalized),
-        getBlue(normalized),
-        Math.round(255 * 0.15)
-      ), true);
-    }
-    return 'rgba(33, 133, 208, 0.15)';
-  }, [theme.colors.tint]);
-
-  const effectiveHighlightColor = highlightColor ?? defaultHighlightColor;
+  const effectiveHighlightColor = highlightColor ?? style.datasheet.highlightColor;
 
   useRefHandle(ref, () => ({
     get editing() { return !_.isNil(state.editing) },

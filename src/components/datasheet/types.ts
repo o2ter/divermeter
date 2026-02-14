@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { ElementNode, ExtendedCSSProperties, Ref } from 'frosty';
+import { ElementNode, Ref } from 'frosty';
 
 export type Position = { row: number; col: number; };
 export type Range<T> = { start: T; end: T; };
