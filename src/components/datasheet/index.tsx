@@ -78,13 +78,6 @@ const DataSheetTable = <T extends object, C extends Column>({
   const theme = useTheme();
   const doc = useDocument();
 
-  // Memoize data length and column count to detect real changes
-  const dataSignature = useMemo(() => ({
-    length: data.length,
-    columnCount: columns.length,
-    extraData,
-  }), [data.length, columns.length, extraData]);
-
   const {
     handleMouseDown,
     handleMouseUp,
