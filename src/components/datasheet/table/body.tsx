@@ -24,8 +24,8 @@
 //
 
 import _ from 'lodash';
-import { Column, DatasheetProps } from '../types';
-import { useDatasheetContext } from '../context';
+import { Column, DataSheetProps } from '../types';
+import { useDataSheetContext } from '../context';
 import { useTheme } from '../../theme';
 import { useStyle } from '../../style';
 import { RowNumberCell } from './rowNumberCell';
@@ -36,7 +36,7 @@ type DataSheetBodyProps<T extends object, C extends Column> = {
   data: T[];
   columns: C[];
   startRowNumber?: number;
-  renderItem: DatasheetProps<T, C>['renderItem'];
+  renderItem: DataSheetProps<T, C>['renderItem'];
   allowSelection?: boolean;
   allowEditForCell?: boolean | ((row: number, col: number) => boolean);
   stickyRowNumbers?: boolean;
@@ -55,7 +55,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
   showEmptyLastRow,
   highlightColor,
 }: DataSheetBodyProps<T, C>) => {
-  const { state, setState, isCellEditing } = useDatasheetContext();
+  const { state, setState, isCellEditing } = useDataSheetContext();
   const theme = useTheme();
   const style = useStyle();
 

@@ -30,7 +30,7 @@ export type Range<T> = { start: T; end: T; };
 
 export type Column = string | { key: string; label: ElementNode; };
 
-export type DatasheetProps<T extends object, C extends Column> = {
+export type DataSheetProps<T extends object, C extends Column> = {
   ref?: Ref<{
     readonly editing: boolean;
     readonly selectedRows: number[];

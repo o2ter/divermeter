@@ -24,10 +24,10 @@
 //
 
 import _ from 'lodash';
-import { Column, DatasheetProps } from './types';
+import { Column, DataSheetProps } from './types';
 import { useEffect, useRef, _useCallbacks, useRefHandle } from 'frosty';
 import { useDocument } from 'frosty/web';
-import { DatasheetStateProvider, useDatasheetContext, selectionKeys } from './context';
+import { DataSheetStateProvider, useDataSheetContext, selectionKeys } from './context';
 import { DataSheetHeader } from './table/header';
 import { DataSheetBody } from './table/body';
 import { useTheme } from '../theme';
@@ -72,8 +72,8 @@ const DataSheetTable = <T extends object, C extends Column>({
   onPasteRows,
   onPasteCells,
   onEndEditing,
-}: DatasheetProps<T, C>) => {
-  const { state, setState, clearSelection, endEditing } = useDatasheetContext();
+}: DataSheetProps<T, C>) => {
+  const { state, setState, clearSelection, endEditing } = useDataSheetContext();
   const tableRef = useRef<HTMLTableElement>();
   const theme = useTheme();
   const style = useStyle();
@@ -380,11 +380,11 @@ const DataSheetTable = <T extends object, C extends Column>({
   );
 };
 
-export const DataSheet = <T extends object, C extends Column>(props: DatasheetProps<T, C>) => {
+export const DataSheet = <T extends object, C extends Column>(props: DataSheetProps<T, C>) => {
   return (
-    <DatasheetStateProvider>
+    <DataSheetStateProvider>
       <DataSheetTable {...props} />
-    </DatasheetStateProvider>
+    </DataSheetStateProvider>
   );
 };
 

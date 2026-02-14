@@ -90,7 +90,7 @@ const calculate = (state: DataSheetState) => {
 
 type CalculatedState = ReturnType<typeof calculate>;
 
-type DatasheetContextType = {
+type DataSheetContextType = {
   state: CalculatedState;
   setState: (dispatch: SetStateAction<DataSheetState>) => void;
   isRowSelected: (row: number) => boolean;
@@ -100,11 +100,11 @@ type DatasheetContextType = {
   endEditing: () => void;
 };
 
-const DatasheetContext = createContext<DatasheetContextType>();
+const DataSheetContext = createContext<DataSheetContextType>();
 
-export const useDatasheetContext = () => useContext(DatasheetContext)!;
+export const useDataSheetContext = () => useContext(DataSheetContext)!;
 
-export const DatasheetStateProvider = ({ children }: PropsWithChildren<{}>) => {
+export const DataSheetStateProvider = ({ children }: PropsWithChildren<{}>) => {
   const [state, setState] = useState<DataSheetState>({});
 
   const value = useMemo(() => {
@@ -128,8 +128,8 @@ export const DatasheetStateProvider = ({ children }: PropsWithChildren<{}>) => {
   }, [state]);
 
   return (
-    <DatasheetContext value= { value } >
+    <DataSheetContext value={value} >
     { children }
-    </DatasheetContext>
+    </DataSheetContext>
   );
 };

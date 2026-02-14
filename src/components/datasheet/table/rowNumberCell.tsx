@@ -24,7 +24,7 @@
 //
 
 import { PropsWithChildren, useMemo } from 'frosty';
-import { useDatasheetContext } from '../context';
+import { useDataSheetContext } from '../context';
 import { DataSheetCell } from './cell';
 import { useTheme } from '../../theme';
 import { useStyle } from '../../style';
@@ -41,7 +41,7 @@ export const RowNumberCell = ({
   stickyRowNumbers,
   children,
 }: RowNumberCellProps) => {
-  const { state, isRowSelected, isCellSelected } = useDatasheetContext();
+  const { state, isRowSelected, isCellSelected } = useDataSheetContext();
   const theme = useTheme();
   const style = useStyle();
 

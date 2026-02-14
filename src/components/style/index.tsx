@@ -307,7 +307,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
     },
   };
 
-  // ========== Datasheet Styles ==========
+  // ========== DataSheet Styles ==========
   // Create harmonious datasheet colors derived from theme
   const datasheetHeaderBg = mixColor(theme.colors.primary, '#F6F8FF', 0.05);
   const datasheetBorderColor = mixColor(theme.colors.primary, '#DDD', 0.1);
@@ -410,7 +410,7 @@ const createStyles = (theme: ReturnType<typeof useTheme>) => {
     // Modal styles
     modal: modalStyles,
 
-    // Datasheet styles
+    // DataSheet styles
     datasheet: datasheetStyles,
   };
 };

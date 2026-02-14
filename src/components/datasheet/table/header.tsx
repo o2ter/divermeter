@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { Column } from '../types';
-import { useDatasheetContext } from '../context';
+import { useDataSheetContext } from '../context';
 import { useTheme } from '../../theme';
 import { useStyle } from '../../style';
 import { _useCallbacks, useEffect, useState } from 'frosty';
@@ -50,7 +50,7 @@ export const DataSheetHeader = <C extends Column>({
   columnMinWidth = 64,
   onColumnWidthChange,
 }: DataSheetHeaderProps<C>) => {
-  const { state, isRowSelected, isCellSelected } = useDatasheetContext();
+  const { state, isRowSelected, isCellSelected } = useDataSheetContext();
   const theme = useTheme();
   const style = useStyle();
   const doc = useDocument();

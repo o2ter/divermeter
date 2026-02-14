@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { PropsWithChildren, useMemo } from 'frosty';
-import { useDatasheetContext } from '../context';
+import { useDataSheetContext } from '../context';
 import { DataSheetCell } from './cell';
 import { useStyle } from '../../style';
 
@@ -45,7 +45,7 @@ export const BodyCell = ({
   allowEditForCell,
   children,
 }: BodyCellProps) => {
-  const { state, setState, isRowSelected, isCellSelected, isCellEditing } = useDatasheetContext();
+  const { state, setState, isRowSelected, isCellSelected, isCellEditing } = useDataSheetContext();
   const style = useStyle();
 
   const borderColor = style.datasheet.borderColor;
