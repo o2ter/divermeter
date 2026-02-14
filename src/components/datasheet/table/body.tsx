@@ -149,7 +149,12 @@ export const DataSheetBody = <T extends object, C extends Column>({
                 allowEditForCell={allowEditForCell}
                 rowNumbers={!_.isNil(startRowNumber)}
               >
-                <span style={{ fontFamily: 'monospace' }}>{' '}</span>
+                <span style={{
+                  fontFamily: 'monospace',
+                  display: 'inline-block',
+                  minHeight: theme.fontSize.md,
+                  lineHeight: `${theme.fontSize.md}px`,
+                }}>{' '}</span>
                 <div
                   style={{
                     position: 'absolute',
@@ -193,7 +198,12 @@ export const DataSheetBody = <T extends object, C extends Column>({
               allowEditForCell={false}
               rowNumbers={!_.isNil(startRowNumber)}
             >
-              <span style={{ fontFamily: 'monospace' }}>{' '}</span>
+              <span style={{
+                fontFamily: 'monospace',
+                display: 'inline-block',
+                minHeight: theme.fontSize.md,
+                lineHeight: `${theme.fontSize.md}px`,
+              }}>{' '}</span>
             </BodyCell>
           ))}
         </tr>
