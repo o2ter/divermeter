@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { Column, DatasheetProps } from './types';
-import { useMemo, useState, useEffect, useRef } from 'frosty';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'frosty';
 import { useDocument } from 'frosty/web';
 import { DatasheetStateProvider, useDatasheetContext, selectionKeys } from './context';
 import { DataSheetHeader } from './table/header';
@@ -49,6 +49,7 @@ const isChildNode = (parent?: Node | null, node?: Node | EventTarget | null, doc
 const DataSheetTable = <T extends object, C extends Column>({
   data,
   columns,
+  extraData,
   encoders,
   encodeValue,
   allowSelection = true,
@@ -77,38 +78,52 @@ const DataSheetTable = <T extends object, C extends Column>({
   const theme = useTheme();
   const doc = useDocument();
 
+  // Memoize data length and column count to detect real changes
+  const dataSignature = useMemo(() => ({
+    length: data.length,
+    columnCount: columns.length,
+    extraData,
+  }), [data.length, columns.length, extraData]);
+
   // Handle clicks outside the table to clear selection
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
-      if (!_.isNil(state.editing)) {
-        // If we're editing and click is outside the editing cell, end editing
-        const cell = (e.target as HTMLElement).closest('td');
-        if (!cell || !isChildNode(tableRef.current, e.target, doc)) {
-          if (_.isFunction(onEndEditing)) {
-            onEndEditing(state.editing.row, state.editing.col);
+      // Use functional setState to always get latest state
+      setState(currentState => {
+        if (!_.isNil(currentState.editing)) {
+          // If we're editing and click is outside the editing cell, end editing
+          const cell = (e.target as HTMLElement).closest('td');
+          if (!cell || !isChildNode(tableRef.current, e.target, doc)) {
+            if (_.isFunction(onEndEditing)) {
+              onEndEditing(currentState.editing.row, currentState.editing.col);
+            }
+            return _.omit(currentState, 'editing');
           }
-          endEditing();
         }
-      }
-      if (!_.isEmpty((state as any).selectingRows) || !_.isEmpty((state as any).selectingCells)) {
-        if (!isChildNode(tableRef.current, e.target, doc)) {
-          setState(state => _.omit(state, ...selectionKeys, 'editing'));
+        if (!_.isEmpty((currentState as any).selectingRows) || !_.isEmpty((currentState as any).selectingCells)) {
+          if (!isChildNode(tableRef.current, e.target, doc)) {
+            return _.omit(currentState, ...selectionKeys, 'editing');
+          }
         }
-      }
+        return currentState;
+      });
     };
 
     const handleMouseUp = (e: MouseEvent) => {
-      if (!_.isEmpty((state as any).selectingRows)) {
-        setState(state => ({
-          ..._.omit(state, ...selectionKeys, 'editing'),
-          selectedRows: (state as any).selectingRows,
-        }));
-      } else if (!_.isEmpty((state as any)._selectingCells)) {
-        setState(state => ({
-          ..._.omit(state, ...selectionKeys, 'editing'),
-          selectedCells: (state as any)._selectingCells,
-        }));
-      }
+      setState(currentState => {
+        if (!_.isEmpty((currentState as any).selectingRows)) {
+          return {
+            ..._.omit(currentState, ...selectionKeys, 'editing'),
+            selectedRows: (currentState as any).selectingRows,
+          };
+        } else if (!_.isEmpty((currentState as any)._selectingCells)) {
+          return {
+            ..._.omit(currentState, ...selectionKeys, 'editing'),
+            selectedCells: (currentState as any)._selectingCells,
+          };
+        }
+        return currentState;
+      });
     };
 
     if (!doc) return;
@@ -118,7 +133,7 @@ const DataSheetTable = <T extends object, C extends Column>({
       doc.removeEventListener('mousedown', handleMouseDown);
       doc.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [state, setState, endEditing, onEndEditing, doc]);
+  }, [setState, onEndEditing, doc]);
 
   // Clipboard and keyboard handling
   useEffect(() => {
@@ -268,7 +283,7 @@ const DataSheetTable = <T extends object, C extends Column>({
       doc.removeEventListener('paste', handlePaste);
       doc.removeEventListener('keydown', handleKeyDown);
     };
-  }, [state, data, columns, allowSelection, encodeValue, encoders, onCopyRows, onCopyCells, onPasteRows, onPasteCells, onDeleteRows, onDeleteCells, doc]);
+  }, [state.selectedRows, state.selectedCells, dataSignature, allowSelection, encodeValue, encoders, onCopyRows, onCopyCells, onPasteRows, onPasteCells, onDeleteRows, onDeleteCells, doc]);
 
   return (
     <table

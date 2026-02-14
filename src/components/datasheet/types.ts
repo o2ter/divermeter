@@ -34,6 +34,7 @@ export type Column = string | { key: string; label: ElementNode; };
 export type DatasheetProps<T extends object, C extends Column> = {
   data: T[];
   columns: C[];
+  extraData?: any;
   encoders?: Record<string, (data: any[][]) => string | Blob | PromiseLike<string | Blob>>;
   encodeValue?: (data: T[keyof T]) => any;
   allowSelection?: boolean;

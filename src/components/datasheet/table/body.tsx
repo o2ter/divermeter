@@ -29,6 +29,7 @@ import { useDatasheetContext, selectionKeys } from '../context';
 import { useTheme } from '../../theme';
 import { RowNumberCell } from './rowNumberCell';
 import { BodyCell } from './bodyCell';
+import { useCallback } from 'frosty';
 
 type DataSheetBodyProps<T extends object, C extends Column> = {
   data: T[];
@@ -58,7 +59,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
   const { state, setState, isCellEditing } = useDatasheetContext();
   const theme = useTheme();
 
-  const handleMouseDown = (e: MouseEvent) => {
+  const handleMouseDown = useCallback((e: MouseEvent) => {
     const element = e.target as HTMLElement;
     const cell = element.closest('td');
     if (_.isNil(cell)) return;
@@ -82,9 +83,9 @@ export const DataSheetBody = <T extends object, C extends Column>({
         metaKey: e.metaKey,
       }));
     }
-  }
+  }, [setState]);
 
-  const handleMouseOver = (e: MouseEvent) => {
+  const handleMouseOver = useCallback((e: MouseEvent) => {
     const element = e.target as HTMLElement;
     const cell = element.closest('td');
     if (_.isNil(cell)) return;
@@ -92,26 +93,29 @@ export const DataSheetBody = <T extends object, C extends Column>({
     const row = cell.dataset.row ?? '';
     const col = cell.dataset.col ?? '';
 
-    if (_.isEmpty(col)) {
-      if (state._selectRows) {
-        setState(state => ({
-          ..._.omit(state, '_selectStart', '_selectEnd'),
-          ...{ _selectRows: { start: state._selectRows!.start, end: Number(row) } },
-          shiftKey: e.shiftKey,
-          metaKey: e.metaKey,
-        }));
+    setState(currentState => {
+      if (_.isEmpty(col)) {
+        if (currentState._selectRows) {
+          return {
+            ..._.omit(currentState, '_selectStart', '_selectEnd'),
+            ...{ _selectRows: { start: currentState._selectRows.start, end: Number(row) } },
+            shiftKey: e.shiftKey,
+            metaKey: e.metaKey,
+          };
+        }
+      } else {
+        if (currentState._selectStart) {
+          return {
+            ..._.omit(currentState, '_selectRows'),
+            ...{ _selectEnd: { row: Number(row), col: Number(col) } },
+            shiftKey: e.shiftKey,
+            metaKey: e.metaKey,
+          };
+        }
       }
-    } else {
-      if (state._selectStart) {
-        setState(state => ({
-          ..._.omit(state, '_selectRows'),
-          ...{ _selectEnd: { row: Number(row), col: Number(col) } },
-          shiftKey: e.shiftKey,
-          metaKey: e.metaKey,
-        }));
-      }
-    }
-  }
+      return currentState;
+    });
+  }, [setState]);
 
   return (
     <tbody
