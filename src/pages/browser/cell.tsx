@@ -38,6 +38,8 @@ type TableCellProps = {
   setEditingValue?: (value: any) => void;
 };
 
+export const typeOf = (x?: TSchema['fields'][string]) => _.isString(x) ? x : x?.type === 'pointer' && x.target === 'File' ? 'file' : x?.type;
+
 const encodeValue = (value: any, space = 2) => {
   const normalName = /^[a-z_][a-z\d_]\w*$/gi;
   const _encodeValue = (value: any, space: number, padding: number): string => {
@@ -64,7 +66,7 @@ export const TableCell = ({
   const theme = useTheme();
   const field = schema.fields[column];
   const isSecure = schema.secureFields?.includes(column);
-  const type = _.isString(field) ? field : field.type;
+  const type = typeOf(field);
 
   const value = item.get(column);
 
@@ -83,23 +85,25 @@ export const TableCell = ({
   // Get color based on value type
   const getTypeColor = () => {
     if (isSecure || _.isNil(value)) {
-      return 'lightgray'; // Slate gray for null/hidden
+      return 'lightgray';
     }
     switch (type) {
       case 'string':
-        return 'darkred'; // Soft coral for strings
+        return 'darkred';
       case 'number':
       case 'decimal':
-        return 'mediumblue'; // Sky blue for numbers
+        return 'mediumblue';
       case 'boolean':
-        return 'darkblue'; // Light blue for booleans
+        return 'darkblue';
       case 'date':
-        return 'darkslateblue'; // Orange for dates
+        return 'darkslateblue';
+      case 'file':
+        return 'mediumblue';
       case 'pointer':
       case 'relation':
-        return 'rebeccapurple'; // Teal for references
+        return 'rebeccapurple';
       default:
-        return 'gray'; // Slate gray for complex types (objects/arrays)
+        return 'gray';
     }
   };
 
@@ -208,13 +212,15 @@ export const TableCell = ({
       case 'number':
         return <div style={cellStyle}>{value}</div>;
       case 'decimal':
-        return <div style={cellStyle}>{value?.toString()}</div>;
+        return <div style={cellStyle}>{value.toString()}</div>;
       case 'boolean':
         return <div style={cellStyle}>{value ? 'true' : 'false'}</div>;
       case 'date':
-        return <div style={cellStyle}>{value?.toLocaleString()}</div>;
+        return <div style={cellStyle}>{value.toLocaleString()}</div>;
+      case 'file':
+        return <div style={cellStyle}>{value.filename}</div>;
       case 'pointer':
-        return <div style={cellStyle}>{value?.id}</div>;
+        return <div style={cellStyle}>{value.id}</div>;
       case 'relation':
         return <div style={cellStyle}>{_.map(value, (v: TObject) => v.id).join(', ')}</div>;
       default:
