@@ -27,7 +27,7 @@ import _ from 'lodash';
 import { Column } from '../types';
 
 type DataSheetHeaderProps<T extends object> = {
-  column: Column<T>;
+  column: Column;
 };
 
 export const DataSheetHeader = <T extends object>({

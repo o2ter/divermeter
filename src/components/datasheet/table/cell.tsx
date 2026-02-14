@@ -26,21 +26,21 @@
 import _ from 'lodash';
 import { Column, DatasheetProps } from '../types';
 
-type DataSheetCellProps<T extends object> = {
+type DataSheetCellProps<T extends object, C extends Column> = {
   data: T;
   rowIdx: number;
   columnIdx: number;
-  column: Column<T>;
-  renderItem: DatasheetProps<T>['renderItem'];
+  column: C;
+  renderItem: DatasheetProps<T, C>['renderItem'];
 };
 
-export const DataSheetCell = <T extends object>({
+export const DataSheetCell = <T extends object, C extends Column>({
   data: item,
   column,
   rowIdx,
   columnIdx,
   renderItem,
-}: DataSheetCellProps<T>) => {
+}: DataSheetCellProps<T, C>) => {
   return (
     <td>
       {renderItem({

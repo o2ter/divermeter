@@ -25,15 +25,19 @@
 
 import _ from 'lodash';
 import { useParams } from '../../components/router';
-import { useProto, useProtoSchema } from '../../proto';
+import { QueryFilter, TSchema, useProto, useProtoSchema } from '../../proto';
 import { useMemo, useResource, useState } from 'frosty';
+import { DataSheet } from '../../components/datasheet';
+
+const TableCell = ({ item, column, schema }: { item: any; column: string; schema: TSchema }) => {
+  return <div></div>;
+};
 
 export const BrowserPage = () => {
   const { schema: className } = useParams() as { schema: string; };
   const proto = useProto();
   const { [className]: schema } = useProtoSchema();
 
-  type QueryFilter = Parameters<ReturnType<typeof proto.Query>['filter']>[0];
   const [filter, setFilter] = useState<QueryFilter[]>([]);
 
   const [limit, setLimit] = useState(20);
@@ -41,7 +45,7 @@ export const BrowserPage = () => {
   const [sort, setSort] = useState<{ field: string; order: 'asc' | 'desc'; }[]>([]);
 
   const {
-    resource,
+    resource = [],
   } = useResource(async () => {
     const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
     q.limit(limit);
@@ -50,5 +54,23 @@ export const BrowserPage = () => {
     return await q.find({ master: true });
   }, [className, filter, limit, offset, sort]);
 
-  return <div>Classes {className}</div>;
+  return (
+    <div>
+      <div>Classes {className}</div>
+      <div>
+        <DataSheet
+          data={resource}
+          columns={_.keys(schema.fields)}
+          columnWidth={_.map(_.keys(schema.fields), () => 200)}
+          renderItem={({ item, column }) => (
+            <TableCell
+              item={item}
+              column={column}
+              schema={schema}
+            />
+          )}
+        />
+      </div>
+    </div>
+  );
 };

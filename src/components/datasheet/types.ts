@@ -29,7 +29,7 @@ import { ElementNode, ExtendedCSSProperties, PropsWithChildren, StyleProp } from
 export type Position = { row: number; col: number; };
 export type Range<T> = { start: T; end: T; };
 
-export type Column<T extends object> = Extract<keyof T, string> | { key: Extract<keyof T, string>; label: ElementNode; };
+export type Column = string | { key: string; label: ElementNode; };
 
 type DataSheetStyleProps = {
   style?: StyleProp<ExtendedCSSProperties>;
@@ -41,9 +41,9 @@ type DataSheetStyleProps = {
   contentContainerStyle?: StyleProp<ExtendedCSSProperties>;
 };
 
-export type DatasheetProps<T extends object> = DataSheetStyleProps & {
+export type DatasheetProps<T extends object, C extends Column> = DataSheetStyleProps & {
   data: T[];
-  columns: Column<T>[];
+  columns: C[];
   encoders?: Record<string, (data: any[][]) => string | Blob | PromiseLike<string | Blob>>;
   encodeValue?: (data: T[keyof T]) => any;
   allowSelection?: boolean;
@@ -58,7 +58,7 @@ export type DatasheetProps<T extends object> = DataSheetStyleProps & {
   highlightColor?: string;
   renderItem: (x: {
     item: T;
-    column: Column<T>;
+    column: C;
     rowIdx: number;
     columnIdx: number;
     isEditing: boolean;
