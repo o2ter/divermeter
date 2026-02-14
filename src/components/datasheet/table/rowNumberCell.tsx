@@ -76,8 +76,6 @@ export const RowNumberCell = ({
     border: `1px double ${selectedBorderColor}`,
     borderTop: 0,
     backgroundColor: headerBg,
-    minWidth: 50,
-    width: 50,
     paddingLeft: theme.spacing.sm,
     paddingRight: theme.spacing.sm,
     fontSize: theme.fontSize.sm,
