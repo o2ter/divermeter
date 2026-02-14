@@ -26,6 +26,8 @@
 import _ from 'lodash';
 import { Decimal } from 'proto.io';
 import { TObject, TSchema } from '../../proto';
+import { useTheme } from '../../components/theme';
+import { normalizeColor, getRed, getGreen, getBlue, rgba, toHexString } from '@o2ter/colors.js';
 
 type TableCellProps = {
   item: TObject;
@@ -59,6 +61,7 @@ const encodeValue = (value: any, space = 2) => {
 export const TableCell = ({
   item, column, schema, isEditing, editingValue, setEditingValue,
 }: TableCellProps) => {
+  const theme = useTheme();
   const field = schema.fields[column];
   const type = _.isString(field) ? field : field.type;
 
@@ -70,18 +73,34 @@ export const TableCell = ({
 
   const value = item.get(column);
 
+  // Helper to create color with opacity
+  const withOpacity = (color: string, opacity: number) => {
+    const normalized = normalizeColor(color);
+    if (!normalized) return color;
+    return toHexString(rgba(
+      getRed(normalized),
+      getGreen(normalized),
+      getBlue(normalized),
+      Math.round(255 * opacity)
+    ), true);
+  };
+
   // Editing mode
   if (isEditing) {
     const inputStyle = {
       width: '100%',
+      minWidth: '100%',
       height: '100%',
-      border: 'none',
+      border: `1px solid ${theme.colors.tint}`,
       outline: 'none',
-      padding: 0,
+      padding: theme.spacing.xs,
       margin: 0,
       fontSize: 'inherit',
       fontFamily: 'inherit',
-      backgroundColor: 'transparent',
+      backgroundColor: '#ffffff',
+      boxShadow: `0 0 0 3px ${withOpacity(theme.colors.tint, 0.1)}`,
+      borderRadius: theme.borderRadius.sm,
+      overflow: 'visible',
     };
 
     switch (type) {
@@ -128,10 +147,10 @@ export const TableCell = ({
           />
         );
       default:
-        // For complex types, use textarea with JSON
+        // For complex types, use textarea with JSON - allow resizing
         return (
           <textarea
-            style={{ ...inputStyle, resize: 'none' }}
+            style={{ ...inputStyle, resize: 'both', minHeight: '60px' }}
             value={editingValue !== undefined ? encodeValue(editingValue, 0) : encodeValue(value, 0)}
             onChange={(e) => {
               try {
