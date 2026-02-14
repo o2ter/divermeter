@@ -50,7 +50,6 @@ const isChildNode = (parent?: Node | null, node?: Node | EventTarget | null, doc
 const DataSheetTable = <T extends object, C extends Column>({
   data,
   columns,
-  extraData,
   encoders,
   encodeValue,
   allowSelection = true,
