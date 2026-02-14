@@ -24,19 +24,19 @@
 //
 
 import _ from 'lodash';
-import { DatasheetProps } from './types';
+import { Column, DatasheetProps } from './types';
 import { useMemo, useState } from 'frosty';
 import { DatasheetContext, DataSheetState } from './context';
 import { DataSheetHeader } from './table/header';
 import { DataSheetCell } from './table/cell';
 
-export const DataSheet = <T extends object>({
+export const DataSheet = <T extends object, C extends Column>({
   data,
   columns,
   rowNumbers,
   startRowNumber,
   renderItem,
-}: DatasheetProps<T>) => {
+}: DatasheetProps<T, C>) => {
   const [state, setState] = useState<DataSheetState>({});
   const value = useMemo(() => ({ state, setState }), [state]);
   return (
