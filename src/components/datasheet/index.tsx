@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { Column, DatasheetProps } from './types';
-import { useMemo, useState, useEffect, useRef, _useCallbacks } from 'frosty';
+import { useMemo, useState, useEffect, useRef, _useCallbacks, useRefHandle } from 'frosty';
 import { useDocument } from 'frosty/web';
 import { DatasheetStateProvider, useDatasheetContext, selectionKeys } from './context';
 import { DataSheetHeader } from './table/header';
@@ -48,6 +48,7 @@ const isChildNode = (parent?: Node | null, node?: Node | EventTarget | null, doc
 }
 
 const DataSheetTable = <T extends object, C extends Column>({
+  ref,
   data,
   columns,
   encoders,
@@ -93,6 +94,14 @@ const DataSheetTable = <T extends object, C extends Column>({
   }, [theme.colors.tint]);
 
   const effectiveHighlightColor = highlightColor ?? defaultHighlightColor;
+
+  useRefHandle(ref, () => ({
+    get editing() { return !_.isNil(state.editing) },
+    get selectedRows() { return _.isEmpty(state.selectedCells) ? state.selectedRows ?? [] : [] },
+    get selectedCells() { return state.selectedCells; },
+    clearSelection,
+    endEditing,
+  }), [state]);
 
   const {
     handleMouseDown,

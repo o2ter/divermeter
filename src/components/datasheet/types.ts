@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { ElementNode, ExtendedCSSProperties } from 'frosty';
+import { ElementNode, ExtendedCSSProperties, Ref } from 'frosty';
 
 export type Position = { row: number; col: number; };
 export type Range<T> = { start: T; end: T; };
@@ -32,6 +32,13 @@ export type Range<T> = { start: T; end: T; };
 export type Column = string | { key: string; label: ElementNode; };
 
 export type DatasheetProps<T extends object, C extends Column> = {
+  ref: Ref<{
+    readonly editing: boolean;
+    readonly selectedRows: number[];
+    readonly selectedCells: Range<Position> | undefined;
+    clearSelection: () => void;
+    endEditing: () => void;
+  }>;
   data: T[];
   columns: C[];
   encoders?: Record<string, (data: any[][]) => string | Blob | PromiseLike<string | Blob>>;
