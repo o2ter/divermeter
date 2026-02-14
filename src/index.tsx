@@ -54,11 +54,15 @@ const Main = ({ pages }: { pages?: Page[]; }) => {
       <div style={{
         display: 'flex',
         flexDirection: 'row',
+        height: '100%',
+        width: '100%',
       }}>
         <div style={{ width: 240 }}>
           <Menu pages={pages} />
         </div>
-        <div style={{ flex: 1 }}>
+        <div style={{
+          flex: 1
+        }}>
           <Routes>
             <Route title='Dashboard' index element={<HomePage />} />
             <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />

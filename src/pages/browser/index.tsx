@@ -49,6 +49,8 @@ const TableCell = ({
       return <div>{item.get(column)}</div>;
     case 'boolean':
       return <div>{item.get(column) ? 'true' : 'false'}</div>;
+    case 'date':
+      return <div>{item.get(column)?.toLocaleString()}</div>;
     default:
       return <div>{JSON.stringify(item.get(column))}</div>;
   }
@@ -78,27 +80,44 @@ export const BrowserPage = () => {
   }, [className, filter, limit, offset, sort]);
 
   return (
-    <div>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      width: '100%',
+      alignItems: 'stretch',
+    }}>
       <div>Classes {className}</div>
-      <div>
-        {schema && <DataSheet
-          data={resource}
-          columns={_.keys(schema.fields)}
-          columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
-          startRowNumber={offset + 1}
-          onColumnWidthChange={(col, width) => {
-            const columnKey = _.keys(schema.fields)[col];
-            setColumnWidth(prev => ({ ...prev, [columnKey]: width }));
+      <div style={{
+        flex: 1,
+        position: 'relative',
+      }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            overflow: 'auto',
           }}
-          renderItem={({ row, columnKey, isEditing }) => (
-            <TableCell
-              item={row}
-              column={columnKey}
-              schema={schema}
-              isEditing={isEditing}
-            />
-          )}
-        />}
+        >
+          {schema && <DataSheet
+            data={resource}
+            columns={_.keys(schema.fields)}
+            columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
+            startRowNumber={offset + 1}
+            onColumnWidthChange={(col, width) => {
+              const columnKey = _.keys(schema.fields)[col];
+              setColumnWidth(prev => ({ ...prev, [columnKey]: width }));
+            }}
+            renderItem={({ row, columnKey, isEditing }) => (
+              <TableCell
+                item={row}
+                column={columnKey}
+                schema={schema}
+                isEditing={isEditing}
+              />
+            )}
+          />}
+        </div>
       </div>
     </div>
   );
