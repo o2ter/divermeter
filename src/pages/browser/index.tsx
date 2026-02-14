@@ -86,7 +86,7 @@ export const BrowserPage = () => {
           columns={_.keys(schema.fields)}
           columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
           rowNumbers
-          startRowNumber={offset}
+          startRowNumber={offset + 1}
           onColumnWidthChange={(col, width) => {
             const columnKey = _.keys(schema.fields)[col];
             setColumnWidth(prev => ({ ...prev, [columnKey]: width }));
