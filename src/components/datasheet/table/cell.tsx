@@ -51,12 +51,9 @@ export const DataSheetCell = ({
     zIndex: isEditing === true ? 10 : 0,
     boxShadow: selected ? `inset 0 -100vh ${highlightColor}` : undefined,
   }), [style, isEditing, selected, highlightColor]);
-
-  const finalStyle = selected ? { ...cellStyle, ...selectedStyle } : cellStyle;
-
   return (
     <td
-      style={finalStyle}
+      style={selected ? [cellStyle, selectedStyle] : cellStyle}
       {...props}
     >
       {children}
