@@ -44,6 +44,8 @@ export const BrowserPage = () => {
   const [offset, setOffset] = useState(0);
   const [sort, setSort] = useState<{ field: string; order: 'asc' | 'desc'; }[]>([]);
 
+  const [columnWidth, setColumnWidth] = useState<Record<string, number>>({});
+
   const {
     resource = [],
   } = useResource(async () => {
@@ -61,7 +63,7 @@ export const BrowserPage = () => {
         <DataSheet
           data={resource}
           columns={_.keys(schema.fields)}
-          columnWidth={_.map(_.keys(schema.fields), () => 200)}
+          columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
           renderItem={({ item, column }) => (
             <TableCell
               item={item}
