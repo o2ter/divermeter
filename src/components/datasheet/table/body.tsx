@@ -41,7 +41,7 @@ type DataSheetBodyProps<T extends object, C extends Column> = {
   allowEditForCell?: boolean | ((row: number, col: number) => boolean);
   stickyRowNumbers?: boolean;
   showEmptyLastRow?: boolean;
-  highlightColor?: string;
+  highlightColor: string;
 };
 
 export const DataSheetBody = <T extends object, C extends Column>({
@@ -54,7 +54,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
   allowEditForCell,
   stickyRowNumbers,
   showEmptyLastRow,
-  highlightColor = 'rgba(33, 133, 208, 0.15)',
+  highlightColor,
 }: DataSheetBodyProps<T, C>) => {
   const { state, setState, isCellEditing } = useDatasheetContext();
   const theme = useTheme();

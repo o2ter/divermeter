@@ -32,6 +32,7 @@ import { DataSheetHeader } from './table/header';
 import { DataSheetBody } from './table/body';
 import { useTheme } from '../theme';
 import { defaultEncoders } from './encoders';
+import { normalizeColor, rgba, getRed, getGreen, getBlue, toHexString } from '@o2ter/colors.js';
 
 const isChildNode = (parent?: Node | null, node?: Node | EventTarget | null, doc?: Document) => {
   if (!parent || !doc) return false;
@@ -61,7 +62,7 @@ const DataSheetTable = <T extends object, C extends Column>({
   stickyHeader = true,
   stickyRowNumbers = true,
   showEmptyLastRow,
-  highlightColor = 'rgba(33, 133, 208, 0.15)',
+  highlightColor,
   renderItem,
   onColumnWidthChange,
   onSelectionChanged,
@@ -77,6 +78,22 @@ const DataSheetTable = <T extends object, C extends Column>({
   const tableRef = useRef<HTMLTableElement>();
   const theme = useTheme();
   const doc = useDocument();
+
+  // Convert theme.colors.tint to rgba with 0.15 opacity for highlight
+  const defaultHighlightColor = useMemo(() => {
+    const normalized = normalizeColor(theme.colors.tint);
+    if (normalized) {
+      return toHexString(rgba(
+        getRed(normalized),
+        getGreen(normalized),
+        getBlue(normalized),
+        Math.round(255 * 0.15)
+      ), true);
+    }
+    return 'rgba(33, 133, 208, 0.15)';
+  }, [theme.colors.tint]);
+
+  const effectiveHighlightColor = highlightColor ?? defaultHighlightColor;
 
   const {
     handleMouseDown,
@@ -329,7 +346,7 @@ const DataSheetTable = <T extends object, C extends Column>({
         allowEditForCell={allowEditForCell}
         stickyRowNumbers={stickyRowNumbers}
         showEmptyLastRow={showEmptyLastRow}
-        highlightColor={highlightColor}
+        highlightColor={effectiveHighlightColor}
       />
     </table>
   );
