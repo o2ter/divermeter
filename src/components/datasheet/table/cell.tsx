@@ -25,3 +25,18 @@
 
 import _ from 'lodash';
 import { DatasheetProps } from '../types';
+
+type DataSheetCellProps<T extends object> = {
+  data: T;
+  column: DatasheetProps<T>['columns'][number];
+};
+
+export const DataSheetCell = <T extends object>({
+  data,
+  column,
+}: DataSheetCellProps<T>) => {
+  return (
+    <td>
+    </td>
+  )
+};

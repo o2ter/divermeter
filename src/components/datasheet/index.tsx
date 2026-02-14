@@ -28,11 +28,13 @@ import { DatasheetProps } from './types';
 import { useMemo, useState } from 'frosty';
 import { DatasheetContext, DataSheetState } from './context';
 import { DataSheetHeader } from './table/header';
+import { DataSheetCell } from './table/cell';
 
 export const DataSheet = <T extends object>({
   data,
   columns,
   rowNumbers,
+  startRowNumber,
   ...props
 }: DatasheetProps<T>) => {
   const [state, setState] = useState<DataSheetState>({});
@@ -46,6 +48,13 @@ export const DataSheet = <T extends object>({
           ))}
         </thead>
         <tbody>
+          {_.map(data, (row, rowIndex) => (
+            <tr key={rowIndex}>
+              {_.map(columns, (column, columnIndex) => (
+                <DataSheetCell key={columnIndex} data={row} column={column} />
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
     </DatasheetContext>
