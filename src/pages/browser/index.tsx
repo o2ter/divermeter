@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
-import { useMemo, useResource, useState } from 'frosty';
+import { _useCallbacks, useMemo, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
 
 const TableCell = ({
@@ -84,6 +84,8 @@ export const BrowserPage = () => {
 
   const {
     resource = [],
+    setResource,
+    refresh,
   } = useResource(async () => {
     const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
     q.limit(limit);
@@ -91,6 +93,17 @@ export const BrowserPage = () => {
     if (!_.isEmpty(sort)) q.sort(_.reduce(sort, (s, { field, order }) => ({ ...s, [field]: order === 'asc' ? 1 : -1 }), {}));
     return await q.find({ master: true });
   }, [className, filter, limit, offset, sort]);
+
+  const {
+    handleUpdateItem,
+  } = _useCallbacks({
+    handleUpdateItem: async (item: TObject, columnKey: string, value: any) => {
+      const cloned = item.clone();
+      cloned.set(columnKey, value);
+      await cloned.save({ master: true });
+      setResource((prev) => _.map(prev, i => i === item ? cloned : i));
+    },
+  });
 
   return (
     <div style={{
