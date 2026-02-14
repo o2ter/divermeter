@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { Column, DataSheetProps } from './types';
 import { useEffect, useRef, _useCallbacks, useRefHandle, useMemo } from 'frosty';
-import { useDocument } from 'frosty/web';
+import { useWindow } from 'frosty/web';
 import { DataSheetStateProvider, useDataSheetContext, selectionKeys } from './context';
 import { DataSheetHeader } from './table/header';
 import { DataSheetBody } from './table/body';
@@ -78,7 +78,10 @@ const DataSheetTable = <T extends object, C extends Column>({
   const tableRef = useRef<HTMLTableElement>();
   const theme = useTheme();
   const style = useStyle();
-  const doc = useDocument();
+  const {
+    document: doc,
+    navigator,
+  } = useWindow();
 
   const effectiveHighlightColor = highlightColor ?? style.datasheet.highlightColor;
 
