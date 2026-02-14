@@ -28,6 +28,8 @@ import { Column, DatasheetProps } from '../types';
 import { useDatasheetContext } from '../context';
 import { useTheme } from '../../theme';
 import { mixColor, shadeColor, tintColor } from '@o2ter/colors.js';
+import { _useCallbacks, useEffect, useState, useRef } from 'frosty';
+import { useDocument } from 'frosty/web';
 
 type DataSheetHeaderProps<T extends object, C extends Column> = {
   columns: C[];
@@ -50,10 +52,42 @@ export const DataSheetHeader = <T extends object, C extends Column>({
 }: DataSheetHeaderProps<T, C>) => {
   const { state, isRowSelected, isCellSelected } = useDatasheetContext();
   const theme = useTheme();
+  const doc = useDocument();
+
+  const [resizing, setResizing] = useState<{ col: number; startX: number; startWidth: number } | null>(null);
 
   const headerBg = mixColor(theme.colors.primary, '#F6F8FF', 0.05);
   const borderColor = mixColor(theme.colors.primary, '#DDD', 0.1);
   const selectedBorderColor = theme.colors.primary;
+  const resizeHandleColor = mixColor(theme.colors.primary, '#888', 0.3);
+  const resizeHandleHoverColor = theme.colors.primary;
+
+  const {
+    handleMouseMove,
+    handleMouseUp,
+  } = _useCallbacks({
+    handleMouseMove: (e: MouseEvent) => {
+      if (resizing && onColumnWidthChange) {
+        const delta = e.clientX - resizing.startX;
+        const newWidth = Math.max(columnMinWidth, resizing.startWidth + delta);
+        onColumnWidthChange(resizing.col, newWidth);
+      }
+    },
+    handleMouseUp: () => {
+      setResizing(null);
+    },
+  });
+
+  useEffect(() => {
+    if (resizing) {
+      doc.addEventListener('mousemove', handleMouseMove);
+      doc.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        doc.removeEventListener('mousemove', handleMouseMove);
+        doc.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [resizing]);
 
   const stickyHeaderStyle = stickyHeader ? {
     position: 'sticky' as const,
@@ -106,6 +140,32 @@ export const DataSheetHeader = <T extends object, C extends Column>({
               }}
             >
               {_.isString(column) ? column : column.label}
+              {onColumnWidthChange && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 6,
+                    cursor: 'col-resize',
+                    backgroundColor: 'transparent',
+                    transition: 'background-color 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: resizeHandleHoverColor,
+                    },
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const currentWidth = _.isArray(columnWidth) ? columnWidth[col] : columnMinWidth;
+                    setResizing({
+                      col,
+                      startX: e.clientX,
+                      startWidth: currentWidth ?? columnMinWidth,
+                    });
+                  }}
+                />
+              )}
             </th>
           );
         })}

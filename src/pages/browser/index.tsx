@@ -87,6 +87,10 @@ export const BrowserPage = () => {
           columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
           rowNumbers
           startRowNumber={offset}
+          onColumnWidthChange={(col, width) => {
+            const columnKey = _.keys(schema.fields)[col];
+            setColumnWidth(prev => ({ ...prev, [columnKey]: width }));
+          }}
           renderItem={({ row, columnKey, isEditing }) => (
             <TableCell
               item={row}
