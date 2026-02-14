@@ -34,11 +34,13 @@ const TableCell = ({
   column,
   schema,
   isEditing,
+  onUpdate,
 }: {
   item: TObject;
   column: string;
   schema: TSchema;
-  isEditing: boolean;
+    isEditing: boolean;
+  onUpdate?: (value: any) => void;
   }) => {
   const field = schema.fields[column];
   const type = _.isString(field) ? field : field.type;
@@ -140,6 +142,7 @@ export const BrowserPage = () => {
                 column={columnKey}
                 schema={schema}
                 isEditing={isEditing}
+                onUpdate={(value) => handleUpdateItem(row, columnKey, value)}
               />
             )}
           />}
