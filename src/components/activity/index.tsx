@@ -25,6 +25,8 @@
 
 import _ from 'lodash';
 import { createActivity, useActivity as _useActivity, PropsWithChildren } from 'frosty';
+import { Spinner } from '../spinner';
+import { useTheme } from '../theme';
 
 const Activity = createActivity();
 
@@ -37,12 +39,37 @@ type ActivityProviderProps = PropsWithChildren<{
 export const ActivityProvider = ({
   defaultDelay,
   children,
-}: ActivityProviderProps) => (
-  <Activity defaultDelay={defaultDelay}>
-    {(tasks) => (
-      <>
-        {children}
-      </>
-    )}
-  </Activity>
-);
+}: ActivityProviderProps) => {
+  const theme = useTheme();
+
+  return (
+    <Activity defaultDelay={defaultDelay}>
+      {(tasks) => (
+        <>
+          {children}
+          {tasks > 0 && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+              }}>
+                <Spinner color={theme.colors.primary} thickness={3} speed={0.8} />
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </Activity>
+  );
+};
