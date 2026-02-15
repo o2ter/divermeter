@@ -124,18 +124,37 @@ export const BrowserPage = () => {
             columns={_.map(schema.fields, (v, k) => ({
               key: k,
               label: (
-                <div onClick={(e) => {
-                  setSort(sort => ({
-                    ...e.shiftKey ? _.omit(sort, k) : {},
-                    [k]: sort[k] === 1 ? -1 : 1,
-                  }));
-                }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                  onClick={(e) => {
+                    setSort(sort => ({
+                      ...e.shiftKey ? _.omit(sort, k) : {},
+                      [k]: sort[k] === 1 ? -1 : 1,
+                    }));
+                  }}
+                >
                   {k}
                   <span style={{
                     color: theme.colorContrast(theme.colors['primary-100']),
                     opacity: 0.5,
                     paddingLeft: theme.spacing.xs,
                   }}>({_.isString(v) ? v : v.type})</span>
+                  <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                    {sort[k] === 1 ? (
+                      <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
+                        <path d="M6 3L9 7H3L6 3Z" fill="currentColor" />
+                      </svg>
+                    ) : sort[k] === -1 ? (
+                      <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
+                        <path d="M6 9L3 5H9L6 9Z" fill="currentColor" />
+                      </svg>
+                    ) : null}
+                  </span>
                 </div>
               ),
             }))}
