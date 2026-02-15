@@ -1808,7 +1808,7 @@ asynckit@^0.4.0:
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
   integrity sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==
 
-axios@^1.12.0:
+axios@^1.13.5:
   version "1.13.5"
   resolved "https://registry.yarnpkg.com/axios/-/axios-1.13.5.tgz#5e464688fa127e11a660a2c49441c009f6567a43"
   integrity sha512-cz4ur7Vb0xS4/KUN0tPWe44eqxrIu31me+fbang3ijiNscE129POzipJJA6zniq2C/Z6sJCjMimjS8Lc/GAs8Q==
@@ -3575,16 +3575,16 @@ process-nextick-args@~2.0.0:
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"
   integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
 
-proto.io@^0.0.230:
-  version "0.0.230"
-  resolved "https://registry.yarnpkg.com/proto.io/-/proto.io-0.0.230.tgz#fd61d9237444a0080746a3efae88f3a9969d04a5"
-  integrity sha512-wDqe7az0+KD3WTtdoEHd1Zw9aU2tvEodTANyHbud/kr+8U5ap+PwoESThLCxbKkvK8uLcyWOuy6aAGWiiLe6Hg==
+proto.io@^0.0.231:
+  version "0.0.231"
+  resolved "https://registry.yarnpkg.com/proto.io/-/proto.io-0.0.231.tgz#a71577c853e746ddfa6888dc5b2dbe1eddd0a13f"
+  integrity sha512-orDrii/q0GwgcWto10H/tnlAsma2cM2j2YaPquHPsMgP5g+SF2qOVqoBskhjOvbwmGGnKSTm5ZsowfdJRtOZeA==
   dependencies:
     "@google-cloud/storage" "^7.16.0"
     "@o2ter/crypto-js" "^0.0.7"
     "@o2ter/utils-js" "^0.0.19"
     ali-oss "^6.23.0"
-    axios "^1.12.0"
+    axios "^1.13.5"
     busboy "^1.6.0"
     decimal.js "^10.6.0"
     jsonwebtoken "^9.0.2"
