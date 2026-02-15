@@ -775,6 +775,105 @@ import { Icon } from '../components/icon';
 </button>
 ```
 
+### Complex Value Handling & Custom Format
+
+**CRITICAL: All complex data structures (objects, arrays, dates, decimals) use a custom encoded format for editing.**
+
+#### Value Format Specification
+
+The project uses a custom format (defined in [src/pages/browser/utils.ts](src/pages/browser/utils.ts)) for encoding/decoding complex values:
+
+**Supported Types:**
+- **Primitives**: `null`, `true`, `false`, numbers, strings (JSON-quoted)
+- **Dates**: `ISODate('2026-02-15T10:30:00.000Z')`
+- **Decimals**: `Decimal('123.456')`
+- **Arrays**: `[value1, value2, value3]`
+- **Objects**: `{key1: value1, key2: value2}`
+
+**Format Features:**
+- Object keys can be unquoted identifiers or quoted strings
+- Supports nested structures (arrays of objects, objects with arrays, etc.)
+- Maintains proper indentation (configurable spacing)
+- Case-sensitive keywords: `null`, `true`, `false`
+
+**Example:**
+```tsx
+// Encoded format
+{
+  name: "John Doe",
+  age: 30,
+  active: true,
+  balance: Decimal('1234.56'),
+  joinDate: ISODate('2025-01-15T00:00:00.000Z'),
+  tags: ["admin", "verified"],
+  metadata: {
+    lastLogin: ISODate('2026-02-15T10:30:00.000Z'),
+    preferences: {
+      theme: "dark",
+      notifications: true
+    }
+  }
+}
+```
+
+#### Encoding & Decoding Functions
+
+**Available in [src/pages/browser/utils.ts](src/pages/browser/utils.ts):**
+
+```tsx
+// Encode value to custom format
+encodeValue(value: any, space?: number): string
+
+// Decode custom format back to value
+decodeValue(text: string): any
+
+// Verify value contains only allowed types
+verifyValue(value: any): void  // Throws on invalid types
+```
+
+#### Usage Policy
+
+1. **For editing complex fields** - Use JSCode component with encodeValue/decodeValue:
+   ```tsx
+   <JSCode
+     initialValue={_.isNil(value) ? '' : encodeValue(value, 2)}
+     onChangeValue={(text) => {
+       try {
+         const parsed = decodeValue(text);
+         verifyValue(parsed);
+         setValue(parsed);
+       } catch (error) {
+         // Keep raw text during editing for incomplete input
+         setValue(text);
+       }
+     }}
+   />
+   ```
+
+2. **For display** - Use `encodeValue(value, 0)` for compact single-line display
+
+3. **Never use `eval()` or `JSON.parse()` directly** - Always use `decodeValue()` for parsing
+
+4. **Null/undefined handling** - Display as empty string in editors, show `(null)` in read-only display
+
+5. **Error handling** - Allow partial/invalid input during editing, only validate on save
+
+#### Custom Parser Details
+
+The `decodeValue()` parser:
+- Handles both single and double-quoted strings
+- Supports escape sequences: `\n`, `\t`, `\r`, `\\`, `\"`, `\'`
+- Allows trailing commas in arrays and objects
+- Provides detailed error messages with position information
+- Recursively parses nested structures
+- Recognizes custom constructors: `ISODate()`, `Decimal()`
+
+**Why Custom Format Instead of JSON:**
+- Supports custom types (Date, Decimal) natively
+- More readable with unquoted object keys
+- Better for human editing in the admin UI
+- Consistent with proto.io's data model
+
 ### TypeScript Patterns
 - Strict mode enabled
 - Component types: `ComponentType<Props>` from frosty
