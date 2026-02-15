@@ -231,19 +231,16 @@ const operators = [
 ];
 
 type GroupFilterCriteria = {
-  id: string;
   operator: '$and' | '$or' | '$nor';
   children: FilterCriteria[];
 };
 
 type CustomFilterCriteria = {
-  id: string;
   operator: '$filter';
   value: string;
 };
 
 type FieldFilterCriteria = {
-  id: string;
   operator: string; // $eq, $ne, $gt, etc.
   field: string;
   value: string;
@@ -275,7 +272,7 @@ const FilterItem = ({
         ...group,
         children: [
           ...group.children,
-          { id: `${Date.now()}-${Math.random()}`, operator: '', field: '', value: '' } as FieldFilterCriteria,
+          { operator: '', field: '', value: '' } as FieldFilterCriteria,
         ],
       });
     };
@@ -319,10 +316,10 @@ const FilterItem = ({
                 if (newOp === '$and' || newOp === '$or' || newOp === '$nor') {
                   onUpdate({ ...group, operator: newOp });
                 } else if (newOp === '$filter') {
-                  onUpdate({ id: group.id, operator: '$filter', value: '' } as CustomFilterCriteria);
+                  onUpdate({ operator: '$filter', value: '' } as CustomFilterCriteria);
                 } else {
                   // Convert to field filter
-                  onUpdate({ id: group.id, operator: newOp, field: '', value: '' } as FieldFilterCriteria);
+                  onUpdate({ operator: newOp, field: '', value: '' } as FieldFilterCriteria);
                 }
               }}
               style={{
@@ -400,7 +397,6 @@ const FilterItem = ({
         </div>
         {group.children.map((child, index) => (
           <FilterItem
-            key={child.id}
             criteria={child}
             fields={fields}
             onUpdate={(updated) => updateChild(index, updated)}
@@ -427,12 +423,12 @@ const FilterItem = ({
           onChange={(e) => {
             const newOp = e.currentTarget.value;
             if (newOp === '$and' || newOp === '$or' || newOp === '$nor') {
-              onUpdate({ id: custom.id, operator: newOp, children: [] } as GroupFilterCriteria);
+              onUpdate({ operator: newOp, children: [] } as GroupFilterCriteria);
             } else if (newOp === '$filter') {
               // Keep as is
             } else {
               // Convert to field filter
-              onUpdate({ id: custom.id, operator: newOp, field: '', value: '' } as FieldFilterCriteria);
+              onUpdate({ operator: newOp, field: '', value: '' } as FieldFilterCriteria);
             }
           }}
           style={{
@@ -684,9 +680,9 @@ const FilterItem = ({
         onChange={(e) => {
           const newOp = e.currentTarget.value;
           if (newOp === '$and' || newOp === '$or' || newOp === '$nor') {
-            onUpdate({ id: field.id, operator: newOp, children: [] } as GroupFilterCriteria);
+            onUpdate({ operator: newOp, children: [] } as GroupFilterCriteria);
           } else if (newOp === '$filter') {
-            onUpdate({ id: field.id, operator: '$filter', value: '' } as CustomFilterCriteria);
+            onUpdate({ operator: '$filter', value: '' } as CustomFilterCriteria);
           } else {
             onUpdate({ ...field, operator: newOp });
           }
@@ -799,7 +795,6 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
         if (key === '$and' || key === '$or' || key === '$nor') {
           const subFilters = Array.isArray(value) ? value : [];
           result.push({
-            id: `${Date.now()}-${Math.random()}`,
             operator: key,
             children: convertFromQueryFilter(subFilters),
           });
@@ -822,7 +817,6 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
             }
 
             result.push({
-              id: `${Date.now()}-${Math.random()}`,
               operator: '$eq',
               field: key,
               value: strValue,
@@ -857,7 +851,6 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
               }
 
               result.push({
-                id: `${Date.now()}-${Math.random()}`,
                 operator: op,
                 field: key,
                 value: strValue,
@@ -991,7 +984,7 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
     handleAddFilter: () => {
       setCriteria([
         ...criteria,
-        { id: `${Date.now()}-${Math.random()}`, operator: '', field: '', value: '' } as FieldFilterCriteria,
+        { operator: '', field: '', value: '' } as FieldFilterCriteria,
       ]);
     },
   });
@@ -1048,7 +1041,6 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
             }}>
               {criteria.map((item, index) => (
                 <FilterItem
-                  key={item.id}
                   criteria={item}
                   fields={expandedFields}
                   onUpdate={(updated) => {
