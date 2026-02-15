@@ -59,7 +59,7 @@ const expandColumns = (fields: TSchema['fields']) => {
   }> = [];
 
   const expandField = (fieldName: string, fieldType: TSchema['fields'][string], path: string[] = []) => {
-    
+
     if (!_.isString(fieldType) && fieldType.type === 'shape') {
       // Expand object properties into separate columns
       for (const [propName, propType] of Object.entries(fieldType.shape)) {
@@ -235,6 +235,7 @@ export const BrowserPage = () => {
   };
 
   const performSaves = async (items: TObject[]) => {
+    const creates = items.filter(item => !item.id);
     for (const item of items) {
       await item.save({ master: true });
     }
@@ -249,6 +250,12 @@ export const BrowserPage = () => {
         count: prev?.count ?? newItems.length,
       };
     });
+    // If we're in relation mode and this is a new item, add it to the relation
+    if (relationQuery && canEditInRelationMode && creates.length > 0) {
+      const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
+      parentObj.addToSet(relationQuery.field, creates);
+      await parentObj.save({ master: true });
+    }
   };
 
   const {
@@ -261,7 +268,6 @@ export const BrowserPage = () => {
         try {
           const cloned = item.clone();
           const isNewItem = !item.id;
-
           // Handle file upload - check if value is a browser File object
           if (value instanceof File) {
             // Upload the file to proto.io
@@ -271,16 +277,7 @@ export const BrowserPage = () => {
           } else {
             cloned.set(columnKey, value);
           }
-
           await performSaves([cloned]);
-
-          // If we're in relation mode and this is a new item, add it to the relation
-          if (relationQuery && canEditInRelationMode) {
-            const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
-            parentObj.addToSet(relationQuery.field, [cloned]);
-            await parentObj.save({ master: true });
-          }
-
           alert.showSuccess(`Object ${cloned.id} ${isNewItem ? 'created' : 'updated'} successfully`);
         } catch (error) {
           console.error('Failed to update item:', error);
@@ -306,7 +303,7 @@ export const BrowserPage = () => {
             });
             alert.showSuccess(`${items.length} object(s) removed from relation successfully`);
           } else {
-          // Regular delete
+            // Regular delete
             await Promise.all(items.map(item => item.destroy({ master: true })));
             setResource((prev) => {
               const prevItems = prev?.items ?? [];
@@ -453,7 +450,7 @@ export const BrowserPage = () => {
                     {sort[col.baseField] === 1 ? (
                       <Icon name="sortAsc" size="md" />
                     ) : sort[col.baseField] === -1 ? (
-                        <Icon name="sortDesc" size="md" />
+                      <Icon name="sortDesc" size="md" />
                     ) : null}
                   </span>
                 </div>
