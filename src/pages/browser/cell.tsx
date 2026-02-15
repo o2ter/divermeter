@@ -238,13 +238,14 @@ type TableCellProps = {
   item?: TObject;
   column: string;
   schema: TSchema;
+  className: string;
   isEditing: boolean;
   editingValue?: any;
   setEditingValue?: (value: any) => void;
 };
 
 export const TableCell = ({
-  item, column, schema, isEditing, editingValue, setEditingValue,
+  item, column, schema, className, isEditing, editingValue, setEditingValue,
 }: TableCellProps) => {
   const theme = useTheme();
   const location = useLocation();
@@ -469,6 +470,25 @@ export const TableCell = ({
             <span style={{ flex: 1, fontFamily: 'monospace', fontSize: theme.fontSize.sm }}>
               {(editingValue ?? value ?? []).length} item(s)
             </span>
+            {field && !_.isString(field) && field.type === 'relation' && field.target && item?.id && (
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: theme.spacing.xs,
+                  color: theme.colors.primary,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+                onClick={() => {
+                  if (!field || _.isString(field) || field.type !== 'relation' || !field.target || !item?.id) return;
+                  location.pushState({}, `/classes/${field.target}?relationOf=${encodeURIComponent(className)}&relationId=${encodeURIComponent(item.id)}&relationField=${encodeURIComponent(column)}`);
+                }}
+              >
+                <Icon name="link" size="sm" />
+              </button>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -591,6 +611,27 @@ export const TableCell = ({
             <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {_.map(value, (v: TObject) => v.id).join(', ')}
             </span>
+            {field && !_.isString(field) && field.type === 'relation' && field.target && item?.id && (
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  color: theme.colors.primary,
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!field || _.isString(field) || field.type !== 'relation' || !field.target || !item?.id) return;
+                  location.pushState({}, `/classes/${field.target}?relationOf=${encodeURIComponent(className)}&relationId=${encodeURIComponent(item.id)}&relationField=${encodeURIComponent(column)}`);
+                }}
+              >
+                <Icon name="link" size="sm" />
+              </button>
+            )}
           </div>
         );
       default:

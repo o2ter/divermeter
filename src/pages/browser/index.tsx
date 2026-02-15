@@ -86,6 +86,7 @@ export const BrowserPage = () => {
 
   const [filter, setFilter] = useState<QueryFilter[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [relationQuery, setRelationQuery] = useState<{ className: string; objectId: string; field: string } | null>(null);
 
   const [limit, setLimit] = useState(20);
   const [offset, setOffset] = useState(0);
@@ -98,12 +99,24 @@ export const BrowserPage = () => {
   // Expand columns from schema  
   const expandedColumns = useMemo(() => schema ? expandColumns(schema.fields) : [], [schema]);
 
-  // Read filter from URL query params (e.g., ?id=123)
+  // Read filter from URL query params (e.g., ?id=123 or ?relationOf=User&relationId=123&relationField=posts)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
+    const relationOf = params.get('relationOf');
+    const relationId = params.get('relationId');
+    const relationField = params.get('relationField');
+
     if (id) {
       setFilter([{ _id: { $eq: id } }]);
+      setRelationQuery(null);
+    } else if (relationOf && relationId && relationField) {
+      // Store relation query params to use proto.Relation in the query
+      setRelationQuery({ className: relationOf, objectId: relationId, field: relationField });
+      setFilter([]);
+    } else {
+      setFilter([]);
+      setRelationQuery(null);
     }
   }, [location.search]);
 
@@ -115,7 +128,11 @@ export const BrowserPage = () => {
     setResource,
     refresh,
   } = useResource(async () => {
-    const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
+    // Build query: either from relation or regular query with filters
+    const q = relationQuery
+      ? proto.Relation(proto.Object(relationQuery.className, relationQuery.objectId), relationQuery.field)
+      : _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
+
     const count = await q.count({ master: true });
     const relation = _.filter(expandedColumns, ({ fieldType: type }) => !_.isString(type) && (type.type === 'pointer' || type.type === 'relation'));
     const files = _.filter(expandedColumns, ({ fieldType: type }) => !_.isString(type) && type.type === 'pointer' && type.target === 'File');
@@ -132,7 +149,7 @@ export const BrowserPage = () => {
       count,
       items: await q.find({ master: true }),
     };
-  }, [className, expandedColumns, filter, limit, offset, sort]);
+  }, [className, expandedColumns, filter, relationQuery, limit, offset, sort]);
 
   const [editingValue, setEditingValue] = useState<any>();
 
@@ -333,14 +350,16 @@ export const BrowserPage = () => {
               opacity: 0.7,
             }}>
               {count} {count === 1 ? 'record' : 'records'}
-              {filter.length > 0 && ` • ${filter.length} ${filter.length === 1 ? 'filter' : 'filters'} active`}
+              {relationQuery && ` • Related to ${relationQuery.className}#${relationQuery.objectId}.${relationQuery.field}`}
+              {!relationQuery && filter.length > 0 && ` • ${filter.length} ${filter.length === 1 ? 'filter' : 'filters'} active`}
             </div>
           </div>
           <Button
-            variant={filter.length > 0 ? 'solid' : 'outline'}
+            variant={filter.length > 0 || relationQuery ? 'solid' : 'outline'}
             color="primary"
             size="sm"
             onClick={() => setShowFilterModal(true)}
+            disabled={!!relationQuery}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
               <Icon name="search" size="sm" />
@@ -424,6 +443,7 @@ export const BrowserPage = () => {
                 item={item}
                 column={columnKey}
                 schema={schema}
+                className={className}
                 isEditing={isEditing}
                 editingValue={editingValue}
                 setEditingValue={setEditingValue}
