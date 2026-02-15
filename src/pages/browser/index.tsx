@@ -174,14 +174,17 @@ export const BrowserPage = () => {
         }
       });
     },
-    handleDeleteKeys: (item: TObject, keys: string[]) => {
+    handleDeleteKeys: (item: TObject[], keys: string[]) => {
       startActivity(async () => {
         try {
-          const cloned = item.clone();
-          keys.forEach(key => cloned.set(key, null));
-          await cloned.save({ master: true });
-          setResource((prev) => _.map(prev, i => i === item ? cloned : i));
-          alert.showSuccess(`Fields ${keys.join(', ')} deleted successfully`);
+          const updates: TObject[] = [];
+          for (const obj of item) {
+            const cloned = obj.clone();
+            keys.forEach(key => cloned.set(key, null));
+            updates.push(cloned);
+          }
+          await performSaves(updates);
+          alert.showSuccess(`${keys.length} field(s) cleared in ${updates.length} object(s)`);
         } catch (error) {
           console.error('Failed to delete fields:', error);
           alert.showError(error instanceof Error ? error.message : 'Failed to delete fields');
@@ -409,26 +412,10 @@ export const BrowserPage = () => {
 
               // Filter out readonly columns
               const editableCols = _.filter(_cols, col => !_.includes(readonlyKeys, col));
+              const items = _.compact(_.map(_rows, row => resource[row]));
 
-              if (!_.isEmpty(editableCols)) {
-                startActivity(async () => {
-                  try {
-                    const updates: TObject[] = [];
-                    for (const row of _rows) {
-                      const item = resource[row];
-                      if (item) {
-                        const cloned = item.clone();
-                        editableCols.forEach(col => cloned.set(col, null));
-                        updates.push(cloned);
-                      }
-                    }
-                    await performSaves(updates);
-                    alert.showSuccess(`${editableCols.length} field(s) cleared in ${updates.length} row(s)`);
-                  } catch (error) {
-                    console.error('Failed to clear cells:', error);
-                    alert.showError(error instanceof Error ? error.message : 'Failed to clear cells');
-                  }
-                });
+              if (!_.isEmpty(editableCols) && !_.isEmpty(items)) {
+                handleDeleteKeys(items, editableCols);
               }
             }}
           />}
