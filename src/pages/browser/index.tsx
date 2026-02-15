@@ -154,8 +154,7 @@ export const BrowserPage = () => {
         try {
           const cloned = item.clone();
           cloned.set(columnKey, value);
-          await cloned.save({ master: true });
-          setResource((prev) => _.map(prev, i => i === item ? cloned : i));
+          await performSaves([cloned]);
           alert.showSuccess(`Object ${item.id} updated successfully`);
         } catch (error) {
           console.error('Failed to update item:', error);
@@ -305,12 +304,12 @@ export const BrowserPage = () => {
             encodeValue={(v, k) => encodeValue(v.get(k))}
             onStartEditing={(row, col) => {
               const columnKey = _.keys(schema.fields)[col];
-              const currentValue = resource[row].get(columnKey);
+              const currentValue = resource[row]?.get(columnKey);
               setEditingValue(currentValue);
             }}
             onEndEditing={(row, col) => {
               const columnKey = _.keys(schema.fields)[col];
-              const item = resource[row];
+              const item = resource[row] ?? proto.Object(className);
               const currentValue = item.get(columnKey);
 
               // Only save if value changed
