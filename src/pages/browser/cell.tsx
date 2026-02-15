@@ -177,6 +177,20 @@ export const TableCell = ({
       overflow: 'visible',
     };
 
+    // Special handling for _id column in empty rows (for adding to relations)
+    if (column === '_id' && !item) {
+      return (
+        <input
+          type="text"
+          style={inputStyle}
+          value={editingValue ?? ''}
+          placeholder="Enter object ID to add to relation..."
+          onInput={(e) => setEditingValue?.(e.currentTarget.value)}
+          autofocus
+        />
+      );
+    }
+
     switch (type) {
       case 'string':
         return (
