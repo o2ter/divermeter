@@ -301,7 +301,7 @@ export const BrowserPage = () => {
               startActivity(async () => {
                 try {
                   const { type, data } = await decodeClipboardData(clipboard, true) ?? {};
-                  if (_.isEmpty(data) || !_.isArray(data)) throw Error('No valid data found in clipboard');
+                  if (_.isEmpty(data) || !_.isArray(data)) return;
                   const objs = _.compact(_.map(rows, row => data?.[row]));
                   const updates: TObject[] = [];
                   if (type === 'json') {
@@ -341,7 +341,29 @@ export const BrowserPage = () => {
             onPasteCells={(cells, clipboard) => {
               startActivity(async () => {
                 try {
+                  const _columns = _.keys(schema.fields);
+                  const _rows = _.range(cells.start.row, cells.end.row + 1);
+                  const _cols = _.range(cells.start.col, cells.end.col + 1).map(c => _columns[c]);
                   const { data } = await decodeClipboardData(clipboard, false) ?? {};
+                  if (_.isEmpty(data) || !_.isArray(data)) return;
+                  const objs = _.compact(_.map(_rows, row => data[row]));
+                  const updates: TObject[] = [];
+                  for (const [obj, values] of _.zip(objs, data)) {
+                    const _obj = obj?.clone() ?? proto.Object(className);
+                    for (const [column = '', value] of _.zip(_cols, values)) {
+                      if (!_.includes(readonlyKeys, column)) {
+                        if (_.isNil(value)) {
+                          if (_obj.id) _obj.set(column, null);
+                        } else if (_.isString(value)) {
+                          const _value = await decodeRawValue(_typeOf(schema.fields[column]) ?? '', value);
+                          if (!_.isNil(_value)) _obj.set(column, _value as any);
+                        } else {
+                          throw Error(`Invalid value for column ${column}: ${value}`);
+                        }
+                      }
+                    }
+                    updates.push(_obj);
+                  }
                 } catch (error) {
                   console.error('Failed to paste data:', error);
                   alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
