@@ -138,7 +138,7 @@ export const BrowserPage = () => {
     for (const item of items) {
       await item.save({ master: true });
     }
-    setResource((prev) => _.map(prev, i => items.includes(i) ? items.find(it => it.id === i.id) ?? i : i));
+    setResource((prev) => _.map(prev, i => items.find(it => it.id === i.id) ?? i));
   };
 
   const {
