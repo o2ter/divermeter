@@ -25,7 +25,7 @@
 
 import _ from 'lodash';
 import { _useCallbacks, useMemo, useState, useEffect } from 'frosty';
-import { QueryFilter, TSchema, ProtoClient } from '../../proto';
+import { QueryFilter, TSchema, useProto } from '../../proto';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
 import { Button } from '../../components/button';
@@ -39,7 +39,7 @@ import { JSCode } from '../../components/jscode';
  * Decode filter parameters from URLSearchParams into QueryFilter[]
  * Supports both filter[col]=val format and legacy filter=json format
  */
-export const decodeFiltersFromURLParams = (params: URLSearchParams, proto: ProtoClient): QueryFilter[] => {
+export const decodeFiltersFromURLParams = (params: URLSearchParams, proto: ReturnType<typeof useProto>): QueryFilter[] => {
   // Priority 1: Parse filter[col]=val parameters with type support
   const filterParams: Record<string, string> = {};
   for (const [key, value] of params.entries()) {
