@@ -1045,18 +1045,43 @@ const encodeClipboard = useMemo(() => (e: ClipboardEvent, data: any[][]) => {
 
 #### CRITICAL: Never Use useEffect to Set State
 
-**If you're using `useEffect` to set state, you're doing something wrong.**
+**If you're using `useEffect` to set state, you're doing something wrong... USUALLY.**
 
 `useEffect` in Frosty is ONLY for:
 - **Registering event listeners** (document, window, element events)
 - **Subscribing to external systems** (WebSocket connections, browser APIs)
 - **Cleanup tasks** (removing listeners, closing connections)
+- **Syncing local modal/dialog state when it opens** (legitimate exception - see below)
 
 **NEVER use `useEffect` for:**
-- Setting state based on props or other state
+- Setting state based on props or other state (derive instead)
 - Deriving values from state or props
-- Synchronizing state
+- Synchronizing most state (use props directly)
 
+**Exception: Modal/Dialog State Synchronization**
+When a modal opens, it's valid to use `useEffect` to sync local editing state from props:
+```tsx
+// ✅ CORRECT: Sync modal state when it opens
+const MyModal = ({ show, initialData }) => {
+  const [localData, setLocalData] = useState(initialData);
+  
+  useEffect(() => {
+    if (show) {
+      // Reset local state when modal opens
+      setLocalData(initialData);
+    }
+  }, [show, initialData]);
+  
+  return <Modal show={show}>...</Modal>;
+};
+```
+
+This is valid because:
+- The modal is a temporary editing context
+- You want fresh state each time it opens
+- Local state isolates changes until "Apply" is clicked
+
+**Common mistakes:**
 ```tsx
 // ❌ WRONG: Using useEffect to set state
 const MyComponent = ({ userId }) => {
@@ -1129,6 +1154,71 @@ const MyComponent = () => {
 - **Computed values** - Calculate derived values during render, not in useEffect
 
 **Remember: If you find yourself setting state in `useEffect`, stop and refactor. There's always a better way.**
+
+#### CRITICAL: Never Use useMemo for Side Effects
+
+**`useMemo` is for computing values, NOT for side effects like setting state.**
+
+`useMemo` should ONLY be used for:
+- **Expensive calculations** that you want to cache
+- **Computing derived values** from props or state
+- **Returning a value** that will be used in rendering
+
+**NEVER use `useMemo` for:**
+- Setting state
+- Calling functions with side effects
+- Registering event listeners
+- Any action that doesn't return a cacheable value
+
+```tsx
+// ❌ WRONG: Using useMemo to set state
+const MyModal = ({ show, data }) => {
+  const [localData, setLocalData] = useState(data);
+  
+  useMemo(() => {
+    if (show) {
+      setLocalData(data); // ABSOLUTELY WRONG!
+    }
+  }, [show, data]);
+  
+  return <Modal show={show}>...</Modal>;
+};
+
+// ✅ CORRECT: Use useEffect for side effects
+const MyModal = ({ show, data }) => {
+  const [localData, setLocalData] = useState(data);
+  
+  useEffect(() => {
+    if (show) {
+      setLocalData(data); // Correct - side effect in useEffect
+    }
+  }, [show, data]);
+  
+  return <Modal show={show}>...</Modal>;
+};
+
+// ✅ CORRECT: Use useMemo for computing values
+const MyComponent = ({ items }) => {
+  const expensiveResult = useMemo(() => {
+    return items.map(item => performExpensiveCalculation(item));
+  }, [items]);
+  
+  return <div>{expensiveResult.length}</div>;
+};
+```
+
+**Why this matters:**
+- **useMemo can be skipped** - React/Frosty may skip memoized computations for performance
+- **Side effects won't reliably run** - useMemo is not guaranteed to execute
+- **Breaks mental model** - Developers expect useMemo to return values, not perform actions
+- **Hard to debug** - Side effects in useMemo are unexpected and confusing
+
+**The rule is simple:**
+- **Computing a value?** → Use `useMemo`
+- **Performing an action?** → Use `useEffect` or `_useCallbacks`
+- **Need both?** → Compute in `useMemo`, perform action in `useEffect`
+
+**Remember: If your `useMemo` doesn't return a value that's used elsewhere, you're using the wrong hook.**
 
 ### Proto.io Integration
 
@@ -1384,8 +1474,9 @@ const MyComponent = () => {
 16. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
 17. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
 18. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
-19. **Never use useEffect to set state** - If you're using `useEffect` to set state, you're doing something wrong. `useEffect` is ONLY for registering event listeners and subscribing to external systems, NOT for deriving values or syncing state. Use `useMemo` for derived values, use props directly, or calculate values during render. Setting state in `useEffect` causes extra renders, performance issues, and can lead to infinite loops.
-20. **Always use master mode** - This is a database admin dashboard. Every proto API call MUST include `{ master: true }` option. Without it, ACL restrictions apply and dashboard features will fail. Use `proto.schema({ master: true })`, `proto.Query('Class').find({ master: true })`, `object.save({ master: true })`, etc.
+19. **Never use useEffect to set state (usually)** - If you're using `useEffect` to set state, you're doing something wrong. `useEffect` is ONLY for registering event listeners and subscribing to external systems, NOT for deriving values or syncing most state. EXCEPTION: It's valid to sync local modal/dialog state when it opens via `useEffect`. Use `useMemo` for derived values, use props directly, or calculate values during render. Setting state in `useEffect` causes extra renders, performance issues, and can lead to infinite loops.
+20. **NEVER use useMemo for side effects** - `useMemo` is for computing and caching values, NOT for performing actions like setting state, calling functions with side effects, or registering event listeners. If your `useMemo` doesn't return a value that's used elsewhere, you're using the wrong hook. Use `useEffect` for side effects, `useMemo` ONLY for computing values. React/Frosty may skip memoized computations, so side effects in `useMemo` won't reliably execute.
+21. **Always use master mode** - This is a database admin dashboard. Every proto API call MUST include `{ master: true }` option. Without it, ACL restrictions apply and dashboard features will fail. Use `proto.schema({ master: true })`, `proto.Query('Class').find({ master: true })`, `object.save({ master: true })`, etc.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export

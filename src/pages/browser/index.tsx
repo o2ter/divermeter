@@ -27,7 +27,7 @@ import _ from 'lodash';
 import { tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
-import { _useCallbacks, useMemo, useResource, useState } from 'frosty';
+import { _useCallbacks, useEffect, useMemo, useResource, useState } from 'frosty';
 import { useSearchParams } from 'frosty/web';
 import { DataSheet } from '../../components/datasheet';
 import { _typeOf, typeOf, decodeValue, verifyValue } from './utils';
@@ -39,6 +39,255 @@ import { Decimal, deserialize, serialize } from 'proto.io';
 import { Button } from '../../components/button';
 import { Icon } from '../../components/icon';
 import { FilterModal, decodeFiltersFromURLParams, encodeFiltersToURLParams } from './filter';
+import { Modal } from '../../components/modal';
+
+// Column Settings Modal Component
+type ColumnSettingsModalProps = {
+  show: boolean;
+  columns: Array<{ key: string; baseField: string; fieldType: TSchema['fields'][string] }>;
+  columnOrder: string[];
+  hiddenColumns: Set<string>;
+  onApply: (order: string[], hidden: Set<string>) => void;
+  onCancel: () => void;
+};
+
+const ColumnSettingsModal = ({ show, columns, columnOrder, hiddenColumns, onApply, onCancel }: ColumnSettingsModalProps) => {
+  const theme = useTheme();
+  const [localOrder, setLocalOrder] = useState<string[]>(columnOrder);
+  const [localHidden, setLocalHidden] = useState<Set<string>>(hiddenColumns);
+
+  // Sync local state when modal opens
+  useEffect(() => {
+    if (show) {
+      // If columnOrder is empty, use all columns from schema
+      const order = columnOrder.length > 0 ? columnOrder : columns.map(col => col.key);
+      setLocalOrder(order);
+      setLocalHidden(new Set(hiddenColumns));
+    }
+  }, [show, columnOrder, hiddenColumns, columns]);
+
+  const moveColumn = (index: number, direction: 'up' | 'down') => {
+    const newOrder = [...localOrder];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex >= 0 && targetIndex < newOrder.length) {
+      [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
+      setLocalOrder(newOrder);
+    }
+  };
+
+  const toggleVisibility = (columnKey: string) => {
+    const newHidden = new Set(localHidden);
+    if (newHidden.has(columnKey)) {
+      newHidden.delete(columnKey);
+    } else {
+      newHidden.add(columnKey);
+    }
+    setLocalHidden(newHidden);
+  };
+
+  const resetToDefault = () => {
+    setLocalOrder(columns.map(col => col.key));
+    setLocalHidden(new Set());
+  };
+
+  const handleApply = () => {
+    onApply(localOrder, localHidden);
+  };
+
+  return (
+    <Modal show={show}>
+      <div style={{
+        width: '600px',
+        maxHeight: '80vh',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: '#ffffff',
+        borderRadius: theme.borderRadius.lg,
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: theme.spacing.lg,
+          borderBottom: `1px solid ${theme.colors['primary-200']}`,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
+          <h3 style={{
+            margin: 0,
+            fontSize: theme.fontSize.lg,
+            fontWeight: theme.fontWeight.semibold,
+            color: theme.colors.primary,
+          }}>
+            Column Settings
+          </h3>
+          <button
+            onClick={onCancel}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: theme.spacing.xs,
+              display: 'flex',
+              alignItems: 'center',
+              color: theme.colorContrast('#ffffff'),
+              opacity: 0.6,
+              '&:hover': {
+                opacity: 1,
+              },
+            }}
+          >
+            <Icon name="close" size="sm" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: theme.spacing.lg,
+        }}>
+          <div style={{
+            fontSize: theme.fontSize.sm,
+            color: theme.colorContrast('#ffffff'),
+            opacity: 0.7,
+            marginBottom: theme.spacing.md,
+          }}>
+            Reorder columns or hide them from the table. Hidden columns can be shown again later.
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: theme.spacing.xs }}>
+            {localOrder.map((colKey, index) => {
+              const column = columns.find(c => c.key === colKey);
+              if (!column) return null;
+
+              const isHidden = localHidden.has(colKey);
+
+              return (
+                <div
+                  key={colKey}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: theme.spacing.sm,
+                    padding: theme.spacing.sm,
+                    backgroundColor: isHidden ? theme.colors['primary-100'] : '#ffffff',
+                    border: `1px solid ${theme.colors['primary-200']}`,
+                    borderRadius: theme.borderRadius.md,
+                    opacity: isHidden ? 0.5 : 1,
+                  }}
+                >
+                  {/* Visibility checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={!isHidden}
+                    onChange={() => toggleVisibility(colKey)}
+                    style={{
+                      cursor: 'pointer',
+                      width: '16px',
+                      height: '16px',
+                    }}
+                  />
+
+                  {/* Column name */}
+                  <div style={{
+                    flex: 1,
+                    fontSize: theme.fontSize.sm,
+                    color: theme.colorContrast('#ffffff'),
+                  }}>
+                    {column.key}
+                  </div>
+
+                  {/* Move buttons */}
+                  <div style={{ display: 'flex', gap: theme.spacing.xs }}>
+                    <button
+                      onClick={() => moveColumn(index, 'up')}
+                      disabled={index === 0}
+                      style={{
+                        background: 'none',
+                        border: `1px solid ${theme.colors['primary-300']}`,
+                        borderRadius: theme.borderRadius.sm,
+                        cursor: index === 0 ? 'not-allowed' : 'pointer',
+                        padding: theme.spacing.xs,
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: theme.colorContrast('#ffffff'),
+                        opacity: index === 0 ? 0.3 : 0.7,
+                        '&:hover': {
+                          opacity: index === 0 ? 0.3 : 1,
+                          backgroundColor: index === 0 ? 'transparent' : theme.colors['primary-100'],
+                        },
+                      }}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      onClick={() => moveColumn(index, 'down')}
+                      disabled={index === localOrder.length - 1}
+                      style={{
+                        background: 'none',
+                        border: `1px solid ${theme.colors['primary-300']}`,
+                        borderRadius: theme.borderRadius.sm,
+                        cursor: index === localOrder.length - 1 ? 'not-allowed' : 'pointer',
+                        padding: theme.spacing.xs,
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: theme.colorContrast('#ffffff'),
+                        opacity: index === localOrder.length - 1 ? 0.3 : 0.7,
+                        '&:hover': {
+                          opacity: index === localOrder.length - 1 ? 0.3 : 1,
+                          backgroundColor: index === localOrder.length - 1 ? 'transparent' : theme.colors['primary-100'],
+                        },
+                      }}
+                    >
+                      ↓
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          padding: theme.spacing.lg,
+          borderTop: `1px solid ${theme.colors['primary-200']}`,
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: theme.spacing.sm,
+        }}>
+          <Button
+            variant="ghost"
+            color="primary"
+            size="sm"
+            onClick={resetToDefault}
+          >
+            Reset to Default
+          </Button>
+          <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+            <Button
+              variant="outline"
+              color="primary"
+              size="sm"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="solid"
+              color="primary"
+              size="sm"
+              onClick={handleApply}
+            >
+              Apply
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+};
 
 // System fields that cannot be edited
 const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
@@ -94,7 +343,10 @@ export const BrowserPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [columnWidth, setColumnWidth] = useState<Record<string, number>>({});
+  const [columnOrder, setColumnOrder] = useState<string[]>([]);
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
 
   const startActivity = useActivity();
 
@@ -181,6 +433,30 @@ export const BrowserPage = () => {
 
   // Expand columns from schema  
   const expandedColumns = useMemo(() => schema ? expandColumns(schema.fields) : [], [schema]);
+
+  // Initialize column order when schema changes
+  useEffect(() => {
+    if (expandedColumns.length > 0 && columnOrder.length === 0) {
+      setColumnOrder(expandedColumns.map(col => col.key));
+    }
+  }, [expandedColumns]);
+
+  // Apply column order and visibility
+  const visibleColumns = useMemo(() => {
+    if (columnOrder.length === 0) return expandedColumns;
+
+    // Sort columns by order and filter out hidden ones
+    const orderedCols = columnOrder
+      .map(key => expandedColumns.find(col => col.key === key))
+      .filter((col): col is NonNullable<typeof col> => col !== undefined && !hiddenColumns.has(col.key));
+
+    // Add any new columns not in the order list (from schema updates)
+    const newCols = expandedColumns.filter(col =>
+      !columnOrder.includes(col.key) && !hiddenColumns.has(col.key)
+    );
+
+    return [...orderedCols, ...newCols];
+  }, [expandedColumns, columnOrder, hiddenColumns]);
 
   const {
     resource: {
@@ -637,17 +913,29 @@ export const BrowserPage = () => {
               {!relationQuery && filter.length > 0 && ` • ${filter.length} ${filter.length === 1 ? 'filter' : 'filters'} active`}
             </div>
           </div>
-          <Button
-            variant={filter.length > 0 || relationQuery ? 'solid' : 'outline'}
-            color="primary"
-            size="sm"
-            onClick={() => setShowFilterModal(true)}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-              <Icon name="search" size="sm" />
-              <span>Filters {filter.length > 0 && `(${filter.length})`}</span>
-            </div>
-          </Button>
+          <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+            <Button
+              variant={filter.length > 0 || relationQuery ? 'solid' : 'outline'}
+              color="primary"
+              size="sm"
+              onClick={() => setShowFilterModal(true)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
+                <Icon name="search" size="sm" />
+                <span>Filters {filter.length > 0 && `(${filter.length})`}</span>
+              </div>
+            </Button>
+            <Button
+              variant={hiddenColumns.size > 0 ? 'solid' : 'outline'}
+              color="primary"
+              size="sm"
+              onClick={() => setShowColumnSettings(true)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
+                <span>Columns {hiddenColumns.size > 0 && `(${expandedColumns.length - hiddenColumns.size}/${expandedColumns.length})`}</span>
+              </div>
+            </Button>
+          </div>
         </div>
       </div>
       <FilterModal
@@ -656,6 +944,18 @@ export const BrowserPage = () => {
         currentFilters={filter}
         onApply={handleApplyFilters}
         onCancel={() => setShowFilterModal(false)}
+      />
+      <ColumnSettingsModal
+        show={showColumnSettings}
+        columns={expandedColumns}
+        columnOrder={columnOrder}
+        hiddenColumns={hiddenColumns}
+        onApply={(order, hidden) => {
+          setColumnOrder(order);
+          setHiddenColumns(hidden);
+          setShowColumnSettings(false);
+        }}
+        onCancel={() => setShowColumnSettings(false)}
       />
       <div style={{
         flex: 1,
@@ -671,7 +971,7 @@ export const BrowserPage = () => {
           {schema && <DataSheet
             key={className}
             data={items}
-            columns={expandedColumns.map(col => ({
+            columns={visibleColumns.map(col => ({
               key: col.key,
               label: (
                 <div
@@ -707,10 +1007,10 @@ export const BrowserPage = () => {
               ),
             }))}
             showEmptyLastRow={true}
-            columnWidth={expandedColumns.map(col => columnWidth[col.key] || 150)}
+            columnWidth={visibleColumns.map(col => columnWidth[col.key] || 150)}
             startRowNumber={offset + 1}
             allowEditForCell={(row, col) => {
-              const column = expandedColumns[col];
+              const column = visibleColumns[col];
               if (!column) return false;
 
               // In empty last row, allow editing writable columns
@@ -727,7 +1027,7 @@ export const BrowserPage = () => {
               return !readonlyKeys.includes(column.baseField);
             }}
             onColumnWidthChange={(col, width) => {
-              const column = expandedColumns[col];
+              const column = visibleColumns[col];
               if (column) {
                 setColumnWidth(prev => ({ ...prev, [column.key]: width }));
               }
@@ -745,13 +1045,13 @@ export const BrowserPage = () => {
             )}
             encodeValue={(v, k) => encodeValue(v.get(k))}
             onStartEditing={(row, col) => {
-              const column = expandedColumns[col];
+              const column = visibleColumns[col];
               if (!column) return;
               const currentValue = items[row]?.get(column.key);
               setEditingValue(currentValue);
             }}
             onEndEditing={(row, col) => {
-              const column = expandedColumns[col];
+              const column = visibleColumns[col];
               if (!column) return;
 
               // Handle adding objects to relation by _id in empty rows
@@ -808,7 +1108,7 @@ export const BrowserPage = () => {
                 try {
                   const { type, data } = await decodeClipboardData(clipboard, true) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data) || !type) return;
-                  await handlePasteData(rows, expandedColumns, data, type);
+                  await handlePasteData(rows, visibleColumns, data, type);
                 } catch (error) {
                   console.error('Failed to paste data:', error);
                   alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
@@ -819,7 +1119,7 @@ export const BrowserPage = () => {
               startActivity(async () => {
                 try {
                   const rows = _.range(cells.start.row, cells.end.row + 1);
-                  const cols = _.range(cells.start.col, cells.end.col + 1).map(c => expandedColumns[c]).filter(Boolean);
+                  const cols = _.range(cells.start.col, cells.end.col + 1).map(c => visibleColumns[c]).filter(Boolean);
                   const { data } = await decodeClipboardData(clipboard, false) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data)) return;
                   await handlePasteData(rows, cols, data, 'raw');
@@ -838,7 +1138,7 @@ export const BrowserPage = () => {
             onDeleteCells={(cells) => {
               const _rows = _.range(cells.start.row, cells.end.row + 1);
               const _cols = _.range(cells.start.col, cells.end.col + 1)
-                .map(c => expandedColumns[c])
+                .map(c => visibleColumns[c])
                 .filter(Boolean);
 
               // Filter out readonly columns (check base field)
