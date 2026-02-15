@@ -29,7 +29,7 @@ import { useParams } from '../../components/router';
 import { QueryFilter, TObject, useProto, useProtoSchema } from '../../proto';
 import { _useCallbacks, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
-import { _typeOf } from './utils';
+import { _typeOf, typeOf } from './utils';
 import { TableCell } from './cell';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
@@ -955,7 +955,7 @@ export const BrowserPage = () => {
                     color: theme.colorContrast(theme.colors['primary-100']),
                     opacity: 0.5,
                     paddingLeft: theme.spacing.xs,
-                  }}>({_.isString(v) ? v : v.type})</span>
+                  }}>({typeOf(v)})</span>
                   <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
                     {sort[k] === 1 ? (
                       <Icon name="sortAsc" size="md" />
