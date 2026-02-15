@@ -372,12 +372,15 @@ export const TableCell = ({
           />
         );
       case 'file':
+        const displayFile = editingValue ?? value;
+        const displayFilename = displayFile instanceof File ? displayFile.name : displayFile?.filename;
+
         return (
           <div style={{ ...inputStyle, display: 'flex', flexDirection: 'column', gap: theme.spacing.sm }}>
-            {value && (
+            {displayFile && (
               <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
                 <span style={{ flex: 1, fontFamily: 'monospace', fontSize: theme.fontSize.sm }}>
-                  {value.filename}
+                  {displayFilename}
                 </span>
                 <Button
                   variant="ghost"

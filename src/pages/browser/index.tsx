@@ -717,7 +717,18 @@ export const BrowserPage = () => {
       startActivity(async () => {
         try {
           const cloned = item.clone();
-          cloned.set(columnKey, value);
+
+          // Handle file upload - check if value is a browser File object
+          if (value instanceof File) {
+            // Upload the file to proto.io
+            const arrayBuffer = await value.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+            const protoFile = proto.File(value.name, uint8Array);
+            cloned.set(columnKey, protoFile);
+          } else {
+            cloned.set(columnKey, value);
+          }
+
           await performSaves([cloned]);
           alert.showSuccess(`Object ${item.id} updated successfully`);
         } catch (error) {
