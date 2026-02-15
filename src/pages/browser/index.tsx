@@ -330,6 +330,9 @@ export const BrowserPage = () => {
             const protoFile = proto.File(value.name, value);
             await protoFile.save({ master: true });
             cloned.set(columnKey, protoFile);
+          } else if (className === 'User' && columnKey === 'password') {
+            // Use proto.setPassword for User class password field
+            await proto.setPassword(cloned, value, { master: true });
           } else {
             cloned.set(columnKey, value);
           }
@@ -443,7 +446,12 @@ export const BrowserPage = () => {
               for (const [column, value] of _.toPairs(values)) {
                 const baseField = column.split('.')[0];
                 if (!_.includes(readonlyKeys, baseField)) {
-                  await obj.set(column, value as any);
+                  if (className === 'User' && column === 'password') {
+                    // Use proto.setPassword for User class password field
+                    await proto.setPassword(obj, value as any, { master: true });
+                  } else {
+                    await obj.set(column, value as any);
+                  }
                 }
               }
             } else if (_.isArray(values)) {
@@ -451,7 +459,14 @@ export const BrowserPage = () => {
                 if (column && !_.includes(readonlyKeys, column.baseField)) {
                   if (!_.isNil(value) && _.isString(value)) {
                     const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                    if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
+                    if (!_.isNil(decoded)) {
+                      if (className === 'User' && column.key === 'password') {
+                        // Use proto.setPassword for User class password field
+                        await proto.setPassword(obj, decoded as any, { master: true });
+                      } else {
+                        obj.set(column.key, decoded as any);
+                      }
+                    }
                   }
                 }
               }
@@ -479,7 +494,12 @@ export const BrowserPage = () => {
             for (const [column, value] of _.toPairs(values)) {
               const baseField = column.split('.')[0];
               if (!_.includes(readonlyKeys, baseField)) {
-                await obj.set(column, value as any);
+                if (className === 'User' && column === 'password') {
+                  // Use proto.setPassword for User class password field
+                  await proto.setPassword(obj, value as any, { master: true });
+                } else {
+                  await obj.set(column, value as any);
+                }
               }
             }
           } else if (_.isArray(values)) {
@@ -489,7 +509,14 @@ export const BrowserPage = () => {
                   obj.set(column.key, null);
                 } else if (_.isString(value)) {
                   const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                  if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
+                  if (!_.isNil(decoded)) {
+                    if (className === 'User' && column.key === 'password') {
+                      // Use proto.setPassword for User class password field
+                      await proto.setPassword(obj, decoded as any, { master: true });
+                    } else {
+                      obj.set(column.key, decoded as any);
+                    }
+                  }
                 }
               }
             }
