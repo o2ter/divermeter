@@ -34,6 +34,7 @@ import { createPages, Page, Route, Routes } from './components/router';
 import { HomePage } from './pages/home';
 import { BrowserPage } from './pages/browser';
 import { ConfigPage } from './pages/config';
+import { NotFoundPage } from './pages/notfound';
 import { AlertProvider, useAlert } from './components/alert';
 import { ModalProvider } from './components/modal';
 
@@ -68,6 +69,7 @@ const Main = ({ pages }: { pages?: Page[]; }) => {
             <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />
             <Route title='Config' path="/config" element={<ConfigPage />} />
             {pages && createPages(pages)}
+            <Route path='*path' element={<NotFoundPage />} />
           </Routes>
         </div>
       </div>
