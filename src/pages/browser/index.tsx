@@ -30,7 +30,7 @@ import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../p
 import { _useCallbacks, useMemo, useResource, useState } from 'frosty';
 import { useSearchParams } from 'frosty/web';
 import { DataSheet } from '../../components/datasheet';
-import { _typeOf, typeOf } from './utils';
+import { _typeOf, typeOf, decodeValue, verifyValue } from './utils';
 import { TableCell } from './cell';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
@@ -289,7 +289,9 @@ export const BrowserPage = () => {
       case 'object':
       case 'array':
       case 'string[]':
-        return deserialize(value);
+        const parsed = decodeValue(value);
+        verifyValue(parsed);
+        return parsed;
       case 'pointer':
         if (!_.isEmpty(value)) return proto.Object(className, value).fetch({ master: true });
         break;

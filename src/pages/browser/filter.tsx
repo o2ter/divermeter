@@ -31,8 +31,9 @@ import { useAlert } from '../../components/alert';
 import { Button } from '../../components/button';
 import { Modal } from '../../components/modal';
 import { Icon } from '../../components/icon';
-import { Decimal, deserialize } from 'proto.io';
-import { _typeOf } from './utils';
+import { Decimal } from 'proto.io';
+import { _typeOf, encodeValue, decodeValue, verifyValue } from './utils';
+import { JSCode } from '../../components/jscode';
 
 // Search operators
 const operators = [
@@ -268,27 +269,21 @@ const FilterItem = ({
           </optgroup>
         </select>
 
-        <textarea
-          value={custom.value}
-          onChange={(e) => onUpdate({ ...custom, value: e.currentTarget.value })}
-          placeholder={'e.g. {"field": {"$gt": 10, "$lt": 100}}'}
-          rows={2}
-          style={{
-            flex: 1,
-            padding: `2px ${theme.spacing.xs}px`,
-            fontSize: theme.fontSize.xs,
-            borderRadius: theme.borderRadius.sm,
-            border: `1px solid ${theme.colors['primary-300']}`,
-            backgroundColor: '#ffffff',
-            color: theme.colorContrast('#ffffff'),
-            fontFamily: 'monospace',
-            resize: 'vertical' as const,
-            '&:focus': {
-              outline: 'none',
-              borderColor: theme.colors.primary,
-            },
-          }}
-        />
+        <div style={{
+          flex: 1,
+          minHeight: '80px',
+          border: `1px solid ${theme.colors['primary-300']}`,
+          borderRadius: theme.borderRadius.sm,
+          overflow: 'auto',
+          '&:focus-within': {
+            borderColor: theme.colors.primary,
+          },
+        }}>
+          <JSCode
+            initialValue={custom.value}
+            onChangeValue={(text) => onUpdate({ ...custom, value: text })}
+          />
+        </div>
 
         <button
           onClick={onRemove}
@@ -313,6 +308,125 @@ const FilterItem = ({
 
   // Field filter (regular operators like $eq, $ne, etc.)
   const field = criteria as FieldFilterCriteria;
+  const fieldType = _typeOf(fields[field.field]);
+
+  // Render type-aware value input
+  const renderValueInput = () => {
+    const disabled = !field.operator || field.operator === '$exists';
+
+    const baseStyle = {
+      flex: 1,
+      padding: `2px ${theme.spacing.xs}px`,
+      fontSize: theme.fontSize.xs,
+      borderRadius: theme.borderRadius.sm,
+      border: `1px solid ${theme.colors['primary-300']}`,
+      backgroundColor: '#ffffff',
+      color: theme.colorContrast('#ffffff'),
+      '&:focus': {
+        outline: 'none',
+        borderColor: theme.colors.primary,
+      },
+      '&:disabled': {
+        opacity: 0.5,
+        cursor: 'not-allowed',
+      },
+    };
+
+    if (disabled) {
+      return (
+        <input
+          type="text"
+          value=""
+          disabled
+          placeholder="N/A"
+          style={baseStyle}
+        />
+      );
+    }
+
+    // For $in and $nin operators, always use comma-separated text input
+    if (field.operator === '$in' || field.operator === '$nin') {
+      return (
+        <input
+          type="text"
+          value={field.value}
+          onChange={(e) => onUpdate({ ...field, value: e.currentTarget.value })}
+          placeholder="value1, value2, value3"
+          style={baseStyle}
+        />
+      );
+    }
+
+    // Type-specific inputs
+    switch (fieldType) {
+      case 'boolean':
+        return (
+          <select
+            value={field.value}
+            onChange={(e) => onUpdate({ ...field, value: e.currentTarget.value })}
+            style={baseStyle}
+          >
+            <option value="">Select...</option>
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </select>
+        );
+
+      case 'number':
+      case 'decimal':
+        return (
+          <input
+            type="number"
+            value={field.value}
+            onChange={(e) => onUpdate({ ...field, value: e.currentTarget.value })}
+            placeholder="Enter number"
+            style={baseStyle}
+          />
+        );
+
+      case 'date':
+        return (
+          <input
+            type="datetime-local"
+            value={field.value}
+            onChange={(e) => onUpdate({ ...field, value: e.currentTarget.value })}
+            style={baseStyle}
+          />
+        );
+
+      case 'array':
+      case 'object':
+      case 'string[]':
+        return (
+          <div style={{
+            flex: 1,
+            minHeight: '60px',
+            border: `1px solid ${theme.colors['primary-300']}`,
+            borderRadius: theme.borderRadius.sm,
+            overflow: 'auto',
+            '&:focus-within': {
+              borderColor: theme.colors.primary,
+            },
+          }}>
+            <JSCode
+              initialValue={field.value}
+              onChangeValue={(text) => onUpdate({ ...field, value: text })}
+            />
+          </div>
+        );
+
+      default:
+        return (
+          <input
+            type="text"
+            value={field.value}
+            onChange={(e) => onUpdate({ ...field, value: e.currentTarget.value })}
+            placeholder="Enter Value"
+            style={baseStyle}
+          />
+        );
+    }
+  };
 
   return (
     <div style={{
@@ -388,30 +502,7 @@ const FilterItem = ({
         ))}
       </select>
 
-      <input
-        type="text"
-        value={field.value}
-        onChange={(e) => onUpdate({ ...field, value: e.currentTarget.value })}
-        placeholder="Enter Value"
-        disabled={!field.operator || field.operator === '$exists'}
-        style={{
-          flex: 1,
-          padding: `2px ${theme.spacing.xs}px`,
-          fontSize: theme.fontSize.xs,
-          borderRadius: theme.borderRadius.sm,
-          border: `1px solid ${theme.colors['primary-300']}`,
-          backgroundColor: '#ffffff',
-          color: theme.colorContrast('#ffffff'),
-          '&:focus': {
-            outline: 'none',
-            borderColor: theme.colors.primary,
-          },
-          '&:disabled': {
-            opacity: 0.5,
-            cursor: 'not-allowed',
-          },
-        }}
-      />
+      {renderValueInput()}
 
       <button
         onClick={onRemove}
@@ -470,7 +561,9 @@ export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProp
       const custom = criteria as CustomFilterCriteria;
       if (!custom.value) return null;
       try {
-        return deserialize(custom.value) as QueryFilter;
+        const parsed = decodeValue(custom.value);
+        verifyValue(parsed);
+        return parsed as QueryFilter;
       } catch (error) {
         alert.showError(`Failed to parse custom filter: ${error}`);
         throw error;
@@ -509,7 +602,9 @@ export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProp
             if (field.operator === '$in' || field.operator === '$nin') {
               parsedValue = field.value.split(',').map(v => v.trim());
             } else {
-              parsedValue = deserialize(field.value);
+              const parsed = decodeValue(field.value);
+              verifyValue(parsed);
+              parsedValue = parsed;
             }
             break;
           case 'pointer':
