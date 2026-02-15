@@ -319,7 +319,7 @@ export const BrowserPage = () => {
                 try {
                   const { type, data } = await decodeClipboardData(clipboard, true) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data)) return;
-                  const objs = _.compact(_.map(rows, row => data?.[row]));
+                  const objs = _.compact(_.map(rows, row => resource[row]));
                   const updates: TObject[] = [];
                   if (type === 'json') {
                     for (const [obj, values] of _.zip(objs, data)) {
@@ -363,7 +363,7 @@ export const BrowserPage = () => {
                   const _cols = _.range(cells.start.col, cells.end.col + 1).map(c => _columns[c]);
                   const { data } = await decodeClipboardData(clipboard, false) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data)) return;
-                  const objs = _.compact(_.map(_rows, row => data[row]));
+                  const objs = _.compact(_.map(_rows, row => resource[row]));
                   const updates: TObject[] = [];
                   for (const [obj, values] of _.zip(objs, data)) {
                     const _obj = obj?.clone() ?? proto.Object(className);
