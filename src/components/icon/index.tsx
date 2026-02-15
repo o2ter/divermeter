@@ -38,7 +38,12 @@ export type IconName =
   | 'success'
   | 'info'
   | 'warning'
-  | 'error';
+  | 'error'
+  | 'link'
+  | 'upload'
+  | 'download'
+  | 'plus'
+  | 'trash';
 
 export type IconSize = 'xs' | 'sm' | 'md' | 'lg';
 
@@ -118,6 +123,26 @@ const iconPaths: Record<IconName, { viewBox: string; paths: string[] }> = {
       'M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z',
     ],
   },
+  link: {
+    viewBox: '0 0 16 16',
+    paths: ['M10.5 2.5L13.5 5.5M13.5 5.5L10.5 8.5M13.5 5.5H6.5C4.5 5.5 3 7 3 9C3 11 4.5 12.5 6.5 12.5H8'],
+  },
+  upload: {
+    viewBox: '0 0 16 16',
+    paths: ['M8 11V3M8 3L5 6M8 3L11 6', 'M2 11V13C2 13.5 2.5 14 3 14H13C13.5 14 14 13.5 14 13V11'],
+  },
+  download: {
+    viewBox: '0 0 16 16',
+    paths: ['M8 3V11M8 11L5 8M8 11L11 8', 'M2 11V13C2 13.5 2.5 14 3 14H13C13.5 14 14 13.5 14 13V11'],
+  },
+  plus: {
+    viewBox: '0 0 16 16',
+    paths: ['M8 3V13', 'M3 8H13'],
+  },
+  trash: {
+    viewBox: '0 0 16 16',
+    paths: ['M3 4H13', 'M5 4V3C5 2.5 5.5 2 6 2H10C10.5 2 11 2.5 11 3V4', 'M6 7V11', 'M10 7V11', 'M4 4L4.5 13C4.5 13.5 5 14 5.5 14H10.5C11 14 11.5 13.5 11.5 13L12 4'],
+  },
 };
 
 const isStrokeIcon = (name: IconName): boolean => {
@@ -128,6 +153,11 @@ const isStrokeIcon = (name: IconName): boolean => {
     'chevronRight',
     'chevronDoubleLeft',
     'chevronDoubleRight',
+    'link',
+    'upload',
+    'download',
+    'plus',
+    'trash',
   ].includes(name);
 };
 
