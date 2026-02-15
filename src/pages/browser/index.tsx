@@ -23,8 +23,8 @@
 //  THE SOFTWARE.
 //
 
-import _, { set } from 'lodash';
-import { tsvFormatRows, tsvParseRows } from 'd3-dsv';
+import _ from 'lodash';
+import { tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, useProto, useProtoSchema } from '../../proto';
 import { _useCallbacks, useResource, useState } from 'frosty';
