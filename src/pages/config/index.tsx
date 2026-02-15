@@ -464,7 +464,7 @@ export const ConfigPage = () => {
                   value={newEntry.value}
                   onChange={(e) => setNewEntry({ ...newEntry, value: e.currentTarget.value })}
                   style={textareaStyle}
-                  placeholder='{\n  string: "text",\n  number: 123,\n  date: ISODate("2026-02-15T00:00:00.000Z"),\n  decimal: Decimal("0.001")\n}'
+                  placeholder='{ string: "text", number: 123, date: ISODate("2026-02-15T00:00:00.000Z"), decimal: Decimal("0.001") }'
                 />
               </div>
 
