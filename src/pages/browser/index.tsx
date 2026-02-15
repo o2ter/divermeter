@@ -143,6 +143,8 @@ export const BrowserPage = () => {
 
   const {
     handleUpdateItem,
+    handleDeleteItems,
+    handleDeleteKeys,
   } = _useCallbacks({
     handleUpdateItem: (item: TObject, columnKey: string, value: any) => {
       startActivity(async () => {
@@ -392,8 +394,39 @@ export const BrowserPage = () => {
               });
             }}
             onDeleteRows={(rows) => {
+              const items = _.compact(_.map(rows, row => resource[row]));
+              if (!_.isEmpty(items)) {
+                handleDeleteItems(items);
+              }
             }}
             onDeleteCells={(cells) => {
+              const _columns = _.keys(schema.fields);
+              const _rows = _.range(cells.start.row, cells.end.row + 1);
+              const _cols = _.range(cells.start.col, cells.end.col + 1).map(c => _columns[c]);
+
+              // Filter out readonly columns
+              const editableCols = _.filter(_cols, col => !_.includes(readonlyKeys, col));
+
+              if (!_.isEmpty(editableCols)) {
+                startActivity(async () => {
+                  try {
+                    const updates: TObject[] = [];
+                    for (const row of _rows) {
+                      const item = resource[row];
+                      if (item) {
+                        const cloned = item.clone();
+                        editableCols.forEach(col => cloned.set(col, null));
+                        updates.push(cloned);
+                      }
+                    }
+                    await performSaves(updates);
+                    alert.showSuccess(`${editableCols.length} field(s) cleared in ${updates.length} row(s)`);
+                  } catch (error) {
+                    console.error('Failed to clear cells:', error);
+                    alert.showError(error instanceof Error ? error.message : 'Failed to clear cells');
+                  }
+                });
+              }
             }}
           />}
         </div>
