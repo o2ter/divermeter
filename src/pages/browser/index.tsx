@@ -381,7 +381,7 @@ const FilterItem = ({
         <option value="$or">OR</option>
         <option value="$filter">custom filter</option>
         <optgroup label="Field Operators">
-          {operators.filter(op => op.value !== '$filter' && availableOperators.includes(op.value)).map(op => (
+          {operators.filter(op => op.value !== '$filter').map(op => (
             <option key={op.value} value={op.value}>{op.label}</option>
           ))}
         </optgroup>
