@@ -788,9 +788,9 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
     return expandFields(schema.fields);
   }, [schema]);
 
-  // Convert QueryFilter[] to FilterCriteria tree
-  const convertFromQueryFilter = (filters: QueryFilter[]): GroupFilterCriteria => {
-    const children: FilterCriteria[] = [];
+  // Convert QueryFilter[] to FilterCriteria[]
+  const convertFromQueryFilter = (filters: QueryFilter[]): FilterCriteria[] => {
+    const result: FilterCriteria[] = [];
 
     for (const filter of filters) {
       // Handle each filter object
@@ -798,10 +798,10 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
         // Group operators
         if (key === '$and' || key === '$or' || key === '$nor') {
           const subFilters = Array.isArray(value) ? value : [];
-          children.push({
+          result.push({
             id: `${Date.now()}-${Math.random()}`,
             operator: key,
-            children: convertFromQueryFilter(subFilters).children,
+            children: convertFromQueryFilter(subFilters),
           });
         }
         // Field filters
@@ -821,7 +821,7 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
               strValue = String(value);
             }
 
-            children.push({
+            result.push({
               id: `${Date.now()}-${Math.random()}`,
               operator: '$eq',
               field: key,
@@ -856,7 +856,7 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
                 strValue = String(opValue);
               }
 
-              children.push({
+              result.push({
                 id: `${Date.now()}-${Math.random()}`,
                 operator: op,
                 field: key,
@@ -868,30 +868,26 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
       }
     }
 
-    return {
-      id: 'root',
-      operator: '$and',
-      children,
-    };
+    return result;
   };
 
-  const [rootGroup, setRootGroup] = useState<GroupFilterCriteria>(() =>
+  const [criteria, setCriteria] = useState<FilterCriteria[]>(() =>
     convertFromQueryFilter(currentFilters)
   );
 
   // Update state when currentFilters change (e.g., when modal opens)
   useEffect(() => {
     if (show) {
-      setRootGroup(convertFromQueryFilter(currentFilters));
+      setCriteria(convertFromQueryFilter(currentFilters));
     }
   }, [show, currentFilters]);
 
-  const convertToQueryFilter = (criteria: FilterCriteria): QueryFilter | null => {
+  const convertSingleToQueryFilter = (item: FilterCriteria): QueryFilter | null => {
     // Group operators ($and, $or, $nor)
-    if (criteria.operator === '$and' || criteria.operator === '$or' || criteria.operator === '$nor') {
-      const group = criteria as GroupFilterCriteria;
+    if (item.operator === '$and' || item.operator === '$or' || item.operator === '$nor') {
+      const group = item as GroupFilterCriteria;
       const childFilters = group.children
-        .map(convertToQueryFilter)
+        .map(convertSingleToQueryFilter)
         .filter((f): f is QueryFilter => f !== null);
 
       if (childFilters.length === 0) return null;
@@ -901,8 +897,8 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
     }
 
     // Custom filter ($filter)
-    if (criteria.operator === '$filter') {
-      const custom = criteria as CustomFilterCriteria;
+    if (item.operator === '$filter') {
+      const custom = item as CustomFilterCriteria;
       if (!custom.value) return null;
       try {
         const parsed = decodeValue(custom.value);
@@ -915,7 +911,7 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
     }
 
     // Field filter
-    const field = criteria as FieldFilterCriteria;
+    const field = item as FieldFilterCriteria;
     if (!field.field || !field.operator) return null;
 
     const fieldType = _typeOf(expandedFields[field.field]);
@@ -973,23 +969,30 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
     }
   };
 
-  const { handleApplyFilters, handleClearFilters } = _useCallbacks({
+  const convertToQueryFilter = (criteriaList: FilterCriteria[]): QueryFilter[] => {
+    return criteriaList
+      .map(convertSingleToQueryFilter)
+      .filter((f): f is QueryFilter => f !== null);
+  };
+
+  const { handleApplyFilters, handleClearFilters, handleAddFilter } = _useCallbacks({
     handleApplyFilters: () => {
       try {
-        const queryFilter = convertToQueryFilter(rootGroup);
-        const filters = queryFilter ? [queryFilter] : [];
+        const filters = convertToQueryFilter(criteria);
         onApply(filters);
       } catch (error) {
         // Error already shown by alert in convertToQueryFilter
       }
     },
     handleClearFilters: () => {
-      setRootGroup({
-        id: 'root',
-        operator: '$and',
-        children: [],
-      });
+      setCriteria([]);
       onApply([]);
+    },
+    handleAddFilter: () => {
+      setCriteria([
+        ...criteria,
+        { id: `${Date.now()}-${Math.random()}`, operator: '', field: '', value: '' } as FieldFilterCriteria,
+      ]);
     },
   });
 
@@ -1038,18 +1041,46 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
         </div>
         {schema && (
           <>
-            <FilterItem
-              criteria={rootGroup}
-              fields={expandedFields}
-              onUpdate={(updated) => {
-                // Root must always be a group
-                if (updated.operator === '$and' || updated.operator === '$or') {
-                  setRootGroup(updated as GroupFilterCriteria);
-                }
-              }}
-              onRemove={() => { }}
-              depth={0}
-            />
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: theme.spacing.xs,
+            }}>
+              {criteria.map((item, index) => (
+                <FilterItem
+                  key={item.id}
+                  criteria={item}
+                  fields={expandedFields}
+                  onUpdate={(updated) => {
+                    const newCriteria = [...criteria];
+                    newCriteria[index] = updated;
+                    setCriteria(newCriteria);
+                  }}
+                  onRemove={() => {
+                    setCriteria(criteria.filter((_, i) => i !== index));
+                  }}
+                  depth={0}
+                />
+              ))}
+
+              <button
+                onClick={handleAddFilter}
+                style={{
+                  padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
+                  fontSize: theme.fontSize.sm,
+                  border: `1px dashed ${theme.colors['primary-300']}`,
+                  borderRadius: theme.borderRadius.sm,
+                  background: 'none',
+                  cursor: 'pointer',
+                  color: theme.colors.primary,
+                  '&:hover': {
+                    backgroundColor: theme.colors['primary-100'],
+                  },
+                }}
+              >
+                + Add Filter
+              </button>
+            </div>
 
             <div style={{
               display: 'flex',
@@ -1057,7 +1088,7 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
               marginTop: theme.spacing.sm,
               justifyContent: 'flex-end',
             }}>
-              {rootGroup.children.length > 0 && (
+              {criteria.length > 0 && (
                 <Button
                   variant="ghost"
                   color="error"
