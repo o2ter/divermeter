@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { tsvParseRows } from 'd3-dsv';
+import { tsvFormatRows, tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, useProto, useProtoSchema } from '../../proto';
 import { _useCallbacks, useResource, useState } from 'frosty';
@@ -33,7 +33,7 @@ import { _typeOf, TableCell } from './cell';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
 import { useActivity } from '../../components/activity';
-import { Decimal, deserialize } from 'proto.io';
+import { Decimal, deserialize, serialize } from 'proto.io';
 
 // System fields that cannot be edited
 const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
@@ -179,6 +179,22 @@ export const BrowserPage = () => {
     },
   });
 
+  const encodeValue = (x: any) => {
+    if (_.isNil(x)) return '';
+    if (_.isNumber(x) || _.isBoolean(x) || _.isString(x)) return `${x}`;
+    if (x instanceof Decimal) return x.toString();
+    if (_.isDate(x)) return x.toISOString();
+    if (proto.isObject(x)) return x.id ?? '';
+    return serialize(x);
+  }
+
+  const encoders = {
+    'text/plain': (data: any[][]) => tsvFormatRows(_.map(data, row => _.map(row, val => encodeValue(val?.value)))),
+    'application/json': (data: any[][]) => serialize(_.map(data, row => _.fromPairs(_.compact(_.map(row, (
+      item => item ? [item.column, item.value] : undefined
+    )))))),
+  };
+
   return (
     <div style={{
       display: 'flex',
@@ -280,6 +296,7 @@ export const BrowserPage = () => {
                 setEditingValue={setEditingValue}
               />
             )}
+            encoders={encoders}
             onStartEditing={(row, col) => {
               const columnKey = _.keys(schema.fields)[col];
               const currentValue = resource[row].get(columnKey);
