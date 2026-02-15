@@ -24,8 +24,9 @@
 //
 
 import _ from 'lodash';
-import { useProtoSchema } from '../../proto';
+import { useProto, useProtoSchema } from '../../proto';
 import { useLocation } from 'frosty/web';
+import { useResource } from 'frosty';
 import { match } from 'path-to-regexp';
 import { useStyle } from '../style';
 import { Page } from '../router';
@@ -70,8 +71,26 @@ const MenuItem = ({
 const SchemaList = () => {
   const style = useStyle();
   const location = useLocation();
+  const proto = useProto();
   const schema = useProtoSchema();
   const selected = match('/classes/:schema')(location.pathname) || undefined;
+
+  // Fetch counts for all schemas
+  const { resource: counts } = useResource(async () => {
+    const keys = _.keys(schema);
+    if (keys.length === 0) return {};
+
+    const countPromises = _.map(keys, async (key) => {
+      try {
+        const count = await proto.Query(key).count({ master: true });
+        return { key, count };
+      } catch (error) {
+        return { key, count: 0 };
+      }
+    });
+    const results = await Promise.all(countPromises);
+    return _.fromPairs(_.map(results, ({ key, count }) => [key, count]));
+  }, [proto, schema]);
 
   return (
     <div>
@@ -90,6 +109,7 @@ const SchemaList = () => {
       <div style={{ marginTop: `${style.spacing.xs}px` }}>
         {_.map(_.keys(schema).sort(), (key) => {
           const isActive = selected?.params.schema === key;
+          const count = counts?.[key];
           return (
             <div
               key={key}
@@ -105,6 +125,9 @@ const SchemaList = () => {
                 transition: 'background-color 0.15s ease, color 0.15s ease',
                 position: 'relative',
                 borderLeft: isActive ? `2px solid ${style.menuItem.accentBorder}` : '2px solid transparent',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 ...(!isActive && {
                   '&:hover': {
                     backgroundColor: style.listItem.hoverBackground,
@@ -116,7 +139,16 @@ const SchemaList = () => {
                 location.pushState({}, `/classes/${key}`);
               }}
             >
-              {key}
+              <span>{key}</span>
+              {!_.isNil(count) && (
+                <span style={{
+                  fontSize: `${style.listItem.fontSize - 2}px`,
+                  opacity: 0.6,
+                  fontWeight: style.fontWeight.normal,
+                }}>
+                  {count}
+                </span>
+              )}
             </div>
           );
         })}
