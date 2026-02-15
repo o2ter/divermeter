@@ -183,10 +183,11 @@ export const TableCell = ({
         );
       default:
         // For complex types, use JSCode component with proper parser
+        const displayValue = editingValue !== undefined ? editingValue : value;
         return (
           <div style={{ ...inputStyle, padding: 0, paddingRight: theme.spacing.md, minHeight: '120px', height: '120px', resize: 'both', overflow: 'auto' }}>
             <JSCode
-              initialValue={editingValue !== undefined ? encodeValue(editingValue, 2) : encodeValue(value, 2)}
+              initialValue={_.isNil(displayValue) ? '' : encodeValue(displayValue, 2)}
               onChangeValue={(text) => {
                 try {
                   const parsed = decodeValue(text);
