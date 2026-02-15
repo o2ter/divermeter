@@ -455,7 +455,7 @@ export const TableCell = ({
                 onClick={() => {
                   if (!field || _.isString(field) || field.type !== 'pointer' || !field.target) return;
                   const targetId = editingValue?.id ?? value?.id;
-                  location.pushState({}, `/classes/${field.target}?filter=${encodeURIComponent(`id == "${targetId}"`)}`);
+                  location.pushState({}, `/classes/${field.target}?id=${encodeURIComponent(targetId)}`);
                 }}
               >
                 <Icon name="link" size="sm" />
@@ -577,7 +577,7 @@ export const TableCell = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!field || _.isString(field) || field.type !== 'pointer' || !field.target) return;
-                  location.pushState({}, `/classes/${field.target}?filter=${encodeURIComponent(`id == "${value.id}"`)}`);
+                  location.pushState({}, `/classes/${field.target}?id=${encodeURIComponent(value.id)}`);
                 }}
               >
                 <Icon name="link" size="sm" />

@@ -27,7 +27,8 @@ import _ from 'lodash';
 import { tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
-import { _useCallbacks, useMemo, useResource, useState } from 'frosty';
+import { _useCallbacks, useEffect, useMemo, useResource, useState } from 'frosty';
+import { useLocation } from 'frosty/web';
 import { DataSheet } from '../../components/datasheet';
 import { _typeOf, typeOf } from './utils';
 import { TableCell } from './cell';
@@ -81,6 +82,7 @@ export const BrowserPage = () => {
   const { schema: className } = useParams() as { schema: string; };
   const proto = useProto();
   const { [className]: schema } = useProtoSchema();
+  const location = useLocation();
 
   const [filter, setFilter] = useState<QueryFilter[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -95,6 +97,15 @@ export const BrowserPage = () => {
 
   // Expand columns from schema  
   const expandedColumns = useMemo(() => schema ? expandColumns(schema.fields) : [], [schema]);
+
+  // Read filter from URL query params (e.g., ?id=123)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    if (id) {
+      setFilter([{ _id: { $eq: id } }]);
+    }
+  }, [location.search]);
 
   const {
     resource: {
