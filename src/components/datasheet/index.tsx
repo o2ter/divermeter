@@ -244,9 +244,22 @@ const DataSheetTable = <T extends object, C extends Column>({
               col: Math.max(currentState._selectStart.col, currentState._selectEnd.col),
             },
           };
+
+          // Union with existing selection if shift key is held
+          const finalBound = currentState.shiftKey && currentState.selectedCells ? {
+            start: {
+              row: Math.min(bound.start.row, currentState.selectedCells.start.row),
+              col: Math.min(bound.start.col, currentState.selectedCells.start.col),
+            },
+            end: {
+              row: Math.max(bound.end.row, currentState.selectedCells.end.row),
+              col: Math.max(bound.end.col, currentState.selectedCells.end.col),
+            },
+          } : bound;
+
           newState = {
             ..._.omit(currentState, ...selectionKeys, 'editing'),
-            selectedCells: bound,
+            selectedCells: finalBound,
           };
         }
 
