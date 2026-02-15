@@ -447,7 +447,7 @@ const expandColumns = (fields: TSchema['fields']) => {
   const columns: Array<{
     key: string;
     baseField: string;
-    fieldType: any;
+    fieldType: TSchema['fields'][string];
   }> = [];
 
   const expandField = (fieldName: string, fieldType: TSchema['fields'][string], path: string[] = []) => {
@@ -511,6 +511,14 @@ export const BrowserPage = () => {
   } = useResource(async () => {
     const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
     const count = await q.count({ master: true });
+    const relation = _.filter(expandedColumns, ({ fieldType: type }) => !_.isString(type) && (type.type === 'pointer' || type.type === 'relation'));
+    const files = _.filter(expandedColumns, ({ fieldType: type }) => !_.isString(type) && type.type === 'pointer' && type.target === 'File');
+    // need to includes all pointer and relation fields
+    q.includes(
+      '*',
+      ..._.map(relation, ({ key }) => `${key}._id`),
+      ..._.map(files, ({ key }) => `${key}.filename`),
+    );
     q.limit(limit);
     if (offset > 0) q.skip(offset);
     if (!_.isEmpty(sort)) q.sort(sort);
@@ -518,7 +526,7 @@ export const BrowserPage = () => {
       count,
       items: await q.find({ master: true }),
     };
-  }, [className, filter, limit, offset, sort]);
+  }, [className, expandedColumns, filter, limit, offset, sort]);
 
   const [editingValue, setEditingValue] = useState<any>();
 
