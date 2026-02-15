@@ -32,6 +32,9 @@ export const ConfigPage = () => {
   const {
     resource: config,
     refresh,
-  } = useResource(async () => proto.config({ master: true }), []);
+  } = useResource(async () => ({
+    config: await proto.config({ master: true }),
+    acl: await proto.configAcl({ master: true }),
+  }), []);
   return <div>Config</div>;
 };
