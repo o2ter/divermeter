@@ -149,6 +149,12 @@ export const ConfigPage = () => {
           return;
         }
 
+        // Check if key already exists
+        if (data?.some(entry => entry.key === newEntry.key)) {
+          alert.showError(`Key "${newEntry.key}" already exists`);
+          return;
+        }
+
         const value = newEntry.value.trim() ? decodeValue(newEntry.value) : undefined;
         const acl = newEntry.acl.trim() ? decodeAcl(newEntry.acl) : undefined;
         await proto.setConfig({ [newEntry.key]: value }, { master: true, acl });
