@@ -43,7 +43,7 @@ export const BrowserPage = () => {
 
   const [limit, setLimit] = useState(20);
   const [offset, setOffset] = useState(0);
-  const [sort, setSort] = useState<{ field: string; order: 'asc' | 'desc'; }[]>([]);
+  const [sort, setSort] = useState<Record<string, 1 | -1>>({});
 
   const [columnWidth, setColumnWidth] = useState<Record<string, number>>({});
 
@@ -55,7 +55,7 @@ export const BrowserPage = () => {
     const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
     q.limit(limit);
     if (offset > 0) q.skip(offset);
-    if (!_.isEmpty(sort)) q.sort(_.reduce(sort, (s, { field, order }) => ({ ...s, [field]: order === 'asc' ? 1 : -1 }), {}));
+    if (!_.isEmpty(sort)) q.sort(sort);
     return await q.find({ master: true });
   }, [className, filter, limit, offset, sort]);
 
@@ -124,7 +124,12 @@ export const BrowserPage = () => {
             columns={_.map(schema.fields, (v, k) => ({
               key: k,
               label: (
-                <span>
+                <span onClick={(e) => {
+                  setSort(sort => ({
+                    ...e.shiftKey ? _.omit(sort, k) : {},
+                    [k]: sort[k] === 1 ? -1 : 1,
+                  }));
+                }}>
                   {k}
                   <span style={{
                     color: theme.colorContrast(theme.colors['primary-100']),
@@ -172,6 +177,14 @@ export const BrowserPage = () => {
               }
 
               setEditingValue(undefined);
+            }}
+            onPasteRows={(rows, clipboard) => {
+            }}
+            onPasteCells={(cells, clipboard) => {
+            }}
+            onDeleteRows={(rows) => {
+            }}
+            onDeleteCells={(cells) => {
             }}
           />}
         </div>
