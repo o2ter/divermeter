@@ -235,14 +235,12 @@ export const BrowserPage = () => {
   };
 
   const performSaves = async (items: TObject[]) => {
-    const creates = items.filter(item => !item.id);
     for (const item of items) {
       await item.save({ master: true });
     }
-    // If we're in relation mode and this is a new item, add it to the relation
-    if (relationQuery && canEditInRelationMode && creates.length > 0) {
+    if (relationQuery && canEditInRelationMode) {
       const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
-      parentObj.addToSet(relationQuery.field, creates);
+      parentObj.addToSet(relationQuery.field, items);
       await parentObj.save({ master: true });
     }
     setResource((prev) => {
