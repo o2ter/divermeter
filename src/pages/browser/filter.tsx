@@ -875,6 +875,64 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
     }
   }, [show, currentFilters]);
 
+  // Helper: Parse a string value based on field type
+  const parseFieldValue = (value: string, fieldType: string | undefined): any => {
+    switch (fieldType) {
+      case 'string':
+        // For string fields, use raw value (no parsing needed)
+        return value;
+
+      case 'number':
+        // For number fields, parse as number
+        const num = parseFloat(value);
+        return _.isFinite(num) ? num : value;
+
+      case 'decimal':
+        // For decimal fields, parse as Decimal
+        try {
+          return new Decimal(value);
+        } catch {
+          return value;
+        }
+
+      case 'boolean':
+        // For boolean fields, parse true/false
+        return value.toLowerCase() === 'true';
+
+      case 'date':
+        // For date fields, handle datetime-local format and ISO strings
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
+          return new Date(value);
+        } else {
+          try {
+            // Try parsing as ISODate('...') format
+            const parsed = decodeValue(value);
+            if (_.isDate(parsed)) {
+              return parsed;
+            }
+            return new Date(value);
+          } catch {
+            return new Date(value);
+          }
+        }
+
+      case 'array':
+      case 'object':
+      case 'string[]':
+        // For complex types, use custom format parser
+        return decodeValue(value);
+
+      default:
+        // For unknown/built-in fields (like _id, __v), try smart parsing
+        try {
+          return decodeValue(value);
+        } catch {
+          // If parsing fails, treat as string
+          return value;
+        }
+    }
+  };
+
   const convertSingleToQueryFilter = (item: FilterCriteria): QueryFilter | null => {
     // Group operators ($and, $or, $nor)
     if (item.operator === '$and' || item.operator === '$or' || item.operator === '$nor') {
@@ -930,81 +988,25 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
           parsedValue = parsed;
         } catch {
           // Fall back to comma-separated values for simple types
-          parsedValue = field.value.split(',').map(v => {
-            const trimmed = v.trim();
-            try {
-              return decodeValue(trimmed);
-            } catch {
-              return trimmed;
-            }
-          });
+          parsedValue = field.value.split(',').map(v => parseFieldValue(v.trim(), fieldType));
         }
       } else {
         // Type-specific parsing based on field type
-        switch (fieldType) {
-          case 'string':
-            // For string fields, use raw value (no parsing needed)
-            parsedValue = field.value;
-            break;
-
-          case 'number':
-            // For number fields, parse as number
-            parsedValue = parseFloat(field.value);
-            if (!_.isFinite(parsedValue)) return null;
-            break;
-
-          case 'decimal':
-            // For decimal fields, parse as Decimal
-            try {
-              parsedValue = new Decimal(field.value);
-            } catch {
-              return null;
-            }
-            break;
-
-          case 'boolean':
-            // For boolean fields, parse true/false
-            parsedValue = field.value.toLowerCase() === 'true';
-            break;
-
-          case 'date':
-            // For date fields, handle datetime-local format and ISO strings
-            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(field.value)) {
-              parsedValue = new Date(field.value);
-            } else {
-              try {
-                // Try parsing as ISODate('...') format
-                parsedValue = decodeValue(field.value);
-                if (!_.isDate(parsedValue)) {
-                  parsedValue = new Date(field.value);
-                }
-              } catch {
-                parsedValue = new Date(field.value);
-              }
-            }
-            break;
-
-          case 'array':
-          case 'object':
-          case 'string[]':
-            // For complex types, use custom format parser
-            try {
-              parsedValue = decodeValue(field.value);
-              verifyValue(parsedValue);
-            } catch (error) {
-              alert.showError(`Invalid value format for ${field.field}: ${error}`);
-              throw error;
-            }
-            break;
-
-          default:
-            // For unknown/built-in fields (like _id, __v), try smart parsing
-            try {
-              parsedValue = decodeValue(field.value);
-            } catch {
-              // If parsing fails, treat as string
-              parsedValue = field.value;
-            }
+        try {
+          parsedValue = parseFieldValue(field.value, fieldType);
+          // Verify complex types
+          if (fieldType === 'array' || fieldType === 'object' || fieldType === 'string[]') {
+            verifyValue(parsedValue);
+          }
+          // Check if parsing resulted in invalid values for certain types
+          if (fieldType === 'number' && !_.isFinite(parsedValue)) return null;
+          if (fieldType === 'decimal' && !(parsedValue instanceof Decimal)) return null;
+        } catch (error) {
+          if (fieldType === 'array' || fieldType === 'object' || fieldType === 'string[]') {
+            alert.showError(`Invalid value format for ${field.field}: ${error}`);
+            throw error;
+          }
+          return null;
         }
       }
     } catch (error) {
