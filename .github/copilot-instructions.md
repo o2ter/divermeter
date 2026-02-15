@@ -52,6 +52,54 @@ const MyProvider = ({ children }) => (
 
 This principle applies to ALL libraries - always verify before implementing.
 
+### Always Check Type Errors Immediately
+
+**CRITICAL: Run type checking after writing or modifying ANY code. Never assume your code is correct without verification.**
+
+Key guidelines:
+
+1. **Check errors immediately** - Use `get_errors` tool after every code change, not just at the end
+2. **Don't assume properties exist** - TypeScript will catch incorrect property access (e.g., `theme.colors.text` doesn't exist)
+3. **Verify function signatures** - Check that you're passing the right types to functions
+4. **Trust TypeScript errors** - If TypeScript reports an error, your code is wrong - fix it, don't ignore it
+5. **Use autocomplete** - Let TypeScript guide you to available properties and methods
+
+**Workflow:**
+```
+1. Write code
+2. Immediately run get_errors tool on the file
+3. Fix any type errors found
+4. Repeat until no errors
+5. Only then consider the code complete
+```
+
+**Why this matters:**
+- Prevents runtime errors that TypeScript would have caught
+- Catches API misunderstandings early (e.g., non-existent theme properties)
+- Ensures code quality before user sees it
+- Saves time - catching errors early is faster than debugging later
+
+**Example - Wrong workflow:**
+```tsx
+// ❌ Write code assuming properties exist
+const text = theme.colors.text;  // Doesn't exist!
+const bg = theme.colors.background;  // Doesn't exist!
+// ... continue writing more code ...
+// User: "check the type errors" - NOW you find the mistakes
+```
+
+**Example - Correct workflow:**
+```tsx
+// ✅ Write code
+const text = theme.colors.text;
+// Immediately run get_errors
+// Error: Property 'text' does not exist
+// Fix immediately
+const text = theme.colorContrast('#ffffff');
+// Verify fix with get_errors
+// No errors - continue
+```
+
 ## Architecture & Key Dependencies
 
 ### JSX Runtime: Frosty (Not React)
@@ -749,13 +797,20 @@ Before submitting code, verify:
 - [ ] Remove commented-out code
 - [ ] Remove debug console.log statements
 
-#### 3. Consistent Style Pattern
+#### 3. Type Errors
+- [ ] **RUN `get_errors` IMMEDIATELY after writing/modifying code**
+- [ ] All TypeScript errors are resolved
+- [ ] No property access errors (e.g., accessing non-existent theme properties)
+- [ ] Function signatures match their definitions
+- [ ] No type assertions (`as any`) used to bypass errors
+
+#### 4. Consistent Style Pattern
 - [ ] All components with styles import and call `useTheme()`
 - [ ] Components with complex styles use `useStyle()` and StyleProvider
 - [ ] Color manipulations use `@o2ter/colors.js` functions
 - [ ] Pseudo-selectors (`&:hover`) used instead of manual event handlers for styling
 
-#### 4. StyleProvider Maintenance
+#### 5. StyleProvider Maintenance
 **CRITICAL: Always audit StyleProvider when modifying or removing components/features.**
 
 When modifying or removing components:
@@ -836,22 +891,23 @@ const MyComponent = () => {
 
 ## Common Pitfalls
 
-1. **Don't assume library APIs** - ALWAYS verify the actual API documentation before use. Libraries with similar purposes (like Frosty vs React) often have fundamentally different APIs. Check the docs, examine existing code patterns, and review type definitions. Never assume a library works like another one you know.
-2. **Don't import from 'react'** - Use `frosty` instead. Frosty has its own implementation of hooks, context, and JSX runtime.
-3. **Don't use React context pattern** - Frosty uses `<Context value={...}>` directly, NOT `<Context.Provider value={...}>`. This is a fundamental API difference.
-4. **Context creation** - Use `createContext<Type>()` without default value, not `createContext<Type | undefined>(undefined)`. Frosty's context API differs from React.
-5. **Don't hardcode styles** - Always use `useTheme()` hook for all style values. Never use magic numbers or literal color values.
-6. **Check theme.colors properties exist** - ALWAYS verify theme properties exist in [src/components/theme/index.tsx](src/components/theme/index.tsx) before use. Properties like `theme.colors.text`, `theme.colors.textSecondary`, `theme.colors.background`, `theme.colors.border` **DO NOT EXIST**. Use `theme.colorContrast()` to derive text colors and `@o2ter/colors.js` functions to create color variations. Run `get_errors` tool immediately after writing code to catch type errors.
-7. **Don't inject CSS** - Use inline `keyframes` property for animations instead of document.createElement('style') or DOM manipulation
-8. **Don't use manual hover handlers** - Use `&:hover` pseudo-selectors in inline styles instead of onMouseEnter/onMouseLeave event handlers
-9. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`. Our custom router has different APIs than React Router.
-10. **Context access** - Always call hooks inside components, not in conditionals
-11. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
-12. **Path separators** - Use forward slashes `/` in all configs, even on Windows
-13. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
-14. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
-15. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
-16. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
+1. **Always check type errors FIRST** - Run `get_errors` tool immediately after writing or modifying code. NEVER assume your code is correct. TypeScript errors reveal API misunderstandings, non-existent properties, and incorrect function usage. Fix all errors before proceeding.
+2. **Don't assume library APIs** - ALWAYS verify the actual API documentation before use. Libraries with similar purposes (like Frosty vs React) often have fundamentally different APIs. Check the docs, examine existing code patterns, and review type definitions. Never assume a library works like another one you know.
+3. **Don't import from 'react'** - Use `frosty` instead. Frosty has its own implementation of hooks, context, and JSX runtime.
+4. **Don't use React context pattern** - Frosty uses `<Context value={...}>` directly, NOT `<Context.Provider value={...}>`. This is a fundamental API difference.
+5. **Context creation** - Use `createContext<Type>()` without default value, not `createContext<Type | undefined>(undefined)`. Frosty's context API differs from React.
+6. **Don't hardcode styles** - Always use `useTheme()` hook for all style values. Never use magic numbers or literal color values.
+7. **Check theme.colors properties exist** - ALWAYS verify theme properties exist in [src/components/theme/index.tsx](src/components/theme/index.tsx) before use. Properties like `theme.colors.text`, `theme.colors.textSecondary`, `theme.colors.background`, `theme.colors.border` **DO NOT EXIST**. Use `theme.colorContrast()` to derive text colors and `@o2ter/colors.js` functions to create color variations. Run `get_errors` tool immediately after writing code to catch type errors.
+8. **Don't inject CSS** - Use inline `keyframes` property for animations instead of document.createElement('style') or DOM manipulation
+9. **Don't use manual hover handlers** - Use `&:hover` pseudo-selectors in inline styles instead of onMouseEnter/onMouseLeave event handlers
+10. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`. Our custom router has different APIs than React Router.
+11. **Context access** - Always call hooks inside components, not in conditionals
+12. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
+13. **Path separators** - Use forward slashes `/` in all configs, even on Windows
+14. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
+15. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
+16. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
+17. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
