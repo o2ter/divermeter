@@ -556,140 +556,99 @@ export const BrowserPage = () => {
                   const { type, data } = await decodeClipboardData(clipboard, true) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data)) return;
 
-                  // Check if pasting into empty rows (for adding to relation)
-                  const emptyRows = _.filter(rows, row => row >= items.length);
-                  const existingRows = _.filter(rows, row => row < items.length);
+                  // Determine mode: creating new objects vs updating existing
+                  const isCreating = rows[0] >= items.length;
 
-                  // Handle adding objects to relation by ID when pasting into empty rows
-                  if (!_.isEmpty(emptyRows) && relationQuery && canEditInRelationMode) {
-                    const objectsToAdd: TObject[] = [];
+                  if (isCreating) {
+                    // MODE: Create new objects (paste into empty row)
+                    if (relationQuery && canEditInRelationMode) {
+                      // Add existing objects to relation by ID
+                      const idColumnIdx = _.findIndex(expandedColumns, col => col.key === '_id');
+                      const objectsToAdd: TObject[] = [];
 
-                    // Find _id column index
-                    const idColumnIdx = _.findIndex(expandedColumns, col => col.key === '_id');
-
-                    if (type === 'json') {
-                      // When pasting JSON with _id field
-                      for (const values of data.slice(0, emptyRows.length)) {
-                        if (values._id && _.isString(values._id)) {
-                          const targetClassName = schema?.fields[relationQuery.field.split('.')[0]];
-                          const targetClass = !_.isString(targetClassName) && targetClassName?.type === 'relation'
-                            ? targetClassName.target
-                            : className;
-                          const obj = await proto.Object(targetClass, values._id).fetch({ master: true });
-                          if (obj) objectsToAdd.push(obj);
-                        }
-                      }
-                    } else if (type === 'raw' && idColumnIdx >= 0) {
-                      // When pasting raw data with _id column
-                      for (const values of data.slice(0, emptyRows.length)) {
-                        const idValue = values[idColumnIdx];
+                      for (const values of data) {
+                        const idValue = type === 'json' ? values._id : values[idColumnIdx];
                         if (idValue && _.isString(idValue)) {
-                          const targetClassName = schema?.fields[relationQuery.field.split('.')[0]];
-                          const targetClass = !_.isString(targetClassName) && targetClassName?.type === 'relation'
-                            ? targetClassName.target
-                            : className;
+                          const targetField = schema?.fields[relationQuery.field.split('.')[0]];
+                          const targetClass = !_.isString(targetField) && targetField?.type === 'relation'
+                            ? targetField.target : className;
                           const obj = await proto.Object(targetClass, idValue).fetch({ master: true });
                           if (obj) objectsToAdd.push(obj);
                         }
                       }
-                    }
 
-                    // Add objects to relation
-                    if (!_.isEmpty(objectsToAdd)) {
-                      const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
-                      parentObj.addToSet(relationQuery.field, objectsToAdd);
-                      await parentObj.save({ master: true });
-
-                      // Update local state
-                      setResource((prev) => {
-                        const prevItems = prev?.items ?? [];
-                        const newItems = [...prevItems, ...objectsToAdd];
-                        return {
-                          items: newItems,
-                          count: newItems.length,
-                        };
-                      });
-
-                      alert.showSuccess(`${objectsToAdd.length} object(s) added to relation successfully`);
-                    }
-                  } else if (!_.isEmpty(emptyRows) && !relationQuery) {
-                    // Handle creating new objects in normal query mode
-                    const newObjects: TObject[] = [];
-                    const startIdx = _.indexOf(rows, emptyRows[0]);
-
-                    if (type === 'json') {
-                      // When pasting JSON data
-                      for (const values of data.slice(startIdx, startIdx + emptyRows.length)) {
-                        const _obj = proto.Object(className);
-                        for (const [column, value] of _.toPairs(values)) {
-                          const baseField = column.split('.')[0];
-                          if (!_.includes(readonlyKeys, baseField)) {
-                            await _obj.set(column, value);
-                          }
-                        }
-                        newObjects.push(_obj);
+                      if (!_.isEmpty(objectsToAdd)) {
+                        const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
+                        parentObj.addToSet(relationQuery.field, objectsToAdd);
+                        await parentObj.save({ master: true });
+                        setResource((prev) => ({
+                          items: [...(prev?.items ?? []), ...objectsToAdd],
+                          count: (prev?.items ?? []).length + objectsToAdd.length,
+                        }));
+                        alert.showSuccess(`${objectsToAdd.length} object(s) added to relation successfully`);
                       }
-                    } else if (type === 'raw') {
-                      // When pasting raw data
-                      for (const values of data.slice(startIdx, startIdx + emptyRows.length)) {
-                        const _obj = proto.Object(className);
-                        for (const [column, value] of _.zip(expandedColumns, values)) {
-                          if (!column) continue;
+                    } else {
+                      // Create new objects in normal mode
+                      const newObjects: TObject[] = [];
 
-                          if (!_.includes(readonlyKeys, column.baseField)) {
-                            if (!_.isNil(value) && _.isString(value)) {
-                              const _value = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                              if (!_.isNil(_value)) _obj.set(column.key, _value as any);
+                      for (const values of data) {
+                        const obj = proto.Object(className);
+                        if (type === 'json') {
+                          for (const [column, value] of _.toPairs(values)) {
+                            const baseField = column.split('.')[0];
+                            if (!_.includes(readonlyKeys, baseField)) {
+                              await obj.set(column, value as any);
+                            }
+                          }
+                        } else {
+                          for (const [column, value] of _.zip(expandedColumns, values)) {
+                            if (column && !_.includes(readonlyKeys, column.baseField)) {
+                              if (!_.isNil(value) && _.isString(value)) {
+                                const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
+                                if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
+                              }
                             }
                           }
                         }
-                        newObjects.push(_obj);
+                        newObjects.push(obj);
+                      }
+
+                      if (!_.isEmpty(newObjects)) {
+                        await performSaves(newObjects);
+                        alert.showSuccess(`${newObjects.length} object(s) created successfully`);
                       }
                     }
-
-                    if (!_.isEmpty(newObjects)) {
-                      await performSaves(newObjects);
-                      alert.showSuccess(`${newObjects.length} object(s) created successfully`);
-                    }
-                  }
-
-                  // Handle updating existing rows
-                  if (!_.isEmpty(existingRows)) {
-                    const objs = _.compact(_.map(existingRows, row => items[row]));
+                  } else {
+                    // MODE: Update existing objects (paste into existing rows)
                     const updates: TObject[] = [];
-                    const startIdx = _.indexOf(rows, existingRows[0]);
+                    const targetRows = _.filter(rows, row => row < items.length);
 
-                    if (type === 'json') {
-                      for (const [obj, values] of _.zip(objs, data.slice(startIdx))) {
-                        const _obj = obj?.clone() ?? proto.Object(className);
+                    for (const [idx, row] of _.entries(targetRows)) {
+                      const item = items[row];
+                      const values = data[parseInt(idx)];
+                      if (!item || !values) continue;
+
+                      const obj = item.clone();
+                      if (type === 'json') {
                         for (const [column, value] of _.toPairs(values)) {
-                          // Proto handles dot notation automatically - extract base field for readonly check
                           const baseField = column.split('.')[0];
                           if (!_.includes(readonlyKeys, baseField)) {
-                            await _obj.set(column, value);
+                            await obj.set(column, value as any);
                           }
                         }
-                        updates.push(_obj);
-                      }
-                    } else if (type === 'raw') {
-                      for (const [obj, values] of _.zip(objs, data.slice(startIdx))) {
-                        const _obj = obj?.clone() ?? proto.Object(className);
+                      } else {
                         for (const [column, value] of _.zip(expandedColumns, values)) {
-                          if (!column) continue;
-
-                          if (!_.includes(readonlyKeys, column.baseField)) {
+                          if (column && !_.includes(readonlyKeys, column.baseField)) {
                             if (_.isNil(value)) {
-                              if (_obj.id) _obj.set(column.key, null);
+                              obj.set(column.key, null);
                             } else if (_.isString(value)) {
-                              const _value = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                              if (!_.isNil(_value)) _obj.set(column.key, _value as any);
-                            } else {
-                              throw Error(`Invalid value for column ${column.key}: ${value}`);
+                              const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
+                              if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
                             }
                           }
                         }
-                        updates.push(_obj);
                       }
+                      updates.push(obj);
                     }
 
                     if (!_.isEmpty(updates)) {
@@ -711,98 +670,84 @@ export const BrowserPage = () => {
                   const { data } = await decodeClipboardData(clipboard, false) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data)) return;
 
-                  // Check if pasting into empty rows (for adding to relation)
-                  const emptyRows = _.filter(_rows, row => row >= items.length);
-                  const existingRows = _.filter(_rows, row => row < items.length);
+                  // Determine mode: creating new objects vs updating existing
+                  const isCreating = _rows[0] >= items.length;
 
-                  // Handle adding objects to relation by ID when pasting _id column into empty rows
-                  if (!_.isEmpty(emptyRows) && relationQuery && canEditInRelationMode) {
-                    const idColumn = _.find(_cols, col => col.key === '_id');
-                    const idColumnIdx = idColumn ? _.indexOf(_cols, idColumn) : -1;
+                  if (isCreating) {
+                    // MODE: Create new objects (paste into empty row)
+                    if (relationQuery && canEditInRelationMode) {
+                      // Add existing objects to relation by ID
+                      const idColumn = _.find(_cols, col => col.key === '_id');
+                      const idColumnIdx = idColumn ? _.indexOf(_cols, idColumn) : -1;
 
-                    if (idColumnIdx >= 0) {
-                      const objectsToAdd: TObject[] = [];
+                      if (idColumnIdx >= 0) {
+                        const objectsToAdd: TObject[] = [];
 
-                      for (const values of data.slice(0, emptyRows.length)) {
-                        const idValue = values[idColumnIdx];
-                        if (idValue && _.isString(idValue)) {
-                          const targetClassName = schema?.fields[relationQuery.field.split('.')[0]];
-                          const targetClass = !_.isString(targetClassName) && targetClassName?.type === 'relation'
-                            ? targetClassName.target
-                            : className;
-                          const obj = await proto.Object(targetClass, idValue).fetch({ master: true });
-                          if (obj) objectsToAdd.push(obj);
-                        }
-                      }
-
-                      // Add objects to relation
-                      if (!_.isEmpty(objectsToAdd)) {
-                        const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
-                        parentObj.addToSet(relationQuery.field, objectsToAdd);
-                        await parentObj.save({ master: true });
-
-                        // Update local state
-                        setResource((prev) => {
-                          const prevItems = prev?.items ?? [];
-                          const newItems = [...prevItems, ...objectsToAdd];
-                          return {
-                            items: newItems,
-                            count: newItems.length,
-                          };
-                        });
-
-                        alert.showSuccess(`${objectsToAdd.length} object(s) added to relation successfully`);
-                      }
-                    }
-                  } else if (!_.isEmpty(emptyRows) && !relationQuery) {
-                    // Handle creating new objects in normal query mode
-                    const newObjects: TObject[] = [];
-                    const startIdx = _.indexOf(_rows, emptyRows[0]);
-
-                    for (const values of data.slice(startIdx, startIdx + emptyRows.length)) {
-                      const _obj = proto.Object(className);
-                      for (const [column, value] of _.zip(_cols, values)) {
-                        if (!column) continue;
-
-                        if (!_.includes(readonlyKeys, column.baseField)) {
-                          if (!_.isNil(value) && _.isString(value)) {
-                            const _value = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                            if (!_.isNil(_value)) _obj.set(column.key, _value as any);
+                        for (const values of data) {
+                          const idValue = values[idColumnIdx];
+                          if (idValue && _.isString(idValue)) {
+                            const targetField = schema?.fields[relationQuery.field.split('.')[0]];
+                            const targetClass = !_.isString(targetField) && targetField?.type === 'relation'
+                              ? targetField.target : className;
+                            const obj = await proto.Object(targetClass, idValue).fetch({ master: true });
+                            if (obj) objectsToAdd.push(obj);
                           }
                         }
+
+                        if (!_.isEmpty(objectsToAdd)) {
+                          const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
+                          parentObj.addToSet(relationQuery.field, objectsToAdd);
+                          await parentObj.save({ master: true });
+                          setResource((prev) => ({
+                            items: [...(prev?.items ?? []), ...objectsToAdd],
+                            count: (prev?.items ?? []).length + objectsToAdd.length,
+                          }));
+                          alert.showSuccess(`${objectsToAdd.length} object(s) added to relation successfully`);
+                        }
                       }
-                      newObjects.push(_obj);
-                    }
+                    } else {
+                      // Create new objects in normal mode
+                      const newObjects: TObject[] = [];
 
-                    if (!_.isEmpty(newObjects)) {
-                      await performSaves(newObjects);
-                      alert.showSuccess(`${newObjects.length} object(s) created successfully`);
-                    }
-                  }
+                      for (const values of data) {
+                        const obj = proto.Object(className);
+                        for (const [column, value] of _.zip(_cols, values)) {
+                          if (column && !_.includes(readonlyKeys, column.baseField)) {
+                            if (!_.isNil(value) && _.isString(value)) {
+                              const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
+                              if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
+                            }
+                          }
+                        }
+                        newObjects.push(obj);
+                      }
 
-                  // Handle updating existing rows
-                  if (!_.isEmpty(existingRows)) {
-                    const objs = _.compact(_.map(existingRows, row => items[row]));
+                      if (!_.isEmpty(newObjects)) {
+                        await performSaves(newObjects);
+                        alert.showSuccess(`${newObjects.length} object(s) created successfully`);
+                      }
+                    }
+                  } else {
+                    // MODE: Update existing objects (paste into existing rows)
                     const updates: TObject[] = [];
-                    const startIdx = _.indexOf(_rows, existingRows[0]);
+                    const targetRows = _.filter(_rows, row => row < items.length);
 
-                    for (const [obj, values] of _.zip(objs, data.slice(startIdx))) {
-                      const _obj = obj?.clone() ?? proto.Object(className);
+                    for (const [idx, row] of _.entries(targetRows)) {
+                      const item = items[row];
+                      const values = data[parseInt(idx)];
+
+                      if (!item || !values) continue;
+
+                      const obj = item.clone();
                       for (const [column, value] of _.zip(_cols, values)) {
-                        if (!column) continue;
-
-                        if (!_.includes(readonlyKeys, column.baseField)) {
-                          if (_.isNil(value)) {
-                            if (_obj.id) _obj.set(column.key, null);
-                          } else if (_.isString(value)) {
-                            const _value = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                            if (!_.isNil(_value)) _obj.set(column.key, _value as any);
-                          } else {
-                            throw Error(`Invalid value for column ${column.key}: ${value}`);
+                        if (column && !_.includes(readonlyKeys, column.baseField)) {
+                          if (!_.isNil(value) && _.isString(value)) {
+                            const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
+                            if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
                           }
                         }
                       }
-                      updates.push(_obj);
+                      updates.push(obj);
                     }
 
                     if (!_.isEmpty(updates)) {
