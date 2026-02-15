@@ -125,7 +125,7 @@ export const Main = () => {
     },
   }), []);
   return (
-    <div style={{ display: 'flex', flex: 1 }}>
+    <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
       <Dashboard
         proto={proto}
         pages={[
