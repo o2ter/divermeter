@@ -24,14 +24,19 @@
 //
 
 import _ from 'lodash';
+import { tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, useProto, useProtoSchema } from '../../proto';
 import { _useCallbacks, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
-import { TableCell } from './cell';
+import { _typeOf, TableCell } from './cell';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
 import { useActivity } from '../../components/activity';
+import { Decimal, deserialize } from 'proto.io';
+
+// System fields that cannot be edited
+const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
 
 export const BrowserPage = () => {
   const theme = useTheme();
@@ -63,6 +68,71 @@ export const BrowserPage = () => {
   }, [className, filter, limit, offset, sort]);
 
   const [editingValue, setEditingValue] = useState<any>();
+
+  const readonlyKeys = [
+    ...systemFields,
+    ..._.keys(_.pickBy(schema.fields, type => !_.isString(type) && type.type === 'relation' && !_.isNil(type.foreignField))),
+  ];
+
+  const decodeClipboardData = async (
+    clipboard: DataTransfer | Clipboard,
+    json: boolean,
+  ) => {
+    if (json && clipboard instanceof DataTransfer) {
+      const json = clipboard.getData('application/json');
+      if (!_.isEmpty(json)) return { type: 'json', data: deserialize(json) as Record<string, any>[] } as const;
+    }
+    if (clipboard instanceof DataTransfer) {
+      const text = clipboard.getData('text/plain');
+      if (!_.isEmpty(text)) return { type: 'raw', data: tsvParseRows(text) } as const;
+    }
+    if (clipboard instanceof Clipboard) {
+      const text = await clipboard.readText();
+      if (!_.isEmpty(text)) return { type: 'raw', data: tsvParseRows(text) } as const;
+    }
+  };
+
+  const decodeRawValue = async (type: string, value: string) => {
+    switch (type) {
+      case 'boolean':
+        if (value.toLowerCase() === 'true') return true;
+        if (value.toLowerCase() === 'false') return false;
+        break;
+      case 'number':
+        {
+          const number = parseFloat(value);
+          if (_.isFinite(number)) return number;
+          break;
+        }
+      case 'decimal':
+        {
+          const number = new Decimal(value);
+          if (number.isFinite()) return number;
+          break;
+        }
+      case 'string': return value;
+      case 'date':
+        {
+          const date = new Date(value);
+          if (_.isFinite(date.valueOf())) return date;
+          break;
+        }
+      case 'object':
+      case 'array':
+      case 'string[]':
+        return deserialize(value);
+      case 'pointer':
+        if (!_.isEmpty(value)) return proto.Object(className, value).fetch({ master: true });
+        break;
+      case 'relation':
+        const _value = JSON.parse(value);
+        if (_.isArray(_value) && _.every(_value, v => !_.isEmpty(v) && _.isString(v))) {
+          return await Promise.all(_.map(_value, v => proto.Object(className, v).fetch({ master: true })));
+        }
+        break;
+      default: break;
+    }
+  };
 
   const {
     handleUpdateItem,
@@ -194,9 +264,7 @@ export const BrowserPage = () => {
             startRowNumber={offset + 1}
             allowEditForCell={(row, col) => {
               const columnKey = _.keys(schema.fields)[col];
-              // System fields that cannot be edited
-              const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
-              return !systemFields.includes(columnKey);
+              return !readonlyKeys.includes(columnKey);
             }}
             onColumnWidthChange={(col, width) => {
               const columnKey = _.keys(schema.fields)[col];
@@ -230,8 +298,55 @@ export const BrowserPage = () => {
               setEditingValue(undefined);
             }}
             onPasteRows={(rows, clipboard) => {
+              startActivity(async () => {
+                try {
+                  const { type, data } = await decodeClipboardData(clipboard, true) ?? {};
+                  if (_.isEmpty(data) || !_.isArray(data)) throw Error('No valid data found in clipboard');
+                  const objs = _.compact(_.map(rows, row => data?.[row]));
+                  const updates: TObject[] = [];
+                  if (type === 'json') {
+                    for (const [obj, values] of _.zip(objs, data)) {
+                      const _obj = obj?.clone() ?? proto.Object(className);
+                      for (const [column, value] of _.toPairs(values)) {
+                        if (!_.includes(readonlyKeys, column)) {
+                          await _obj.set(column, value);
+                        }
+                      }
+                      updates.push(_obj);
+                    }
+                  } else if (type === 'raw') {
+                    for (const [obj, values] of _.zip(objs, data)) {
+                      const _obj = obj?.clone() ?? proto.Object(className);
+                      for (const [column = '', value] of _.zip(_.keys(schema.fields), values)) {
+                        if (!_.includes(readonlyKeys, column)) {
+                          if (_.isNil(value)) {
+                            if (_obj.id) _obj.set(column, null);
+                          } else if (_.isString(value)) {
+                            const _value = await decodeRawValue(_typeOf(schema.fields[column]) ?? '', value);
+                            if (!_.isNil(_value)) _obj.set(column, _value as any);
+                          } else {
+                            throw Error(`Invalid value for column ${column}: ${value}`);
+                          }
+                        }
+                      }
+                      updates.push(_obj);
+                    }
+                  }
+                } catch (error) {
+                  console.error('Failed to paste data:', error);
+                  alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
+                }
+              });
             }}
             onPasteCells={(cells, clipboard) => {
+              startActivity(async () => {
+                try {
+                  const { data } = await decodeClipboardData(clipboard, false) ?? {};
+                } catch (error) {
+                  console.error('Failed to paste data:', error);
+                  alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
+                }
+              });
             }}
             onDeleteRows={(rows) => {
             }}

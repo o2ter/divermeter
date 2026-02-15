@@ -38,6 +38,7 @@ type TableCellProps = {
   setEditingValue?: (value: any) => void;
 };
 
+export const _typeOf = (x?: TSchema['fields'][string]) => _.isString(x) ? x : x?.type;
 export const typeOf = (x?: TSchema['fields'][string]) => _.isString(x) ? x : x?.type === 'pointer' && x.target === 'File' ? 'file' : x?.type;
 
 const encodeValue = (value: any, space = 2) => {
