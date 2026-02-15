@@ -65,18 +65,65 @@ export const decodeFiltersFromURLParams = (params: URLSearchParams, proto: Retur
     });
   }
 
-  // Priority 2: Complex filter parameter (JSON format)
+  // Priority 2: Complex filter parameter (JSON with serialized values)
   const filterParam = params.get('filter');
   if (filterParam) {
     try {
-      // Complex filters use JSON - values will be parsed when loaded into UI
-      return JSON.parse(filterParam);
+      const parsed = JSON.parse(filterParam);
+      // Deserialize all values recursively to restore Date, Decimal, etc.
+      return deserializeFilterValues(parsed);
     } catch {
       return [];
     }
   }
 
   return [];
+};
+
+/**
+ * Recursively serialize all values in a filter structure
+ */
+const serializeFilterValues = (obj: any): any => {
+  if (_.isNil(obj)) return obj;
+  if (_.isDate(obj) || obj instanceof Decimal || _.isNumber(obj) || _.isBoolean(obj) || _.isString(obj)) {
+    return serialize(obj);
+  }
+  if (_.isArray(obj)) {
+    return obj.map(serializeFilterValues);
+  }
+  if (_.isObject(obj)) {
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = serializeFilterValues(value);
+    }
+    return result;
+  }
+  return obj;
+};
+
+/**
+ * Recursively deserialize all values in a filter structure
+ */
+const deserializeFilterValues = (obj: any): any => {
+  if (_.isNil(obj)) return obj;
+  if (_.isString(obj)) {
+    try {
+      return deserialize(obj);
+    } catch {
+      return obj;
+    }
+  }
+  if (_.isArray(obj)) {
+    return obj.map(deserializeFilterValues);
+  }
+  if (_.isObject(obj)) {
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = deserializeFilterValues(value);
+    }
+    return result;
+  }
+  return obj;
 };
 
 /**
@@ -126,8 +173,9 @@ export const encodeFiltersToURLParams = (filters: QueryFilter[], params: URLSear
       });
     });
   } else {
-    // For complex filters, use JSON (values are serialized individually)
-    params.set('filter', JSON.stringify(filters));
+    // For complex filters, serialize all values before JSON encoding
+    const serialized = serializeFilterValues(filters);
+    params.set('filter', JSON.stringify(serialized));
   }
 };
 
