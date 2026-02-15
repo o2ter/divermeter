@@ -35,25 +35,38 @@ import { Decimal } from 'proto.io';
 import { _typeOf, encodeValue, decodeValue, verifyValue } from './utils';
 import { JSCode } from '../../components/jscode';
 
-// Search operators
+// Search operators supported by proto.io TFieldQuerySelector
 const operators = [
+  // Comparison operators
   { value: '$eq', label: 'equals' },
   { value: '$ne', label: 'not equals' },
   { value: '$gt', label: 'greater than' },
-  { value: '$gte', label: 'greater or equal' },
+  { value: '$gte', label: 'greater than or equal' },
   { value: '$lt', label: 'less than' },
-  { value: '$lte', label: 'less or equal' },
+  { value: '$lte', label: 'less than or equal' },
+  // Array membership
   { value: '$in', label: 'in' },
   { value: '$nin', label: 'not in' },
+  // Set operations
+  { value: '$subset', label: 'subset of' },
+  { value: '$superset', label: 'superset of' },
+  { value: '$intersect', label: 'intersects' },
+  // String operations
+  { value: '$pattern', label: 'matches' },
+  { value: '$starts', label: 'starts with' },
+  { value: '$ends', label: 'ends with' },
+  // Array operations
+  { value: '$size', label: 'size' },
+  { value: '$empty', label: 'is empty' },
+  // Field existence
   { value: '$exists', label: 'exists' },
-  { value: '$regex', label: 'matches regex' },
-  { value: '$text', label: 'text search' },
+  // Custom filter
   { value: '$filter', label: 'custom filter' },
 ];
 
 type GroupFilterCriteria = {
   id: string;
-  operator: '$and' | '$or';
+  operator: '$and' | '$or' | '$nor';
   children: FilterCriteria[];
 };
 
@@ -87,8 +100,8 @@ const FilterItem = ({
 }) => {
   const theme = useTheme();
 
-  // Group operators ($and, $or)
-  if (criteria.operator === '$and' || criteria.operator === '$or') {
+  // Group operators ($and, $or, $nor)
+  if (criteria.operator === '$and' || criteria.operator === '$or' || criteria.operator === '$nor') {
     const group = criteria as GroupFilterCriteria;
 
     const addFilter = () => {
@@ -115,9 +128,15 @@ const FilterItem = ({
       <div style={{
         marginLeft: depth > 0 ? `${theme.spacing.md}px` : 0,
         padding: theme.spacing.xs,
-        border: `1px solid ${group.operator === '$and' ? theme.colors['primary-300'] : theme.colors['tint-300']}`,
+        border: `1px solid ${group.operator === '$and' ? theme.colors['primary-300'] :
+          group.operator === '$or' ? theme.colors['tint-300'] :
+            theme.colors['warning-300']
+          }`,
         borderRadius: theme.borderRadius.sm,
-        backgroundColor: group.operator === '$and' ? theme.colors['primary-100'] : theme.colors['tint-100'],
+        backgroundColor:
+          group.operator === '$and' ? theme.colors['primary-100'] :
+            group.operator === '$or' ? theme.colors['tint-100'] :
+              theme.colors['warning-100'],
         marginBottom: theme.spacing.xs,
       }}>
         <div style={{
@@ -131,7 +150,7 @@ const FilterItem = ({
               value={group.operator}
               onChange={(e) => {
                 const newOp = e.currentTarget.value;
-                if (newOp === '$and' || newOp === '$or') {
+                if (newOp === '$and' || newOp === '$or' || newOp === '$nor') {
                   onUpdate({ ...group, operator: newOp });
                 } else if (newOp === '$filter') {
                   onUpdate({ id: group.id, operator: '$filter', value: '' } as CustomFilterCriteria);
@@ -156,6 +175,7 @@ const FilterItem = ({
             >
               <option value="$and">AND</option>
               <option value="$or">OR</option>
+              <option value="$nor">NOR</option>
               <option value="$filter">custom filter</option>
               <optgroup label="Field Operators">
                 {operators.filter(op => op.value !== '$filter').map(op => (
@@ -166,7 +186,11 @@ const FilterItem = ({
           ) : null}
           <span style={{
             fontSize: theme.fontSize.xs,
-            color: theme.colorContrast(group.operator === '$and' ? theme.colors['primary-100'] : theme.colors['tint-100']),
+            color: theme.colorContrast(
+              group.operator === '$and' ? theme.colors['primary-100'] :
+                group.operator === '$or' ? theme.colors['tint-100'] :
+                  theme.colors['warning-100']
+            ),
             opacity: 0.6,
           }}>
             ({group.children.length})
@@ -236,7 +260,7 @@ const FilterItem = ({
           value={custom.operator}
           onChange={(e) => {
             const newOp = e.currentTarget.value;
-            if (newOp === '$and' || newOp === '$or') {
+            if (newOp === '$and' || newOp === '$or' || newOp === '$nor') {
               onUpdate({ id: custom.id, operator: newOp, children: [] } as GroupFilterCriteria);
             } else if (newOp === '$filter') {
               // Keep as is
@@ -261,6 +285,7 @@ const FilterItem = ({
         >
           <option value="$and">AND</option>
           <option value="$or">OR</option>
+          <option value="$nor">NOR</option>
           <option value="$filter">custom filter</option>
           <optgroup label="Field Operators">
             {operators.filter(op => op.value !== '$filter').map(op => (
@@ -344,8 +369,38 @@ const FilterItem = ({
       );
     }
 
-    // For $in and $nin operators, always use comma-separated text input
-    if (field.operator === '$in' || field.operator === '$nin') {
+    // Operator-specific inputs (override field type)
+    if (field.operator === '$size') {
+      // $size expects a number
+      return (
+        <input
+          type="number"
+          value={field.value}
+          onChange={(e) => onUpdate({ ...field, value: e.currentTarget.value })}
+          placeholder="Array/string size"
+          style={baseStyle}
+        />
+      );
+    }
+
+    if (field.operator === '$empty') {
+      // $empty expects a boolean
+      return (
+        <select
+          value={field.value}
+          onChange={(e) => onUpdate({ ...field, value: e.currentTarget.value })}
+          style={baseStyle}
+        >
+          <option value="">Select...</option>
+          <option value="true">true (is empty)</option>
+          <option value="false">false (not empty)</option>
+        </select>
+      );
+    }
+
+    // For array operators ($in, $nin, $subset, $superset, $intersect), use comma-separated input
+    if (field.operator === '$in' || field.operator === '$nin' ||
+      field.operator === '$subset' || field.operator === '$superset' || field.operator === '$intersect') {
       return (
         <input
           type="text"
@@ -357,7 +412,7 @@ const FilterItem = ({
       );
     }
 
-    // Type-specific inputs
+    // Type-specific inputs for standard operators
     switch (fieldType) {
       case 'boolean':
         return (
@@ -439,7 +494,7 @@ const FilterItem = ({
         value={field.operator}
         onChange={(e) => {
           const newOp = e.currentTarget.value;
-          if (newOp === '$and' || newOp === '$or') {
+          if (newOp === '$and' || newOp === '$or' || newOp === '$nor') {
             onUpdate({ id: field.id, operator: newOp, children: [] } as GroupFilterCriteria);
           } else if (newOp === '$filter') {
             onUpdate({ id: field.id, operator: '$filter', value: '' } as CustomFilterCriteria);
@@ -464,6 +519,7 @@ const FilterItem = ({
         <option value="">Select Operator</option>
         <option value="$and">AND</option>
         <option value="$or">OR</option>
+        <option value="$nor">NOR</option>
         <option value="$filter">custom filter</option>
         <optgroup label="Field Operators">
           {operators.filter(op => op.value !== '$filter').map(op => (
@@ -543,8 +599,8 @@ export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProp
   });
 
   const convertToQueryFilter = (criteria: FilterCriteria): QueryFilter | null => {
-    // Group operators ($and, $or)
-    if (criteria.operator === '$and' || criteria.operator === '$or') {
+    // Group operators ($and, $or, $nor)
+    if (criteria.operator === '$and' || criteria.operator === '$or' || criteria.operator === '$nor') {
       const group = criteria as GroupFilterCriteria;
       const childFilters = group.children
         .map(convertToQueryFilter)
@@ -577,48 +633,54 @@ export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProp
     const fieldType = _typeOf(schema?.fields[field.field]);
     let parsedValue: any = field.value;
 
-    // Parse value based on field type and operator
+    // Parse value based on operator and field type
     if (field.operator !== '$exists') {
       try {
-        switch (fieldType) {
-          case 'number':
-            parsedValue = parseFloat(field.value);
-            if (!_.isFinite(parsedValue)) return null;
-            break;
-          case 'decimal':
-            parsedValue = new Decimal(field.value);
-            if (!parsedValue.isFinite()) return null;
-            break;
-          case 'boolean':
-            parsedValue = field.value.toLowerCase() === 'true';
-            break;
-          case 'date':
-            parsedValue = new Date(field.value);
-            if (!_.isFinite(parsedValue.valueOf())) return null;
-            break;
-          case 'array':
-          case 'object':
-          case 'string[]':
-            if (field.operator === '$in' || field.operator === '$nin') {
-              parsedValue = field.value.split(',').map(v => v.trim());
-            } else {
+        // Operator-specific parsing (overrides field type)
+        if (field.operator === '$size') {
+          // $size expects a number
+          parsedValue = parseFloat(field.value);
+          if (!_.isFinite(parsedValue)) return null;
+        } else if (field.operator === '$empty') {
+          // $empty expects a boolean
+          parsedValue = field.value.toLowerCase() === 'true';
+        } else if (field.operator === '$in' || field.operator === '$nin' ||
+          field.operator === '$subset' || field.operator === '$superset' || field.operator === '$intersect') {
+          // Array operators expect arrays (comma-separated input)
+          parsedValue = field.value.split(',').map(v => v.trim());
+        } else {
+        // Field type-based parsing for standard operators
+          switch (fieldType) {
+            case 'number':
+              parsedValue = parseFloat(field.value);
+              if (!_.isFinite(parsedValue)) return null;
+              break;
+            case 'decimal':
+              parsedValue = new Decimal(field.value);
+              if (!parsedValue.isFinite()) return null;
+              break;
+            case 'boolean':
+              parsedValue = field.value.toLowerCase() === 'true';
+              break;
+            case 'date':
+              parsedValue = new Date(field.value);
+              if (!_.isFinite(parsedValue.valueOf())) return null;
+              break;
+            case 'array':
+            case 'object':
+            case 'string[]':
               const parsed = decodeValue(field.value);
               verifyValue(parsed);
               parsedValue = parsed;
-            }
-            break;
-          case 'pointer':
-            if (field.operator === '$in' || field.operator === '$nin') {
-              parsedValue = field.value.split(',').map(v => v.trim());
-            } else {
+              break;
+            case 'pointer':
               parsedValue = field.value;
-            }
-            break;
-          default:
-            if (field.operator === '$in' || field.operator === '$nin') {
-              parsedValue = field.value.split(',').map(v => v.trim());
-            }
-            break;
+              break;
+            default:
+              // String and other types use raw value
+              parsedValue = field.value;
+              break;
+          }
         }
       } catch (error) {
         alert.showError(`Failed to parse filter value for ${field.field}: ${error}`);
