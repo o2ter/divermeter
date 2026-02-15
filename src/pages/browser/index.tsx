@@ -319,6 +319,7 @@ export const BrowserPage = () => {
         ..._.filter(items, it => !_.some(prevItems, p => p.id === it.id))
       ];
       return {
+        className,
         items: newItems,
         count: prev?.count ?? newItems.length,
       };
@@ -358,6 +359,7 @@ export const BrowserPage = () => {
               const prevItems = prev?.items ?? [];
               const newItems = [...prevItems, cloned];
               return {
+                className,
                 items: newItems,
                 count: prev?.count ?? newItems.length,
               };
@@ -390,6 +392,7 @@ export const BrowserPage = () => {
               const prevItems = prev?.items ?? [];
               const newItems = _.filter(prevItems, i => !items.includes(i));
               return {
+                className,
                 items: newItems,
                 count: Math.max(0, (prev?.count ?? 0) - items.length),
               };
@@ -402,6 +405,7 @@ export const BrowserPage = () => {
               const prevItems = prev?.items ?? [];
               const newItems = _.filter(prevItems, i => !items.includes(i));
               return {
+                className,
                 items: newItems,
                 count: Math.max(0, (prev?.count ?? 0) - items.length),
               };
@@ -465,6 +469,7 @@ export const BrowserPage = () => {
             parentObj.addToSet(relationQuery.field, objectsToAdd);
             await parentObj.save({ master: true });
             setResource((prev) => ({
+              className,
               items: [...(prev?.items ?? []), ...objectsToAdd],
               count: (prev?.items ?? []).length + objectsToAdd.length,
             }));
@@ -770,6 +775,7 @@ export const BrowserPage = () => {
                           const prevItems = prev?.items ?? [];
                           const newItems = [...prevItems, obj];
                           return {
+                            className,
                             items: newItems,
                             count: newItems.length,
                           };
