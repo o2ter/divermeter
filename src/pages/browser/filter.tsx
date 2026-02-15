@@ -24,8 +24,8 @@
 //
 
 import _ from 'lodash';
-import { _useCallbacks, useMemo, useState } from 'frosty';
-import { QueryFilter, TSchema } from '../../proto';
+import { _useCallbacks, useMemo, useState, useEffect } from 'frosty';
+import { QueryFilter, TSchema, ProtoClient } from '../../proto';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
 import { Button } from '../../components/button';
@@ -34,6 +34,123 @@ import { Icon } from '../../components/icon';
 import { Decimal } from 'proto.io';
 import { _typeOf, encodeValue, decodeValue, verifyValue } from './utils';
 import { JSCode } from '../../components/jscode';
+
+/**
+ * Decode filter parameters from URLSearchParams into QueryFilter[]
+ * Supports both filter[col]=val format and legacy filter=json format
+ */
+export const decodeFiltersFromURLParams = (params: URLSearchParams, proto: ProtoClient): QueryFilter[] => {
+  // Priority 1: Parse filter[col]=val parameters with type support
+  const filterParams: Record<string, string> = {};
+  for (const [key, value] of params.entries()) {
+    const match = key.match(/^filter\[(.+)\]$/);
+    if (match) {
+      filterParams[match[1]] = value;
+    }
+  }
+
+  if (Object.keys(filterParams).length > 0) {
+    // Convert filter[col]=val to QueryFilter format with type parsing
+    return Object.entries(filterParams).map(([col, val]) => {
+      // Support type prefixes: date:, decimal:, pointer:
+      let parsedValue: any = val;
+
+      // Parse date: prefix (e.g., "date:2024-01-01T00:00:00Z")
+      if (val.startsWith('date:')) {
+        parsedValue = new Date(val.substring(5));
+      }
+      // Parse decimal: prefix (e.g., "decimal:123.45")
+      else if (val.startsWith('decimal:')) {
+        parsedValue = new Decimal(val.substring(8));
+      }
+      // Parse pointer: prefix (e.g., "pointer:User:abc123")
+      else if (val.startsWith('pointer:')) {
+        const parts = val.substring(8).split(':');
+        if (parts.length >= 2) {
+          parsedValue = proto.Object(parts[0], parts.slice(1).join(':'));
+        }
+      }
+
+      return { [col]: { $eq: parsedValue } };
+    });
+  }
+
+  // Priority 2: Complex filter parameter (JSON format - has limitations with Date/Decimal)
+  const filterParam = params.get('filter');
+  if (filterParam) {
+    try {
+      return JSON.parse(filterParam);
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+};
+
+/**
+ * Encode QueryFilter[] into URLSearchParams
+ * Uses filter[col]=val format for simple equality filters, JSON for complex filters
+ */
+export const encodeFiltersToURLParams = (filters: QueryFilter[], params: URLSearchParams, proto: ProtoClient): void => {
+  // Delete existing filter parameters
+  const keysToDelete: string[] = [];
+  for (const key of params.keys()) {
+    if (key.match(/^filter\[.+\]$/)) {
+      keysToDelete.push(key);
+    }
+  }
+  keysToDelete.forEach(key => params.delete(key));
+  params.delete('filter');
+
+  if (filters.length === 0) return;
+
+  // Check if all filters are simple equality filters
+  const allSimpleEquality = filters.every(filterItem => {
+    const entries = Object.entries(filterItem);
+    // Single field with simple value or $eq operator
+    return entries.length === 1 && entries.every(([col, condition]) => {
+      // Skip group operators
+      if (col === '$and' || col === '$or' || col === '$nor') return false;
+      // Check if it's a simple value (shorthand for $eq) or explicit $eq
+      if (!_.isObject(condition) || _.isDate(condition) || condition instanceof Decimal || proto.isObject(condition)) {
+        return true;
+      }
+      return _.isObject(condition) && '$eq' in condition && Object.keys(condition).length === 1;
+    });
+  });
+
+  if (allSimpleEquality) {
+    // Use filter[col]=val format for simple equality filters
+    filters.forEach(filterItem => {
+      Object.entries(filterItem).forEach(([col, condition]) => {
+        // Get the actual value (either direct or from $eq)
+        const value = (_.isObject(condition) && !_.isDate(condition) && !(condition instanceof Decimal) && !proto.isObject(condition) && '$eq' in condition)
+          ? condition.$eq
+          : condition;
+
+        let encodedValue: string;
+
+        // Encode complex types with prefixes
+        if (_.isDate(value)) {
+          encodedValue = `date:${value.toISOString()}`;
+        } else if (value instanceof Decimal) {
+          encodedValue = `decimal:${value.toString()}`;
+        } else if (proto.isObject(value)) {
+          encodedValue = `pointer:${value.className}:${value.id}`;
+        } else {
+          encodedValue = String(value);
+        }
+
+        params.set(`filter[${col}]`, encodedValue);
+      });
+    });
+  } else {
+    // For complex filters (with group operators, non-$eq operators, etc), fall back to JSON format
+    // Note: This has limitations - Date/Decimal objects become strings
+    params.set('filter', JSON.stringify(filters));
+  }
+};
 
 // Helper: Expand schema fields into flat list (flatten shape types)
 const expandFields = (fields: TSchema['fields']) => {
@@ -629,11 +746,12 @@ const FilterItem = ({
 export type FilterModalProps = {
   show: boolean;
   schema: TSchema | null;
+  currentFilters?: QueryFilter[];
   onApply: (filters: QueryFilter[]) => void;
   onCancel: () => void;
 };
 
-export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProps) => {
+export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCancel }: FilterModalProps) => {
   const theme = useTheme();
   const alert = useAlert();
 
@@ -643,11 +761,103 @@ export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProp
     return expandFields(schema.fields);
   }, [schema]);
 
-  const [rootGroup, setRootGroup] = useState<GroupFilterCriteria>({
-    id: 'root',
-    operator: '$and',
-    children: [],
-  });
+  // Convert QueryFilter[] to FilterCriteria tree
+  const convertFromQueryFilter = (filters: QueryFilter[]): GroupFilterCriteria => {
+    const children: FilterCriteria[] = [];
+
+    for (const filter of filters) {
+      // Handle each filter object
+      for (const [key, value] of Object.entries(filter)) {
+        // Group operators
+        if (key === '$and' || key === '$or' || key === '$nor') {
+          const subFilters = Array.isArray(value) ? value : [];
+          children.push({
+            id: `${Date.now()}-${Math.random()}`,
+            operator: key,
+            children: convertFromQueryFilter(subFilters).children,
+          });
+        }
+        // Field filters
+        else {
+          const fieldType = _typeOf(expandedFields[key]);
+
+          // Simple value (shorthand for $eq)
+          if (!_.isObject(value) || _.isDate(value) || value instanceof Decimal) {
+            let strValue = '';
+            if (_.isDate(value)) {
+              strValue = value.toISOString().slice(0, 16); // For datetime-local input
+            } else if (value instanceof Decimal) {
+              strValue = value.toString();
+            } else if (_.isBoolean(value)) {
+              strValue = String(value);
+            } else if (!_.isNil(value)) {
+              strValue = String(value);
+            }
+
+            children.push({
+              id: `${Date.now()}-${Math.random()}`,
+              operator: '$eq',
+              field: key,
+              value: strValue,
+            });
+          }
+          // Operator-based value (e.g., { $gt: 5 })
+          else {
+            for (const [op, opValue] of Object.entries(value)) {
+              let strValue = '';
+
+              // Handle array operators
+              if (op === '$in' || op === '$nin' || op === '$subset' || op === '$superset' || op === '$intersect') {
+                if (Array.isArray(opValue)) {
+                  // For complex types, use encoded format
+                  if (fieldType === 'array' || fieldType === 'object' || fieldType === 'string[]') {
+                    strValue = encodeValue(opValue, 0);
+                  } else {
+                    // For simple types, use comma-separated
+                    strValue = opValue.join(', ');
+                  }
+                }
+              }
+              // Handle other operators
+              else if (_.isDate(opValue)) {
+                strValue = opValue.toISOString().slice(0, 16);
+              } else if (opValue instanceof Decimal) {
+                strValue = opValue.toString();
+              } else if (_.isBoolean(opValue)) {
+                strValue = String(opValue);
+              } else if (!_.isNil(opValue)) {
+                strValue = String(opValue);
+              }
+
+              children.push({
+                id: `${Date.now()}-${Math.random()}`,
+                operator: op,
+                field: key,
+                value: strValue,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      id: 'root',
+      operator: '$and',
+      children,
+    };
+  };
+
+  const [rootGroup, setRootGroup] = useState<GroupFilterCriteria>(() =>
+    convertFromQueryFilter(currentFilters)
+  );
+
+  // Update state when currentFilters change (e.g., when modal opens)
+  useEffect(() => {
+    if (show) {
+      setRootGroup(convertFromQueryFilter(currentFilters));
+    }
+  }, [show, currentFilters]);
 
   const convertToQueryFilter = (criteria: FilterCriteria): QueryFilter | null => {
     // Group operators ($and, $or, $nor)

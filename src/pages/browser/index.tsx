@@ -38,7 +38,7 @@ import { useActivity } from '../../components/activity';
 import { Decimal, deserialize, serialize } from 'proto.io';
 import { Button } from '../../components/button';
 import { Icon } from '../../components/icon';
-import { FilterModal } from './filter';
+import { FilterModal, decodeFiltersFromURLParams, encodeFiltersToURLParams } from './filter';
 
 // System fields that cannot be edited
 const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
@@ -103,7 +103,6 @@ export const BrowserPage = () => {
     const relationOf = params.get('relationOf');
     const relationId = params.get('relationId');
     const relationField = params.get('relationField');
-    const filterParam = params.get('filter');
     const limitParam = params.get('limit');
     const offsetParam = params.get('offset');
     const sortParam = params.get('sort');
@@ -116,47 +115,8 @@ export const BrowserPage = () => {
     // Priority 1: relation parameters
       relationQuery = { className: relationOf, objectId: relationId, field: relationField };
     } else {
-      // Priority 2: Parse filter[col]=val parameters with type support
-      const filterParams: Record<string, string> = {};
-      for (const [key, value] of params.entries()) {
-        const match = key.match(/^filter\[(.+)\]$/);
-        if (match) {
-          filterParams[match[1]] = value;
-        }
-      }
-
-      if (Object.keys(filterParams).length > 0) {
-        // Convert filter[col]=val to QueryFilter format with type parsing
-        filter = Object.entries(filterParams).map(([col, val]) => {
-          // Support type prefixes: date:, decimal:, pointer:
-          let parsedValue: any = val;
-
-          // Parse date: prefix (e.g., "date:2024-01-01T00:00:00Z")
-          if (val.startsWith('date:')) {
-            parsedValue = new Date(val.substring(5));
-          }
-          // Parse decimal: prefix (e.g., "decimal:123.45")
-          else if (val.startsWith('decimal:')) {
-            parsedValue = new Decimal(val.substring(8));
-          }
-          // Parse pointer: prefix (e.g., "pointer:User:abc123")
-          else if (val.startsWith('pointer:')) {
-            const parts = val.substring(8).split(':');
-            if (parts.length >= 2) {
-              parsedValue = proto.Object(parts[0], parts.slice(1).join(':'));
-            }
-          }
-
-          return { [col]: { $eq: parsedValue } };
-        });
-      } else if (filterParam) {
-        // Priority 3: Complex filter parameter (JSON format - has limitations with Date/Decimal)
-        try {
-          filter = JSON.parse(filterParam);
-        } catch {
-          filter = [];
-        }
-      }
+      // Priority 2: Parse filter parameters using centralized decoder
+      filter = decodeFiltersFromURLParams(params, proto);
     }
 
     // Parse limit
@@ -176,50 +136,13 @@ export const BrowserPage = () => {
     }
 
     return { filter, relationQuery, limit, offset, sort };
-  }, [searchParams]);
+  }, [searchParams, proto]);
 
   // Helper functions to update URL params
   const updateFilter = (newFilter: QueryFilter[]) => {
     setSearchParams(params => {
-      // Delete existing filter parameters
-      const keysToDelete: string[] = [];
-      for (const key of params.keys()) {
-        if (key.match(/^filter\[.+\]$/)) {
-          keysToDelete.push(key);
-        }
-      }
-      keysToDelete.forEach(key => params.delete(key));
-      params.delete('filter');
-
-      // Set new filter parameters in filter[col]=val format
-      if (newFilter.length > 0) {
-        newFilter.forEach(filterItem => {
-          // Handle simple equality filters
-          Object.entries(filterItem).forEach(([col, condition]) => {
-            if (_.isObject(condition) && '$eq' in condition) {
-              const value = condition.$eq;
-              let encodedValue: string;
-
-              // Encode complex types with prefixes
-              if (_.isDate(value)) {
-                encodedValue = `date:${value.toISOString()}`;
-              } else if (value instanceof Decimal) {
-                encodedValue = `decimal:${value.toString()}`;
-              } else if (proto.isObject(value)) {
-                encodedValue = `pointer:${value.className}:${value.id}`;
-              } else {
-                encodedValue = String(value);
-              }
-
-              params.set(`filter[${col}]`, encodedValue);
-            } else {
-              // For complex filters (with operators like $gt, $lt, etc), fall back to JSON format
-              // Note: This has limitations - Date/Decimal objects become strings
-              params.set('filter', JSON.stringify(newFilter));
-            }
-          });
-        });
-      }
+      // Use centralized encoder to update filter params
+      encodeFiltersToURLParams(newFilter, params, proto);
       params.delete('offset');
       return params;
     });
@@ -535,6 +458,7 @@ export const BrowserPage = () => {
       <FilterModal
         show={showFilterModal}
         schema={schema}
+        currentFilters={filter}
         onApply={handleApplyFilters}
         onCancel={() => setShowFilterModal(false)}
       />
