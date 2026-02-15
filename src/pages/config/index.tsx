@@ -279,13 +279,6 @@ export const ConfigPage = () => {
     fontFamily: 'var(--font-monospace)',
   };
 
-  const textareaStyle = {
-    ...inputStyle,
-    minHeight: 120,
-    fontFamily: 'var(--font-monospace)',
-    resize: 'vertical' as const,
-  };
-
   return (
     <div style={containerStyle}>
       <div style={headerStyle}>
@@ -320,7 +313,7 @@ export const ConfigPage = () => {
               </tr>
             </thead>
             <tbody>
-              {data.map((entry, idx) => {
+                  {data.map((entry) => {
                 const isEditing = editingState?.key === entry.key;
                 return (
                   <tr
