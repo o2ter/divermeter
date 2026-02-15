@@ -553,6 +553,7 @@ Before writing any styled component, ensure:
 - [ ] All font weights come from `theme.fontWeight.*`
 - [ ] Use `@o2ter/colors.js` for any color mixing, opacity adjustments, or color variations
 - [ ] No magic numbers or hardcoded style values
+- [ ] Use Icon component (`<Icon name="..." size="..." />`) instead of inline SVG or Unicode symbols
 
 #### Pseudo-Selectors in Inline Styles
 **CRITICAL: Frosty supports CSS pseudo-selectors directly in inline styles.**
@@ -658,6 +659,121 @@ export const Spinner = ({ color = 'currentColor', speed = 0.6 }: SpinnerProps) =
 ```
 
 This approach keeps all styling in JavaScript/TypeScript, maintains type safety, and avoids DOM manipulation.
+
+#### SVG Icons for UI Symbols
+**CRITICAL: Use the Icon component for all UI icons. Do not create inline SVGs.**
+
+All SVG icons in the codebase are consolidated into the Icon component ([src/components/icon/index.tsx](src/components/icon/index.tsx)). Always use `<Icon name="..." size="..." />` instead of inline SVG markup.
+
+```tsx
+// ✅ CORRECT: Use Icon component
+import { Icon } from '../components/icon';
+<button onClick={handleClose}>
+  <Icon name="close" size="xs" />
+</button>
+
+// ❌ WRONG: Don't create inline SVG
+<button onClick={handleClose}>
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M9.5 2.5L2.5 9.5M2.5 2.5L9.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+</button>
+
+// ❌ WRONG: Don't use Unicode symbols
+<button>✕</button>
+<button>🔍</button>
+```
+
+**See "Icon Component" section below for complete documentation on available icons and usage.**
+
+**Adding New Icons:**
+
+When you need to add a new icon that doesn't exist in the Icon component:
+1. Add the icon definition to the `iconPaths` object in [src/components/icon/index.tsx](src/components/icon/index.tsx)
+2. Add the icon name to the `IconName` type
+3. Update the `isStrokeIcon()` or `isFillIcon()` function if needed
+4. Use the new icon: `<Icon name="newIconName" size="md" />`
+
+All icons should use `currentColor` to inherit theme colors and follow consistent sizing patterns.
+
+#### Icon Component
+**CRITICAL: Always use the Icon component instead of inline SVG for all icons in the codebase.**
+
+The Icon component ([src/components/icon/index.tsx](src/components/icon/index.tsx)) provides a centralized, type-safe way to use all SVG icons throughout the application.
+
+**Available Icons:**
+```tsx
+type IconName =
+  | 'close'           // X icon for closing/removing (12x12 base)
+  | 'closeFilled'     // Filled X icon for dismissing alerts (20x20 base)
+  | 'search'          // Magnifying glass icon (16x16 base)
+  | 'sortAsc'         // Upward triangle for ascending sort (12x12 base)
+  | 'sortDesc'        // Downward triangle for descending sort (12x12 base)
+  | 'chevronLeft'     // Left arrow for previous (12x12 base)
+  | 'chevronRight'    // Right arrow for next (12x12 base)
+  | 'chevronDoubleLeft'  // Double left arrow for first page (12x12 base)
+  | 'chevronDoubleRight' // Double right arrow for last page (12x12 base)
+  | 'success'         // Checkmark in circle for success alerts (20x20 base)
+  | 'info'            // Info 'i' in circle for info alerts (20x20 base)
+  | 'warning'         // Triangle with exclamation for warnings (20x20 base)
+  | 'error'           // X in circle for error alerts (20x20 base);
+
+type IconSize = 'xs' | 'sm' | 'md' | 'lg' | number;
+```
+
+**Size mapping:**
+- `xs`: 12px
+- `sm`: 14px
+- `md`: 16px
+- `lg`: 20px
+- Custom: Any number for pixel size
+
+**Usage:**
+```tsx
+import { Icon } from '../components/icon';
+
+// Basic usage
+<Icon name="close" size="xs" />
+
+// With custom size
+<Icon name="search" size={18} />
+
+// With inline styles
+<Icon name="chevronRight" size="sm" style={{ marginLeft: 4 }} />
+
+// In buttons
+<button onClick={handleClose}>
+  <Icon name="close" size="sm" />
+</button>
+```
+
+**Benefits:**
+- **Type safety** - Icon names are type-checked
+- **Consistent sizing** - Predefined size scale
+- **Automatic stroke/fill** - Icons automatically use stroke or fill based on type
+- **Theme integration** - All icons use `currentColor` to inherit theme colors
+- **Single source of truth** - Update an icon once, changes everywhere
+- **Better maintainability** - No duplicate SVG code scattered across files
+
+**When to use:**
+- **Always** - Use Icon component for all icons throughout the codebase
+- Replace inline SVGs with Icon component when refactoring
+- Add new icons to the Icon component definition when needed
+
+**Example - Refactoring inline SVG to Icon component:**
+```tsx
+// ❌ WRONG: Inline SVG
+<button onClick={handleClose}>
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M9.5 2.5L2.5 9.5M2.5 2.5L9.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+</button>
+
+// ✅ CORRECT: Use Icon component
+<button onClick={handleClose}>
+  <Icon name="close" size="xs" />
+</button>
+```
 
 ### TypeScript Patterns
 - Strict mode enabled
@@ -1057,20 +1173,22 @@ const MyComponent = () => {
 7. **Check theme.colors properties exist** - ALWAYS verify theme properties exist in [src/components/theme/index.tsx](src/components/theme/index.tsx) before use. Properties like `theme.colors.text`, `theme.colors.textSecondary`, `theme.colors.background`, `theme.colors.border` **DO NOT EXIST**. Use `theme.colorContrast()` to derive text colors and `@o2ter/colors.js` functions to create color variations. Run `get_errors` tool immediately after writing code to catch type errors.
 8. **Don't inject CSS** - Use inline `keyframes` property for animations instead of document.createElement('style') or DOM manipulation
 9. **Don't use manual hover handlers** - Use `&:hover` pseudo-selectors in inline styles instead of onMouseEnter/onMouseLeave event handlers
-10. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`. Our custom router has different APIs than React Router.
-11. **Context access** - Always call hooks inside components, not in conditionals
-12. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
-13. **Path separators** - Use forward slashes `/` in all configs, even on Windows
-14. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
-15. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
-16. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
-17. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
+10. **Don't use Unicode symbols or inline SVGs** - Use the Icon component (`<Icon name="close" size="xs" />`) for all UI icons. The Icon component provides type-safe, centralized icon management. Never create inline SVG markup or use Unicode symbols (✕, →, ←, 🔍, etc.) for UI elements. See [src/components/icon/index.tsx](src/components/icon/index.tsx) for available icons.
+11. **Router navigation** - Use `location.pushState()`, not `navigate()` or `history.push()`. Our custom router has different APIs than React Router.
+12. **Context access** - Always call hooks inside components, not in conditionals
+13. **Build before publishing** - Run `yarn rollup` to generate dist/ artifacts
+14. **Path separators** - Use forward slashes `/` in all configs, even on Windows
+15. **ProtoProvider wrapping** - Dashboard handles this internally; test apps must wrap with ProtoProvider manually
+16. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
+17. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
+18. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
 - [src/proto.tsx](src/proto.tsx) - Proto context and providers
 - [src/components/theme/index.tsx](src/components/theme/index.tsx) - Complete theming system (ThemeProvider, useTheme, ThemeSettings type)
 - [src/components/style/index.tsx](src/components/style/index.tsx) - StyleProvider for cached component styles (menu, button, alert, modal, datasheet) - ALWAYS audit when modifying components
+- [src/components/icon/index.tsx](src/components/icon/index.tsx) - Reusable Icon component with all SVG icons (close, search, chevrons, sort, alerts)
 - [src/components/spinner/index.tsx](src/components/spinner/index.tsx) - Reusable spinner component (example of inline keyframes)
 - [src/components/router/index.tsx](src/components/router/index.tsx) - Custom router implementation
 - [src/components/menu/index.tsx](src/components/menu/index.tsx) - Dynamic menu from schema

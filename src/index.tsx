@@ -46,8 +46,10 @@ export { useAlert } from './components/alert';
 export { Modal } from './components/modal';
 export { Spinner } from './components/spinner';
 export { Button } from './components/button';
+export { Icon } from './components/icon';
 export type { SpinnerProps } from './components/spinner';
 export type { ButtonProps } from './components/button';
+export type { IconProps, IconName, IconSize } from './components/icon';
 
 const Main = ({ pages }: { pages?: Page[]; }) => {
   const { showError } = useAlert();

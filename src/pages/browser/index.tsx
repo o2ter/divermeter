@@ -36,6 +36,7 @@ import { useActivity } from '../../components/activity';
 import { Decimal, deserialize, serialize } from 'proto.io';
 import { Button } from '../../components/button';
 import { Modal } from '../../components/modal';
+import { Icon } from '../../components/icon';
 
 // System fields that cannot be edited
 const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
@@ -227,9 +228,7 @@ const FilterItem = ({
                   '&:hover': { opacity: 1 },
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M9.5 2.5L2.5 9.5M2.5 2.5L9.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                <Icon name="close" size="xs" />
               </button>
             )}
           </div>
@@ -332,9 +331,7 @@ const FilterItem = ({
             '&:hover': { opacity: 1 },
           }}
         >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M9.5 2.5L2.5 9.5M2.5 2.5L9.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+          <Icon name="close" size="xs" />
         </button>
       </div>
     );
@@ -459,9 +456,7 @@ const FilterItem = ({
           '&:hover': { opacity: 1 },
         }}
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M9.5 2.5L2.5 9.5M2.5 2.5L9.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
+        <Icon name="close" size="xs" />
       </button>
     </div>
   );
@@ -821,10 +816,7 @@ export const BrowserPage = () => {
             onClick={() => setShowFilterModal(true)}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M11 11L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+              <Icon name="search" size="sm" />
               <span>Filters {filter.length > 0 && `(${filter.length})`}</span>
             </div>
           </Button>
@@ -869,9 +861,7 @@ export const BrowserPage = () => {
                 },
               }}
             >
-              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+              <Icon name="close" size="lg" />
             </button>
           </div>
           {schema && (
@@ -957,13 +947,9 @@ export const BrowserPage = () => {
                   }}>({_.isString(v) ? v : v.type})</span>
                   <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
                     {sort[k] === 1 ? (
-                      <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
-                        <path d="M6 3L9 7H3L6 3Z" fill="currentColor" />
-                      </svg>
+                      <Icon name="sortAsc" size="md" />
                     ) : sort[k] === -1 ? (
-                      <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
-                        <path d="M6 9L3 5H9L6 9Z" fill="currentColor" />
-                      </svg>
+                        <Icon name="sortDesc" size="md" />
                     ) : null}
                   </span>
                 </div>
@@ -1134,10 +1120,7 @@ export const BrowserPage = () => {
             disabled={offset === 0}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M8 10L4 6L8 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M5 10L1 6L5 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Icon name="chevronDoubleLeft" size="xs" />
               <span>First</span>
             </div>
           </Button>
@@ -1149,9 +1132,7 @@ export const BrowserPage = () => {
             disabled={offset === 0}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M7 10L3 6L7 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Icon name="chevronLeft" size="xs" />
               <span>Prev</span>
             </div>
           </Button>
@@ -1171,9 +1152,7 @@ export const BrowserPage = () => {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <span>Next</span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M5 2L9 6L5 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Icon name="chevronRight" size="xs" />
             </div>
           </Button>
           <Button
@@ -1185,10 +1164,7 @@ export const BrowserPage = () => {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <span>Last</span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M7 2L11 6L7 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Icon name="chevronDoubleRight" size="xs" />
             </div>
           </Button>
           <select
