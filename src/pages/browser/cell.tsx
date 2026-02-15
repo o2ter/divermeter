@@ -324,6 +324,7 @@ export const TableCell = ({
   if (isEditing) {
     const inputStyle = {
       minWidth: '100%',
+      minHeight: '100%',
       border: `1px solid ${theme.colors.tint}`,
       outline: 'none',
       padding: theme.spacing.xs,
