@@ -425,12 +425,11 @@ export const BrowserPage = () => {
   // Expand columns from schema  
   const expandedColumns = useMemo(() => schema ? expandColumns(schema.fields) : [], [schema]);
 
-  // Initialize column order when schema changes
+  // Reset column customization when navigating to a different schema
   useEffect(() => {
-    if (expandedColumns.length > 0 && columnOrder.length === 0) {
-      setColumnOrder(expandedColumns.map(col => col.key));
-    }
-  }, [expandedColumns]);
+    setColumnOrder([]);
+    setHiddenColumns(new Set());
+  }, [className]);
 
   // Apply column order and visibility
   const visibleColumns = useMemo(() => {
