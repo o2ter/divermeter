@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { _useCallbacks, useMemo, useState } from 'frosty';
+import { _useCallbacks, useMemo, useState, useEffect } from 'frosty';
 import { QueryFilter, TSchema, useProto } from '../../proto';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
@@ -851,6 +851,13 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
   const [rootGroup, setRootGroup] = useState<GroupFilterCriteria>(() =>
     convertFromQueryFilter(currentFilters)
   );
+
+  // Update state when currentFilters change (e.g., when modal opens)
+  useEffect(() => {
+    if (show) {
+      setRootGroup(convertFromQueryFilter(currentFilters));
+    }
+  }, [show, currentFilters]);
 
   const convertToQueryFilter = (criteria: FilterCriteria): QueryFilter | null => {
     // Group operators ($and, $or, $nor)
