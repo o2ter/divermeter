@@ -910,7 +910,7 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
     const fieldType = _typeOf(expandedFields[field.field]);
     let parsedValue: any = field.value;
 
-    // Parse value using deserialize for proper type handling
+    // Parse value with type-specific handling
     try {
       // Special operators that require specific input handling
       if (field.operator === '$size') {
@@ -933,20 +933,78 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
           parsedValue = field.value.split(',').map(v => {
             const trimmed = v.trim();
             try {
-              return deserialize(trimmed);
+              return decodeValue(trimmed);
             } catch {
               return trimmed;
             }
           });
         }
       } else {
-        // For all other operators, use deserialize for smart type detection
-        // This handles numbers, booleans, dates, decimals, objects automatically
-        try {
-          parsedValue = deserialize(field.value);
-        } catch {
-          // If deserialize fails, treat as string
-          parsedValue = field.value;
+        // Type-specific parsing based on field type
+        switch (fieldType) {
+          case 'string':
+            // For string fields, use raw value (no parsing needed)
+            parsedValue = field.value;
+            break;
+
+          case 'number':
+            // For number fields, parse as number
+            parsedValue = parseFloat(field.value);
+            if (!_.isFinite(parsedValue)) return null;
+            break;
+
+          case 'decimal':
+            // For decimal fields, parse as Decimal
+            try {
+              parsedValue = new Decimal(field.value);
+            } catch {
+              return null;
+            }
+            break;
+
+          case 'boolean':
+            // For boolean fields, parse true/false
+            parsedValue = field.value.toLowerCase() === 'true';
+            break;
+
+          case 'date':
+            // For date fields, handle datetime-local format and ISO strings
+            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(field.value)) {
+              parsedValue = new Date(field.value);
+            } else {
+              try {
+                // Try parsing as ISODate('...') format
+                parsedValue = decodeValue(field.value);
+                if (!_.isDate(parsedValue)) {
+                  parsedValue = new Date(field.value);
+                }
+              } catch {
+                parsedValue = new Date(field.value);
+              }
+            }
+            break;
+
+          case 'array':
+          case 'object':
+          case 'string[]':
+            // For complex types, use custom format parser
+            try {
+              parsedValue = decodeValue(field.value);
+              verifyValue(parsedValue);
+            } catch (error) {
+              alert.showError(`Invalid value format for ${field.field}: ${error}`);
+              throw error;
+            }
+            break;
+
+          default:
+            // For unknown/built-in fields (like _id, __v), try smart parsing
+            try {
+              parsedValue = decodeValue(field.value);
+            } catch {
+              // If parsing fails, treat as string
+              parsedValue = field.value;
+            }
         }
       }
     } catch (error) {
