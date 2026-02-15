@@ -138,7 +138,7 @@ export const BrowserPage = () => {
                     }));
                   }}
                 >
-                  {k}
+                  <span>{k}</span>
                   <span style={{
                     color: theme.colorContrast(theme.colors['primary-100']),
                     opacity: 0.5,
