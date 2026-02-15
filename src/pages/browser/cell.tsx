@@ -323,9 +323,7 @@ export const TableCell = ({
   // Editing mode
   if (isEditing) {
     const inputStyle = {
-      width: '100%',
       minWidth: '100%',
-      height: '100%',
       border: `1px solid ${theme.colors.tint}`,
       outline: 'none',
       padding: theme.spacing.xs,
@@ -399,14 +397,6 @@ export const TableCell = ({
                 <span style={{ flex: 1, fontFamily: 'monospace', fontSize: theme.fontSize.sm }}>
                   {displayFilename}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingValue?.(null)}
-                >
-                  <Icon name="trash" size="sm" />
-                  Remove
-                </Button>
               </div>
             )}
             <input
