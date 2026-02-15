@@ -1131,6 +1131,22 @@ const MyComponent = () => {
 **Remember: If you find yourself setting state in `useEffect`, stop and refactor. There's always a better way.**
 
 ### Proto.io Integration
+
+**CRITICAL: This is a database dashboard - ALWAYS use `master: true` in all proto API calls.**
+
+Divermeter is an admin dashboard that operates exclusively in master mode to provide full database access:
+- **Schema operations**: `proto.schema({ master: true })`
+- **Query operations**: `proto.Query('ClassName').find({ master: true })`
+- **Object operations**: `object.save({ master: true })`, `object.destroy({ master: true })`
+- **All proto API calls**: Include `{ master: true }` option
+
+**Why master mode:**
+- Admin dashboard needs unrestricted access to all tables and data
+- Bypasses ACL (access control lists) for management operations
+- Required for schema introspection and configuration viewing
+- Standard practice for database admin tools
+
+**Integration details:**
 - Dashboard requires `ProtoClient` as prop: `<Dashboard proto={protoClient} />`
 - Schema fetched asynchronously via `proto.schema({ master: true })`
 - Menu dynamically lists schemas from proto backend
@@ -1369,6 +1385,7 @@ const MyComponent = () => {
 17. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
 18. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
 19. **Never use useEffect to set state** - If you're using `useEffect` to set state, you're doing something wrong. `useEffect` is ONLY for registering event listeners and subscribing to external systems, NOT for deriving values or syncing state. Use `useMemo` for derived values, use props directly, or calculate values during render. Setting state in `useEffect` causes extra renders, performance issues, and can lead to infinite loops.
+20. **Always use master mode** - This is a database admin dashboard. Every proto API call MUST include `{ master: true }` option. Without it, ACL restrictions apply and dashboard features will fail. Use `proto.schema({ master: true })`, `proto.Query('Class').find({ master: true })`, `object.save({ master: true })`, etc.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
