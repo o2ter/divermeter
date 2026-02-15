@@ -317,6 +317,7 @@ export const BrowserPage = () => {
     handleUpdateItem,
     handleDeleteItems,
     handleDeleteKeys,
+    handlePasteData,
   } = _useCallbacks({
     handleUpdateItem: (item: TObject, columnKey: string, value: any) => {
       startActivity(async () => {
@@ -392,6 +393,115 @@ export const BrowserPage = () => {
           alert.showError(error instanceof Error ? error.message : 'Failed to delete fields');
         }
       });
+    },
+    handlePasteData: async (
+      rows: number[],
+      cols: Array<{ key: string; baseField: string; fieldType: TSchema['fields'][string] }>,
+      data: any[][] | Record<string, any>[],
+      type: 'json' | 'raw',
+    ) => {
+      // Determine mode: creating new objects vs updating existing
+      const isCreating = rows[0] >= items.length;
+
+      if (isCreating) {
+        // MODE: Create new objects (paste into empty row)
+        if (relationQuery && canEditInRelationMode) {
+          // Add existing objects to relation by ID
+          const idColumnIdx = _.findIndex(cols, col => col.key === '_id');
+          if (idColumnIdx < 0) return;
+
+          const objectsToAdd: TObject[] = [];
+
+          for (const values of data) {
+            const idValue = type === 'json' && !_.isArray(values) ? values._id : _.isArray(values) ? values[idColumnIdx] : undefined;
+            if (idValue && _.isString(idValue)) {
+              const targetField = schema?.fields[relationQuery.field.split('.')[0]];
+              const targetClass = !_.isString(targetField) && targetField?.type === 'relation'
+                ? targetField.target : className;
+              const obj = await proto.Object(targetClass, idValue).fetch({ master: true });
+              if (obj) objectsToAdd.push(obj);
+            }
+          }
+
+          if (!_.isEmpty(objectsToAdd)) {
+            const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
+            parentObj.addToSet(relationQuery.field, objectsToAdd);
+            await parentObj.save({ master: true });
+            setResource((prev) => ({
+              items: [...(prev?.items ?? []), ...objectsToAdd],
+              count: (prev?.items ?? []).length + objectsToAdd.length,
+            }));
+            alert.showSuccess(`${objectsToAdd.length} object(s) added to relation successfully`);
+          }
+        } else {
+          // Create new objects in normal mode
+          const newObjects: TObject[] = [];
+
+          for (const values of data) {
+            const obj = proto.Object(className);
+            if (type === 'json' && !_.isArray(values)) {
+              for (const [column, value] of _.toPairs(values)) {
+                const baseField = column.split('.')[0];
+                if (!_.includes(readonlyKeys, baseField)) {
+                  await obj.set(column, value as any);
+                }
+              }
+            } else if (_.isArray(values)) {
+              for (const [column, value] of _.zip(cols, values)) {
+                if (column && !_.includes(readonlyKeys, column.baseField)) {
+                  if (!_.isNil(value) && _.isString(value)) {
+                    const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
+                    if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
+                  }
+                }
+              }
+            }
+            newObjects.push(obj);
+          }
+
+          if (!_.isEmpty(newObjects)) {
+            await performSaves(newObjects);
+            alert.showSuccess(`${newObjects.length} object(s) created successfully`);
+          }
+        }
+      } else {
+        // MODE: Update existing objects (paste into existing rows)
+        const updates: TObject[] = [];
+        const targetRows = _.filter(rows, row => row < items.length);
+
+        for (const [idx, row] of _.entries(targetRows)) {
+          const item = items[row];
+          const values = data[parseInt(idx)];
+          if (!item || !values) continue;
+
+          const obj = item.clone();
+          if (type === 'json' && !_.isArray(values)) {
+            for (const [column, value] of _.toPairs(values)) {
+              const baseField = column.split('.')[0];
+              if (!_.includes(readonlyKeys, baseField)) {
+                await obj.set(column, value as any);
+              }
+            }
+          } else if (_.isArray(values)) {
+            for (const [column, value] of _.zip(cols, values)) {
+              if (column && !_.includes(readonlyKeys, column.baseField)) {
+                if (_.isNil(value)) {
+                  obj.set(column.key, null);
+                } else if (_.isString(value)) {
+                  const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
+                  if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
+                }
+              }
+            }
+          }
+          updates.push(obj);
+        }
+
+        if (!_.isEmpty(updates)) {
+          await performSaves(updates);
+          alert.showSuccess(`${updates.length} object(s) updated successfully`);
+        }
+      }
     },
   });
 
@@ -611,108 +721,8 @@ export const BrowserPage = () => {
               startActivity(async () => {
                 try {
                   const { type, data } = await decodeClipboardData(clipboard, true) ?? {};
-                  if (_.isEmpty(data) || !_.isArray(data)) return;
-
-                  // Determine mode: creating new objects vs updating existing
-                  const isCreating = rows[0] >= items.length;
-
-                  if (isCreating) {
-                    // MODE: Create new objects (paste into empty row)
-                    if (relationQuery && canEditInRelationMode) {
-                      // Add existing objects to relation by ID
-                      const idColumnIdx = _.findIndex(expandedColumns, col => col.key === '_id');
-                      const objectsToAdd: TObject[] = [];
-
-                      for (const values of data) {
-                        const idValue = type === 'json' ? values._id : values[idColumnIdx];
-                        if (idValue && _.isString(idValue)) {
-                          const targetField = schema?.fields[relationQuery.field.split('.')[0]];
-                          const targetClass = !_.isString(targetField) && targetField?.type === 'relation'
-                            ? targetField.target : className;
-                          const obj = await proto.Object(targetClass, idValue).fetch({ master: true });
-                          if (obj) objectsToAdd.push(obj);
-                        }
-                      }
-
-                      if (!_.isEmpty(objectsToAdd)) {
-                        const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
-                        parentObj.addToSet(relationQuery.field, objectsToAdd);
-                        await parentObj.save({ master: true });
-                        setResource((prev) => ({
-                          items: [...(prev?.items ?? []), ...objectsToAdd],
-                          count: (prev?.items ?? []).length + objectsToAdd.length,
-                        }));
-                        alert.showSuccess(`${objectsToAdd.length} object(s) added to relation successfully`);
-                      }
-                    } else {
-                      // Create new objects in normal mode
-                      const newObjects: TObject[] = [];
-
-                      for (const values of data) {
-                        const obj = proto.Object(className);
-                        if (type === 'json') {
-                          for (const [column, value] of _.toPairs(values)) {
-                            const baseField = column.split('.')[0];
-                            if (!_.includes(readonlyKeys, baseField)) {
-                              await obj.set(column, value as any);
-                            }
-                          }
-                        } else {
-                          for (const [column, value] of _.zip(expandedColumns, values)) {
-                            if (column && !_.includes(readonlyKeys, column.baseField)) {
-                              if (!_.isNil(value) && _.isString(value)) {
-                                const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                                if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
-                              }
-                            }
-                          }
-                        }
-                        newObjects.push(obj);
-                      }
-
-                      if (!_.isEmpty(newObjects)) {
-                        await performSaves(newObjects);
-                        alert.showSuccess(`${newObjects.length} object(s) created successfully`);
-                      }
-                    }
-                  } else {
-                    // MODE: Update existing objects (paste into existing rows)
-                    const updates: TObject[] = [];
-                    const targetRows = _.filter(rows, row => row < items.length);
-
-                    for (const [idx, row] of _.entries(targetRows)) {
-                      const item = items[row];
-                      const values = data[parseInt(idx)];
-                      if (!item || !values) continue;
-
-                      const obj = item.clone();
-                      if (type === 'json') {
-                        for (const [column, value] of _.toPairs(values)) {
-                          const baseField = column.split('.')[0];
-                          if (!_.includes(readonlyKeys, baseField)) {
-                            await obj.set(column, value as any);
-                          }
-                        }
-                      } else {
-                        for (const [column, value] of _.zip(expandedColumns, values)) {
-                          if (column && !_.includes(readonlyKeys, column.baseField)) {
-                            if (_.isNil(value)) {
-                              obj.set(column.key, null);
-                            } else if (_.isString(value)) {
-                              const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                              if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
-                            }
-                          }
-                        }
-                      }
-                      updates.push(obj);
-                    }
-
-                    if (!_.isEmpty(updates)) {
-                      await performSaves(updates);
-                      alert.showSuccess(`${updates.length} object(s) updated successfully`);
-                    }
-                  }
+                  if (_.isEmpty(data) || !_.isArray(data) || !type) return;
+                  await handlePasteData(rows, expandedColumns, data, type);
                 } catch (error) {
                   console.error('Failed to paste data:', error);
                   alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
@@ -722,96 +732,11 @@ export const BrowserPage = () => {
             onPasteCells={(cells, clipboard) => {
               startActivity(async () => {
                 try {
-                  const _rows = _.range(cells.start.row, cells.end.row + 1);
-                  const _cols = _.range(cells.start.col, cells.end.col + 1).map(c => expandedColumns[c]).filter(Boolean);
+                  const rows = _.range(cells.start.row, cells.end.row + 1);
+                  const cols = _.range(cells.start.col, cells.end.col + 1).map(c => expandedColumns[c]).filter(Boolean);
                   const { data } = await decodeClipboardData(clipboard, false) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data)) return;
-
-                  // Determine mode: creating new objects vs updating existing
-                  const isCreating = _rows[0] >= items.length;
-
-                  if (isCreating) {
-                    // MODE: Create new objects (paste into empty row)
-                    if (relationQuery && canEditInRelationMode) {
-                      // Add existing objects to relation by ID
-                      const idColumn = _.find(_cols, col => col.key === '_id');
-                      const idColumnIdx = idColumn ? _.indexOf(_cols, idColumn) : -1;
-
-                      if (idColumnIdx >= 0) {
-                        const objectsToAdd: TObject[] = [];
-
-                        for (const values of data) {
-                          const idValue = values[idColumnIdx];
-                          if (idValue && _.isString(idValue)) {
-                            const targetField = schema?.fields[relationQuery.field.split('.')[0]];
-                            const targetClass = !_.isString(targetField) && targetField?.type === 'relation'
-                              ? targetField.target : className;
-                            const obj = await proto.Object(targetClass, idValue).fetch({ master: true });
-                            if (obj) objectsToAdd.push(obj);
-                          }
-                        }
-
-                        if (!_.isEmpty(objectsToAdd)) {
-                          const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
-                          parentObj.addToSet(relationQuery.field, objectsToAdd);
-                          await parentObj.save({ master: true });
-                          setResource((prev) => ({
-                            items: [...(prev?.items ?? []), ...objectsToAdd],
-                            count: (prev?.items ?? []).length + objectsToAdd.length,
-                          }));
-                          alert.showSuccess(`${objectsToAdd.length} object(s) added to relation successfully`);
-                        }
-                      }
-                    } else {
-                      // Create new objects in normal mode
-                      const newObjects: TObject[] = [];
-
-                      for (const values of data) {
-                        const obj = proto.Object(className);
-                        for (const [column, value] of _.zip(_cols, values)) {
-                          if (column && !_.includes(readonlyKeys, column.baseField)) {
-                            if (!_.isNil(value) && _.isString(value)) {
-                              const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                              if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
-                            }
-                          }
-                        }
-                        newObjects.push(obj);
-                      }
-
-                      if (!_.isEmpty(newObjects)) {
-                        await performSaves(newObjects);
-                        alert.showSuccess(`${newObjects.length} object(s) created successfully`);
-                      }
-                    }
-                  } else {
-                    // MODE: Update existing objects (paste into existing rows)
-                    const updates: TObject[] = [];
-                    const targetRows = _.filter(_rows, row => row < items.length);
-
-                    for (const [idx, row] of _.entries(targetRows)) {
-                      const item = items[row];
-                      const values = data[parseInt(idx)];
-
-                      if (!item || !values) continue;
-
-                      const obj = item.clone();
-                      for (const [column, value] of _.zip(_cols, values)) {
-                        if (column && !_.includes(readonlyKeys, column.baseField)) {
-                          if (!_.isNil(value) && _.isString(value)) {
-                            const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                            if (!_.isNil(decoded)) obj.set(column.key, decoded as any);
-                          }
-                        }
-                      }
-                      updates.push(obj);
-                    }
-
-                    if (!_.isEmpty(updates)) {
-                      await performSaves(updates);
-                      alert.showSuccess(`${updates.length} object(s) updated successfully`);
-                    }
-                  }
+                  await handlePasteData(rows, cols, data, 'raw');
                 } catch (error) {
                   console.error('Failed to paste data:', error);
                   alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
