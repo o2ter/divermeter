@@ -74,166 +74,6 @@ const Switch = ({ checked, onChange, disabled }: { checked: boolean; onChange: (
   );
 };
 
-// Helper component: Relation editor modal
-const RelationEditor = ({
-  value,
-  targetClassName,
-  onSave,
-  onClose
-}: {
-  value: TObject[];
-  targetClassName: string;
-  onSave: (items: TObject[]) => void;
-  onClose: () => void;
-}) => {
-  const theme = useTheme();
-  const proto = useProto();
-  const [items, setItems] = useState<TObject[]>(value);
-  const [newId, setNewId] = useState('');
-
-  const withOpacity = (color: string, opacity: number) => {
-    const normalized = normalizeColor(color);
-    if (!normalized) return color;
-    return toHexString(rgba(
-      getRed(normalized),
-      getGreen(normalized),
-      getBlue(normalized),
-      Math.round(255 * opacity)
-    ), true);
-  };
-
-  const modalStyle = {
-    backgroundColor: '#ffffff',
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.xl,
-    minWidth: 400,
-    maxWidth: 600,
-    maxHeight: '80vh',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: theme.spacing.lg,
-  };
-
-  const headerStyle = {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colorContrast('#ffffff'),
-  };
-
-  const listStyle = {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: theme.spacing.sm,
-    maxHeight: 300,
-    overflowY: 'auto' as const,
-    padding: theme.spacing.sm,
-    backgroundColor: withOpacity(theme.colors.primary, 0.02),
-    borderRadius: theme.borderRadius.md,
-  };
-
-  const itemStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: theme.spacing.sm,
-    backgroundColor: '#ffffff',
-    borderRadius: theme.borderRadius.sm,
-    border: `1px solid ${withOpacity(theme.colors.primary, 0.1)}`,
-  };
-
-  const addSectionStyle = {
-    display: 'flex',
-    gap: theme.spacing.sm,
-    alignItems: 'center',
-  };
-
-  const inputStyle = {
-    flex: 1,
-    padding: theme.spacing.sm,
-    border: `1px solid ${withOpacity(theme.colors.primary, 0.2)}`,
-    borderRadius: theme.borderRadius.sm,
-    fontSize: theme.fontSize.md,
-    outline: 'none',
-    '&:focus': {
-      borderColor: theme.colors.primary,
-      boxShadow: `0 0 0 3px ${withOpacity(theme.colors.primary, 0.1)}`,
-    },
-  };
-
-  const buttonGroupStyle = {
-    display: 'flex',
-    gap: theme.spacing.sm,
-    justifyContent: 'flex-end',
-  };
-
-  const addItem = () => {
-    if (newId.trim() && !items.find(item => item.id === newId.trim())) {
-      setItems([...items, proto.Object(targetClassName, newId.trim())]);
-      setNewId('');
-    }
-  };
-
-  const removeItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
-  };
-
-  return (
-    <div style={modalStyle}>
-      <div style={headerStyle}>Edit Relation ({targetClassName})</div>
-
-      <div style={listStyle}>
-        {items.length === 0 ? (
-          <div style={{ textAlign: 'center', color: '#999', padding: theme.spacing.md }}>
-            No items
-          </div>
-        ) : (
-          items.map(item => (
-            <div key={item.id} style={itemStyle}>
-              <span style={{ fontFamily: 'monospace', color: 'rebeccapurple' }}>{item.id}</span>
-              <button
-                onClick={() => item.id && removeItem(item.id)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: theme.spacing.xs,
-                  color: theme.colors.error,
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                <Icon name="trash" size="sm" />
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div style={addSectionStyle}>
-        <input
-          type="text"
-          value={newId}
-          onInput={(e) => setNewId(e.currentTarget.value)}
-          onKeyPress={(e) => e.key === 'Enter' && addItem()}
-          placeholder="Enter object ID"
-          style={inputStyle}
-        />
-        <Button variant="outline" color="primary" onClick={addItem} disabled={!newId.trim()}>
-          <Icon name="plus" size="sm" />
-          Add
-        </Button>
-      </div>
-
-      <div style={buttonGroupStyle}>
-        <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button variant="solid" color="primary" onClick={() => { onSave(items); onClose(); }}>
-          Save
-        </Button>
-      </div>
-    </div>
-  );
-};
-
 type TableCellProps = {
   item?: TObject;
   column: string;
@@ -272,7 +112,6 @@ export const TableCell = ({
 
   const proto = useProto();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [showRelationModal, setShowRelationModal] = useState(false);
 
   const value = item?.get(column);
 
@@ -489,21 +328,6 @@ export const TableCell = ({
                 <Icon name="link" size="sm" />
               </button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowRelationModal(true)}
-            >
-              Edit Items
-            </Button>
-            <Modal show={showRelationModal}>
-              <RelationEditor
-                value={editingValue ?? value ?? []}
-                targetClassName={field && !_.isString(field) && field.type === 'relation' && field.target ? field.target : 'Object'}
-                onSave={(items) => setEditingValue?.(items)}
-                onClose={() => setShowRelationModal(false)}
-              />
-            </Modal>
           </div>
         );
       default:

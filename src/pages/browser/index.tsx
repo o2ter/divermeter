@@ -158,6 +158,11 @@ export const BrowserPage = () => {
     ..._.keys(_.pickBy(schema?.fields, type => !_.isString(type) && type.type === 'relation' && !_.isNil(type.foreignField))),
   ];
 
+  // Check if we can edit in relation mode (relation field must be editable)
+  const canEditInRelationMode = relationQuery
+    ? !readonlyKeys.includes(relationQuery.field.split('.')[0])
+    : true;
+
   const handleApplyFilters = (filters: QueryFilter[]) => {
     setFilter(filters);
     setOffset(0);
@@ -250,6 +255,7 @@ export const BrowserPage = () => {
       startActivity(async () => {
         try {
           const cloned = item.clone();
+          const isNewItem = !item.id;
 
           // Handle file upload - check if value is a browser File object
           if (value instanceof File) {
@@ -262,7 +268,15 @@ export const BrowserPage = () => {
           }
 
           await performSaves([cloned]);
-          alert.showSuccess(`Object ${item.id} updated successfully`);
+
+          // If we're in relation mode and this is a new item, add it to the relation
+          if (relationQuery && isNewItem && canEditInRelationMode && cloned.id) {
+            const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
+            parentObj.addToSet(relationQuery.field, [cloned]);
+            await parentObj.save({ master: true });
+          }
+
+          alert.showSuccess(`Object ${cloned.id} ${isNewItem ? 'created' : 'updated'} successfully`);
         } catch (error) {
           console.error('Failed to update item:', error);
           alert.showError(error instanceof Error ? error.message : 'Failed to update item');
@@ -272,16 +286,33 @@ export const BrowserPage = () => {
     handleDeleteItems: (items: TObject[]) => {
       startActivity(async () => {
         try {
-          await Promise.all(items.map(item => item.destroy({ master: true })));
-          setResource((prev) => {
-            const prevItems = prev?.items ?? [];
-            const newItems = _.filter(prevItems, i => !items.includes(i));
-            return {
-              items: newItems,
-              count: Math.max(0, (prev?.count ?? 0) - items.length),
-            };
-          });
-          alert.showSuccess(`${items.length} object(s) deleted successfully`);
+          // If we're in relation mode, remove from relation instead of deleting
+          if (relationQuery && canEditInRelationMode) {
+            const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
+            parentObj.removeAll(relationQuery.field, items);
+            await parentObj.save({ master: true });
+            setResource((prev) => {
+              const prevItems = prev?.items ?? [];
+              const newItems = _.filter(prevItems, i => !items.includes(i));
+              return {
+                items: newItems,
+                count: Math.max(0, (prev?.count ?? 0) - items.length),
+              };
+            });
+            alert.showSuccess(`${items.length} object(s) removed from relation successfully`);
+          } else {
+          // Regular delete
+            await Promise.all(items.map(item => item.destroy({ master: true })));
+            setResource((prev) => {
+              const prevItems = prev?.items ?? [];
+              const newItems = _.filter(prevItems, i => !items.includes(i));
+              return {
+                items: newItems,
+                count: Math.max(0, (prev?.count ?? 0) - items.length),
+              };
+            });
+            alert.showSuccess(`${items.length} object(s) deleted successfully`);
+          }
         } catch (error) {
           console.error('Failed to delete items:', error);
           alert.showError(error instanceof Error ? error.message : 'Failed to delete items');
@@ -423,7 +454,7 @@ export const BrowserPage = () => {
                 </div>
               ),
             }))}
-            showEmptyLastRow
+            showEmptyLastRow={canEditInRelationMode}
             columnWidth={expandedColumns.map(col => columnWidth[col.key] || 150)}
             startRowNumber={offset + 1}
             allowEditForCell={(row, col) => {
