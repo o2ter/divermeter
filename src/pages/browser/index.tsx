@@ -324,14 +324,36 @@ export const BrowserPage = () => {
         try {
           const cloned = item.clone();
           const isNewItem = !item.id;
+          const isUserPassword = className === 'User' && columnKey === 'password';
+
           // Handle file upload - check if value is a browser File object
           if (value instanceof File) {
             // Upload the file to proto.io
             const protoFile = proto.File(value.name, value);
             await protoFile.save({ master: true });
             cloned.set(columnKey, protoFile);
-          } else if (className === 'User' && columnKey === 'password') {
-            // Use proto.setPassword for User class password field
+          } else if (isUserPassword && isNewItem) {
+            // For new User objects with password: save first, then set password
+            await cloned.save({ master: true });
+            await proto.setPassword(cloned, value, { master: true });
+            // Update in relation if needed
+            if (relationQuery && canEditInRelationMode) {
+              const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
+              parentObj.addToSet(relationQuery.field, [cloned]);
+              await parentObj.save({ master: true });
+            }
+            setResource((prev) => {
+              const prevItems = prev?.items ?? [];
+              const newItems = [...prevItems, cloned];
+              return {
+                items: newItems,
+                count: prev?.count ?? newItems.length,
+              };
+            });
+            alert.showSuccess(`Object ${cloned.id} created successfully`);
+            return; // Early return - already saved
+          } else if (isUserPassword) {
+            // For existing User objects: use proto.setPassword
             await proto.setPassword(cloned, value, { master: true });
           } else {
             cloned.set(columnKey, value);
@@ -439,6 +461,7 @@ export const BrowserPage = () => {
         } else {
           // Create new objects in normal mode
           const newObjects: TObject[] = [];
+          const pendingPasswords: Array<{ obj: TObject; password: any }> = [];
 
           for (const values of data) {
             const obj = proto.Object(className);
@@ -447,8 +470,8 @@ export const BrowserPage = () => {
                 const baseField = column.split('.')[0];
                 if (!_.includes(readonlyKeys, baseField)) {
                   if (className === 'User' && column === 'password') {
-                    // Use proto.setPassword for User class password field
-                    await proto.setPassword(obj, value as any, { master: true });
+                    // Save password for later - must set after object is saved
+                    pendingPasswords.push({ obj, password: value });
                   } else {
                     await obj.set(column, value as any);
                   }
@@ -461,8 +484,8 @@ export const BrowserPage = () => {
                     const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
                     if (!_.isNil(decoded)) {
                       if (className === 'User' && column.key === 'password') {
-                        // Use proto.setPassword for User class password field
-                        await proto.setPassword(obj, decoded as any, { master: true });
+                        // Save password for later - must set after object is saved
+                        pendingPasswords.push({ obj, password: decoded });
                       } else {
                         obj.set(column.key, decoded as any);
                       }
@@ -476,12 +499,17 @@ export const BrowserPage = () => {
 
           if (!_.isEmpty(newObjects)) {
             await performSaves(newObjects);
+            // Now set passwords for User objects
+            for (const { obj, password } of pendingPasswords) {
+              await proto.setPassword(obj, password, { master: true });
+            }
             alert.showSuccess(`${newObjects.length} object(s) created successfully`);
           }
         }
       } else {
         // MODE: Update existing objects (paste into existing rows)
         const updates: TObject[] = [];
+        const pendingPasswords: Array<{ obj: TObject; password: any }> = [];
         const targetRows = _.filter(rows, row => row < items.length);
 
         for (const [idx, row] of _.entries(targetRows)) {
@@ -490,15 +518,18 @@ export const BrowserPage = () => {
           if (!item || !values) continue;
 
           const obj = item.clone();
+          let hasNonPasswordChanges = false;
+
           if (type === 'json' && !_.isArray(values)) {
             for (const [column, value] of _.toPairs(values)) {
               const baseField = column.split('.')[0];
               if (!_.includes(readonlyKeys, baseField)) {
                 if (className === 'User' && column === 'password') {
-                  // Use proto.setPassword for User class password field
-                  await proto.setPassword(obj, value as any, { master: true });
+                  // Save password for later - must be set after other fields are saved
+                  pendingPasswords.push({ obj, password: value });
                 } else {
                   await obj.set(column, value as any);
+                  hasNonPasswordChanges = true;
                 }
               }
             }
@@ -507,25 +538,35 @@ export const BrowserPage = () => {
               if (column && !_.includes(readonlyKeys, column.baseField)) {
                 if (_.isNil(value)) {
                   obj.set(column.key, null);
+                  hasNonPasswordChanges = true;
                 } else if (_.isString(value)) {
                   const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
                   if (!_.isNil(decoded)) {
                     if (className === 'User' && column.key === 'password') {
-                      // Use proto.setPassword for User class password field
-                      await proto.setPassword(obj, decoded as any, { master: true });
+                      // Save password for later - must be set after other fields are saved
+                      pendingPasswords.push({ obj, password: decoded });
                     } else {
                       obj.set(column.key, decoded as any);
+                      hasNonPasswordChanges = true;
                     }
                   }
                 }
               }
             }
           }
-          updates.push(obj);
+
+          // Only add to updates if there are non-password changes
+          if (hasNonPasswordChanges || pendingPasswords.some(p => p.obj === obj)) {
+            updates.push(obj);
+          }
         }
 
         if (!_.isEmpty(updates)) {
           await performSaves(updates);
+          // Now set passwords for User objects (after other fields are saved)
+          for (const { obj, password } of pendingPasswords) {
+            await proto.setPassword(obj, password, { master: true });
+          }
           alert.showSuccess(`${updates.length} object(s) updated successfully`);
         }
       }
