@@ -30,7 +30,7 @@ import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../p
 import { _useCallbacks, useEffect, useMemo, useResource, useState } from 'frosty';
 import { useSearchParams } from 'frosty/web';
 import { DataSheet } from '../../components/datasheet';
-import { _typeOf, typeOf, decodeValue, verifyValue } from './utils';
+import { _typeOf, typeOf, decodeValue, verifyValue, readonlyKeysForSchema } from './utils';
 import { TableCell } from './cell';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
@@ -40,17 +40,7 @@ import { Button } from '../../components/button';
 import { Icon } from '../../components/icon';
 import { FilterModal, decodeFiltersFromURLParams, encodeFiltersToURLParams } from './filter';
 import { ColumnSettingsModal } from './columnSettings';
-
-// System fields that cannot be edited
-const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
-const readonlyKeysForSchema = (schema?: TSchema) => {
-  if (!schema) return systemFields;
-  return _.uniq([
-    ...systemFields,
-    ..._.keys(_.pickBy(schema.fields, type => !_.isString(type) && type.type === 'relation' && !_.isNil(type.foreignField))),
-    ...schema.secureFields ?? [],
-  ]);
-};
+import { SchemaInfoModal } from './schemaInfo';
 
 // Helper: Expand schema fields into columns (flatten object types but not arrays)
 const expandColumns = (fields: TSchema['fields']) => {
@@ -96,6 +86,7 @@ export const BrowserPage = () => {
 
   const [showFilterModal, setShowFilterModal] = useState<number>();
   const [showColumnSettings, setShowColumnSettings] = useState<number>();
+  const [showSchemaInfo, setShowSchemaInfo] = useState<number>();
   const [columnWidth, setColumnWidth] = useState<Record<string, number>>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
@@ -666,6 +657,17 @@ export const BrowserPage = () => {
           </div>
           <div style={{ display: 'flex', gap: theme.spacing.sm }}>
             <Button
+              variant="outline"
+              color="primary"
+              size="sm"
+              onClick={() => setShowSchemaInfo(Date.now())}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
+                <Icon name="info" size="sm" />
+                <span>Schema Info</span>
+              </div>
+            </Button>
+            <Button
               variant={filter.length > 0 || relationQuery ? 'solid' : 'outline'}
               color="primary"
               size="sm"
@@ -710,6 +712,14 @@ export const BrowserPage = () => {
             setShowColumnSettings(undefined);
           }}
           onCancel={() => setShowColumnSettings(undefined)}
+        />
+      )}
+      {showSchemaInfo && schema && (
+        <SchemaInfoModal
+          key={showSchemaInfo}
+          schema={schema}
+          className={className}
+          onCancel={() => setShowSchemaInfo(undefined)}
         />
       )}
       <div style={{

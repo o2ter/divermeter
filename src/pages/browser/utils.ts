@@ -27,6 +27,19 @@ import _ from 'lodash';
 import { Decimal } from 'proto.io';
 import { TSchema } from '../../proto';
 
+// System fields that cannot be edited
+export const systemReadonlyFields = ['_id', '__v', '__i', '_created_at', '_updated_at'];
+export const systemFields = [...systemReadonlyFields, '_expired_at', '_rperm', '_wperm'];
+
+export const readonlyKeysForSchema = (schema?: TSchema) => {
+  if (!schema) return systemReadonlyFields;
+  return _.uniq([
+    ...systemReadonlyFields,
+    ..._.keys(_.pickBy(schema.fields, type => !_.isString(type) && type.type === 'relation' && !_.isNil(type.foreignField))),
+    ...schema.secureFields ?? [],
+  ]);
+};
+
 export const _typeOf = (x?: TSchema['fields'][string]) => _.isString(x) ? x : x?.type;
 export const typeOf = (x?: TSchema['fields'][string]) => _.isString(x) ? x : x?.type === 'pointer' && x.target === 'File' ? 'file' : x?.type;
 
