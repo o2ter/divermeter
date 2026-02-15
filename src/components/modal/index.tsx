@@ -38,14 +38,14 @@ export const Modal = ({
   children
 }: ModalProps) => {
 
-  const id = useMemo(() => _.uniqueId(), []);
   const setElements = useContext(Context);
 
   useEffect(() => {
     if (!show) return;
+    const id = _.uniqueId();
     setElements((prev) => ({ ...prev, [id]: children as ElementNode }));
     return () => setElements((prev) => _.omit(prev, id));
-  }, [id, show]);
+  }, [show, children]);
 
   return <></>
 };
