@@ -53,44 +53,172 @@ const operators = [
   { value: '$exists', label: 'exists' },
   { value: '$regex', label: 'matches regex' },
   { value: '$text', label: 'text search' },
+  { value: '$filter', label: 'custom filter' },
 ];
 
 // Type-specific operators
 const getOperatorsForType = (type: string) => {
   switch (type) {
     case 'string':
-      return ['$eq', '$ne', '$in', '$nin', '$exists', '$regex', '$text'];
+      return ['$eq', '$ne', '$in', '$nin', '$exists', '$regex', '$text', '$filter'];
     case 'number':
     case 'decimal':
     case 'date':
-      return ['$eq', '$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin', '$exists'];
+      return ['$eq', '$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin', '$exists', '$filter'];
     case 'boolean':
-      return ['$eq', '$ne', '$exists'];
+      return ['$eq', '$ne', '$exists', '$filter'];
     case 'pointer':
     case 'relation':
-      return ['$eq', '$ne', '$in', '$nin', '$exists'];
+      return ['$eq', '$ne', '$in', '$nin', '$exists', '$filter'];
     default:
-      return ['$eq', '$ne', '$exists'];
+      return ['$eq', '$ne', '$exists', '$filter'];
   }
 };
 
-type FilterCriteria = {
+type FieldFilterCriteria = {
   id: string;
+  type: 'field';
   field: string;
   operator: string;
   value: string;
 };
 
-const FilterRow = ({
+type GroupFilterCriteria = {
+  id: string;
+  type: 'group';
+  combinator: '$and' | '$or';
+  children: FilterCriteria[];
+};
+
+type FilterCriteria = FieldFilterCriteria | GroupFilterCriteria;
+
+const FilterGroup = ({
+  group,
+  fields,
+  onUpdate,
+  onRemove,
+  depth = 0,
+}: {
+  group: GroupFilterCriteria;
+  fields: Record<string, any>;
+  onUpdate: (updated: GroupFilterCriteria) => void;
+  onRemove: () => void;
+  depth?: number;
+}) => {
+  const theme = useTheme();
+
+  const updateChild = (index: number, updated: FilterCriteria) => {
+    const newChildren = [...group.children];
+    newChildren[index] = updated;
+    onUpdate({ ...group, children: newChildren });
+  };
+
+  const removeChild = (index: number) => {
+    onUpdate({ ...group, children: group.children.filter((_, i) => i !== index) });
+  };
+
+  const addFilter = () => {
+    onUpdate({
+      ...group,
+      children: [
+        ...group.children,
+        { id: `${Date.now()}-${Math.random()}`, type: 'field', field: '', operator: '', value: '' },
+      ],
+    });
+  };
+
+  const addGroup = () => {
+    onUpdate({
+      ...group,
+      children: [
+        ...group.children,
+        { id: `${Date.now()}-${Math.random()}`, type: 'group', combinator: '$and', children: [] },
+      ],
+    });
+  };
+
+  return (
+    <div style={{
+      marginLeft: depth > 0 ? `${theme.spacing.xl}px` : 0,
+      padding: theme.spacing.md,
+      border: `2px solid ${group.combinator === '$and' ? theme.colors['primary-300'] : theme.colors['tint-300']}`,
+      borderRadius: theme.borderRadius.md,
+      backgroundColor: group.combinator === '$and' ? theme.colors['primary-100'] : theme.colors['tint-100'],
+      marginBottom: theme.spacing.sm,
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: theme.spacing.sm,
+        marginBottom: group.children.length > 0 ? theme.spacing.md : 0,
+      }}>
+        <select
+          value={group.combinator}
+          onChange={(e) => onUpdate({ ...group, combinator: e.currentTarget.value as '$and' | '$or' })}
+          style={{
+            padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
+            fontSize: theme.fontSize.sm,
+            fontWeight: theme.fontWeight.semibold,
+            borderRadius: theme.borderRadius.md,
+            border: `1px solid ${theme.colors['primary-400']}`,
+            backgroundColor: '#ffffff',
+            color: theme.colorContrast('#ffffff'),
+            '&:focus': {
+              outline: 'none',
+              borderColor: theme.colors.primary,
+            },
+          }}
+        >
+          <option value="$and">AND</option>
+          <option value="$or">OR</option>
+        </select>
+        <span style={{
+          fontSize: theme.fontSize.sm,
+          color: theme.colorContrast(group.combinator === '$and' ? theme.colors['primary-100'] : theme.colors['tint-100']),
+          opacity: 0.7,
+        }}>
+          {group.children.length === 0 ? 'Empty group' : `${group.children.length} condition${group.children.length > 1 ? 's' : ''}`}
+        </span>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: theme.spacing.xs }}>
+          <Button variant="ghost" color="primary" size="sm" onClick={addFilter}>
+            + Filter
+          </Button>
+          <Button variant="ghost" color="primary" size="sm" onClick={addGroup}>
+            + Group
+          </Button>
+          {depth > 0 && (
+            <Button variant="ghost" color="error" size="sm" onClick={onRemove}>
+              ✕
+            </Button>
+          )}
+        </div>
+      </div>
+      {group.children.map((child, index) => (
+        <FilterItem
+          key={child.id}
+          criteria={child}
+          fields={fields}
+          onUpdate={(updated) => updateChild(index, updated)}
+          onRemove={() => removeChild(index)}
+          depth={depth + 1}
+        />
+      ))}
+    </div>
+  );
+};
+
+const FilterField = ({
   criteria,
   fields,
   onUpdate,
   onRemove,
+  onConvertToGroup,
 }: {
-  criteria: FilterCriteria;
+    criteria: FieldFilterCriteria;
   fields: Record<string, any>;
-  onUpdate: (updated: FilterCriteria) => void;
+    onUpdate: (updated: FieldFilterCriteria) => void;
   onRemove: () => void;
+    onConvertToGroup: () => void;
 }) => {
   const theme = useTheme();
   const fieldType = _typeOf(fields[criteria.field]);
@@ -100,7 +228,7 @@ const FilterRow = ({
     <div style={{
       display: 'flex',
       gap: theme.spacing.sm,
-      alignItems: 'center',
+      alignItems: 'flex-start',
       padding: `${theme.spacing.sm}px 0`,
     }}>
       <select
@@ -160,43 +288,124 @@ const FilterRow = ({
           ))}
       </select>
 
-      <input
-        type="text"
-        value={criteria.value}
-        onChange={(e) => onUpdate({ ...criteria, value: e.currentTarget.value })}
-        placeholder="Value..."
-        disabled={!criteria.operator || criteria.operator === '$exists'}
-        style={{
-          flex: 1,
-          padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-          fontSize: theme.fontSize.sm,
-          borderRadius: theme.borderRadius.md,
-          border: `1px solid ${theme.colors['primary-300']}`,
-          backgroundColor: '#ffffff',
-          color: theme.colorContrast('#ffffff'),
-          '&:focus': {
-            outline: 'none',
-            borderColor: theme.colors.primary,
-          },
-          '&:disabled': {
-            opacity: 0.5,
-            cursor: 'not-allowed',
-          },
-        }}
-      />
+      {criteria.operator === '$filter' ? (
+        <textarea
+          value={criteria.value}
+          onChange={(e) => onUpdate({ ...criteria, value: e.currentTarget.value })}
+          placeholder={'JSON filter expression, e.g., {"$gt": 10, "$lt": 100}'}
+          rows={3}
+          style={{
+            flex: 1,
+            padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
+            fontSize: theme.fontSize.sm,
+            borderRadius: theme.borderRadius.md,
+            border: `1px solid ${theme.colors['primary-300']}`,
+            backgroundColor: '#ffffff',
+            color: theme.colorContrast('#ffffff'),
+            fontFamily: 'monospace',
+            resize: 'vertical' as const,
+            '&:focus': {
+              outline: 'none',
+              borderColor: theme.colors.primary,
+            },
+          }}
+        />
+      ) : (
+          <input
+            type="text"
+            value={criteria.value}
+            onChange={(e) => onUpdate({ ...criteria, value: e.currentTarget.value })}
+            placeholder="Value..."
+            disabled={!criteria.operator || criteria.operator === '$exists'}
+            style={{
+              flex: 1,
+              padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
+              fontSize: theme.fontSize.sm,
+              borderRadius: theme.borderRadius.md,
+              border: `1px solid ${theme.colors['primary-300']}`,
+              backgroundColor: '#ffffff',
+              color: theme.colorContrast('#ffffff'),
+              '&:focus': {
+                outline: 'none',
+                borderColor: theme.colors.primary,
+              },
+              '&:disabled': {
+                opacity: 0.5,
+                cursor: 'not-allowed',
+              },
+            }}
+          />
+      )}
+
+      <Button
+        variant="ghost"
+        color="primary"
+        size="sm"
+        onClick={onConvertToGroup}
+        style={{ flexShrink: 0 }}
+        title="Convert to group"
+      >
+        ⊕
+      </Button>
 
       <Button
         variant="ghost"
         color="error"
         size="sm"
         onClick={onRemove}
-        style={{
-          flexShrink: 0,
-        }}
+        style={{ flexShrink: 0 }}
       >
         ✕
       </Button>
     </div>
+  );
+};
+
+const FilterItem = ({
+  criteria,
+  fields,
+  onUpdate,
+  onRemove,
+  depth = 0,
+}: {
+  criteria: FilterCriteria;
+  fields: Record<string, any>;
+  onUpdate: (updated: FilterCriteria) => void;
+  onRemove: () => void;
+  depth?: number;
+}) => {
+  const convertToGroup = () => {
+    if (criteria.type === 'field') {
+      const newGroup: GroupFilterCriteria = {
+        id: criteria.id,
+        type: 'group',
+        combinator: '$and',
+        children: [criteria],
+      };
+      onUpdate(newGroup);
+    }
+  };
+
+  if (criteria.type === 'group') {
+    return (
+      <FilterGroup
+        group={criteria}
+        fields={fields}
+        onUpdate={onUpdate as (updated: GroupFilterCriteria) => void}
+        onRemove={onRemove}
+        depth={depth}
+      />
+    );
+  }
+
+  return (
+    <FilterField
+      criteria={criteria}
+      fields={fields}
+      onUpdate={onUpdate as (updated: FieldFilterCriteria) => void}
+      onRemove={onRemove}
+      onConvertToGroup={convertToGroup}
+    />
   );
 };
 
@@ -207,7 +416,12 @@ export const BrowserPage = () => {
   const proto = useProto();
   const { [className]: schema } = useProtoSchema();
 
-  const [searchCriteria, setSearchCriteria] = useState<FilterCriteria[]>([]);
+  const [rootGroup, setRootGroup] = useState<GroupFilterCriteria>({
+    id: 'root',
+    type: 'group',
+    combinator: '$and',
+    children: [],
+  });
   const [filter, setFilter] = useState<QueryFilter[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
@@ -246,97 +460,114 @@ export const BrowserPage = () => {
   ];
 
   const {
-    handleAddCriteria,
-    handleUpdateCriteria,
-    handleRemoveCriteria,
     handleApplyFilters,
     handleClearFilters,
   } = _useCallbacks({
-    handleAddCriteria: () => {
-      setSearchCriteria(prev => [
-        ...prev,
-        { id: `${Date.now()}-${Math.random()}`, field: '', operator: '', value: '' }
-      ]);
-    },
-    handleUpdateCriteria: (updated: FilterCriteria) => {
-      setSearchCriteria(prev => prev.map(c => c.id === updated.id ? updated : c));
-    },
-    handleRemoveCriteria: (id: string) => {
-      setSearchCriteria(prev => prev.filter(c => c.id !== id));
-    },
     handleApplyFilters: () => {
-      const filters: QueryFilter[] = [];
-      for (const criteria of searchCriteria) {
-        if (!criteria.field || !criteria.operator) continue;
+      try {
+        // Recursive function to convert FilterCriteria tree to QueryFilter
+        const convertToQueryFilter = (criteria: FilterCriteria): QueryFilter | null => {
+          if (criteria.type === 'group') {
+            const childFilters = criteria.children
+              .map(convertToQueryFilter)
+              .filter((f): f is QueryFilter => f !== null);
 
-        const fieldType = _typeOf(schema?.fields[criteria.field]);
-        let parsedValue: any = criteria.value;
+            if (childFilters.length === 0) return null;
+            if (childFilters.length === 1) return childFilters[0];
 
-        // Parse value based on field type and operator
-        if (criteria.operator !== '$exists') {
-          try {
-            switch (fieldType) {
-              case 'number':
-                parsedValue = parseFloat(criteria.value);
-                if (!_.isFinite(parsedValue)) continue;
-                break;
-              case 'decimal':
-                parsedValue = new Decimal(criteria.value);
-                if (!parsedValue.isFinite()) continue;
-                break;
-              case 'boolean':
-                parsedValue = criteria.value.toLowerCase() === 'true';
-                break;
-              case 'date':
-                parsedValue = new Date(criteria.value);
-                if (!_.isFinite(parsedValue.valueOf())) continue;
-                break;
-              case 'array':
-              case 'object':
-              case 'string[]':
-                if (criteria.operator === '$in' || criteria.operator === '$nin') {
-                  parsedValue = criteria.value.split(',').map(v => v.trim());
-                } else {
-                  parsedValue = deserialize(criteria.value);
-                }
-                break;
-              case 'pointer':
-                if (criteria.operator === '$in' || criteria.operator === '$nin') {
-                  parsedValue = criteria.value.split(',').map(v => v.trim());
-                } else {
-                  parsedValue = criteria.value;
-                }
-                break;
-              default:
-                if (criteria.operator === '$in' || criteria.operator === '$nin') {
-                  parsedValue = criteria.value.split(',').map(v => v.trim());
-                }
-                break;
-            }
-          } catch (error) {
-            console.error('Failed to parse filter value:', error);
-            continue;
+            return { [criteria.combinator]: childFilters };
           }
-        }
 
-        // Create filter object
-        if (criteria.operator === '$exists') {
-          filters.push({ [criteria.field]: { $exists: true } });
-        } else if (criteria.operator === '$eq') {
-          filters.push({ [criteria.field]: parsedValue });
-        } else {
-          filters.push({ [criteria.field]: { [criteria.operator]: parsedValue } });
-        }
+          // Field filter
+          if (!criteria.field || !criteria.operator) return null;
+
+          const fieldType = _typeOf(schema?.fields[criteria.field]);
+          let parsedValue: any = criteria.value;
+
+          // Parse value based on field type and operator
+          if (criteria.operator !== '$exists') {
+            try {
+              if (criteria.operator === '$filter') {
+                // Parse custom filter JSON
+                parsedValue = deserialize(criteria.value);
+              } else {
+                switch (fieldType) {
+                  case 'number':
+                    parsedValue = parseFloat(criteria.value);
+                    if (!_.isFinite(parsedValue)) return null;
+                    break;
+                  case 'decimal':
+                    parsedValue = new Decimal(criteria.value);
+                    if (!parsedValue.isFinite()) return null;
+                    break;
+                  case 'boolean':
+                    parsedValue = criteria.value.toLowerCase() === 'true';
+                    break;
+                  case 'date':
+                    parsedValue = new Date(criteria.value);
+                    if (!_.isFinite(parsedValue.valueOf())) return null;
+                    break;
+                  case 'array':
+                  case 'object':
+                  case 'string[]':
+                    if (criteria.operator === '$in' || criteria.operator === '$nin') {
+                      parsedValue = criteria.value.split(',').map(v => v.trim());
+                    } else {
+                      parsedValue = deserialize(criteria.value);
+                    }
+                    break;
+                  case 'pointer':
+                    if (criteria.operator === '$in' || criteria.operator === '$nin') {
+                      parsedValue = criteria.value.split(',').map(v => v.trim());
+                    } else {
+                      parsedValue = criteria.value;
+                    }
+                    break;
+                  default:
+                    if (criteria.operator === '$in' || criteria.operator === '$nin') {
+                      parsedValue = criteria.value.split(',').map(v => v.trim());
+                    }
+                    break;
+                }
+              }
+            } catch (error) {
+              alert.showError(`Failed to parse filter value for ${criteria.field}: ${error}`);
+              throw error;
+            }
+          }
+
+          // Create filter object
+          if (criteria.operator === '$exists') {
+            return { [criteria.field]: { $exists: true } };
+          } else if (criteria.operator === '$eq') {
+            return { [criteria.field]: parsedValue };
+          } else if (criteria.operator === '$filter') {
+            return { [criteria.field]: parsedValue };
+          } else {
+            return { [criteria.field]: { [criteria.operator]: parsedValue } };
+          }
+        };
+
+        const queryFilter = convertToQueryFilter(rootGroup);
+        const filters = queryFilter ? [queryFilter] : [];
+
+        setFilter(filters);
+        setOffset(0);
+        setShowFilterModal(false);
+      } catch (error) {
+        alert.showError(`Failed to apply filters: ${error}`);
       }
-      setFilter(filters);
-      setOffset(0); // Reset pagination when filters change
-      setShowFilterModal(false); // Close modal after applying
     },
     handleClearFilters: () => {
-      setSearchCriteria([]);
+      setRootGroup({
+        id: 'root',
+        type: 'group',
+        combinator: '$and',
+        children: [],
+      });
       setFilter([]);
       setOffset(0);
-      setShowFilterModal(false); // Close modal after clearing
+      setShowFilterModal(false);
     },
   });
 
@@ -573,61 +804,38 @@ export const BrowserPage = () => {
           </div>
           {schema && (
             <>
-              {searchCriteria.map((criteria) => (
-                <FilterRow
-                  key={criteria.id}
-                  criteria={criteria}
-                  fields={schema.fields}
-                  onUpdate={handleUpdateCriteria}
-                  onRemove={() => handleRemoveCriteria(criteria.id)}
-                />
-              ))}
-              {searchCriteria.length === 0 && (
-                <div style={{
-                  textAlign: 'center',
-                  padding: `${theme.spacing.xl}px 0`,
-                  color: theme.colorContrast('#ffffff'),
-                  opacity: 0.5,
-                  fontSize: theme.fontSize.sm,
-                }}>
-                  No filters added yet
-                </div>
-              )}
+              <FilterGroup
+                group={rootGroup}
+                fields={schema.fields}
+                onUpdate={setRootGroup}
+                onRemove={() => { }}
+                depth={0}
+              />
+
               <div style={{
                 display: 'flex',
                 gap: theme.spacing.sm,
                 marginTop: theme.spacing.lg,
-                justifyContent: 'space-between',
+                justifyContent: 'flex-end',
               }}>
+                {rootGroup.children.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    color="error"
+                    size="sm"
+                    onClick={handleClearFilters}
+                  >
+                    Clear All
+                  </Button>
+                )}
                 <Button
-                  variant="outline"
+                  variant="solid"
                   color="primary"
                   size="sm"
-                  onClick={handleAddCriteria}
+                  onClick={handleApplyFilters}
                 >
-                  + Add Filter
+                  Apply Filters
                 </Button>
-                <div style={{ display: 'flex', gap: theme.spacing.sm }}>
-                  {(searchCriteria.length > 0 || filter.length > 0) && (
-                    <Button
-                      variant="ghost"
-                      color="error"
-                      size="sm"
-                      onClick={handleClearFilters}
-                    >
-                      Clear All
-                    </Button>
-                  )}
-                  <Button
-                    variant="solid"
-                    color="primary"
-                    size="sm"
-                    onClick={handleApplyFilters}
-                    disabled={searchCriteria.length === 0}
-                  >
-                    Apply Filters
-                  </Button>
-                </div>
               </div>
             </>
           )}
