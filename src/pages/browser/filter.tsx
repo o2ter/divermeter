@@ -31,7 +31,7 @@ import { useAlert } from '../../components/alert';
 import { Button } from '../../components/button';
 import { Modal } from '../../components/modal';
 import { Icon } from '../../components/icon';
-import { Decimal } from 'proto.io';
+import { Decimal, serialize, deserialize } from 'proto.io';
 import { _typeOf, encodeValue, decodeValue, verifyValue } from './utils';
 import { JSCode } from '../../components/jscode';
 
@@ -50,35 +50,26 @@ export const decodeFiltersFromURLParams = (params: URLSearchParams, proto: Retur
   }
 
   if (Object.keys(filterParams).length > 0) {
-    // Convert filter[col]=val to QueryFilter format with type parsing
+    // Convert filter[col]=val to QueryFilter format using deserialize
     return Object.entries(filterParams).map(([col, val]) => {
-      // Support type prefixes: date:, decimal:, pointer:
-      let parsedValue: any = val;
-
-      // Parse date: prefix (e.g., "date:2024-01-01T00:00:00Z")
-      if (val.startsWith('date:')) {
-        parsedValue = new Date(val.substring(5));
-      }
-      // Parse decimal: prefix (e.g., "decimal:123.45")
-      else if (val.startsWith('decimal:')) {
-        parsedValue = new Decimal(val.substring(8));
-      }
-      // Parse pointer: prefix (e.g., "pointer:User:abc123")
-      else if (val.startsWith('pointer:')) {
-        const parts = val.substring(8).split(':');
-        if (parts.length >= 2) {
-          parsedValue = proto.Object(parts[0], parts.slice(1).join(':'));
-        }
+      // Use deserialize to handle all types (Date, Decimal, Objects, etc.)
+      let parsedValue: any;
+      try {
+        parsedValue = deserialize(val);
+      } catch {
+        // If deserialize fails, treat as plain string
+        parsedValue = val;
       }
 
       return { [col]: { $eq: parsedValue } };
     });
   }
 
-  // Priority 2: Complex filter parameter (JSON format - has limitations with Date/Decimal)
+  // Priority 2: Complex filter parameter (JSON format)
   const filterParam = params.get('filter');
   if (filterParam) {
     try {
+      // Complex filters use JSON - values will be parsed when loaded into UI
       return JSON.parse(filterParam);
     } catch {
       return [];
@@ -129,25 +120,13 @@ export const encodeFiltersToURLParams = (filters: QueryFilter[], params: URLSear
           ? condition.$eq
           : condition;
 
-        let encodedValue: string;
-
-        // Encode complex types with prefixes
-        if (_.isDate(value)) {
-          encodedValue = `date:${value.toISOString()}`;
-        } else if (value instanceof Decimal) {
-          encodedValue = `decimal:${value.toString()}`;
-        } else if (proto.isObject(value)) {
-          encodedValue = `pointer:${value.className}:${value.id}`;
-        } else {
-          encodedValue = String(value);
-        }
-
+        // Use serialize to encode all types properly
+        const encodedValue = serialize(value);
         params.set(`filter[${col}]`, encodedValue);
       });
     });
   } else {
-    // For complex filters (with group operators, non-$eq operators, etc), fall back to JSON format
-    // Note: This has limitations - Date/Decimal objects become strings
+    // For complex filters, use JSON (values are serialized individually)
     params.set('filter', JSON.stringify(filters));
   }
 };
@@ -894,9 +873,9 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
     const fieldType = _typeOf(expandedFields[field.field]);
     let parsedValue: any = field.value;
 
-    // Parse value based on operator and field type
+    // Parse value using deserialize for proper type handling
     try {
-      // Operator-specific parsing (overrides field type)
+      // Special operators that require specific input handling
       if (field.operator === '$size') {
         // $size expects a number
         parsedValue = parseFloat(field.value);
@@ -907,47 +886,30 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
       } else if (field.operator === '$in' || field.operator === '$nin' ||
         field.operator === '$subset' || field.operator === '$superset' || field.operator === '$intersect') {
         // Array operators expect arrays
-        // For complex field types, parse using custom format
-        if (fieldType === 'array' || fieldType === 'object' || fieldType === 'string[]') {
+        // Try custom format first, fall back to comma-separated
+        try {
           const parsed = decodeValue(field.value);
           verifyValue(parsed);
           parsedValue = parsed;
-        } else {
-          // For simple types, use comma-separated values
-          parsedValue = field.value.split(',').map(v => v.trim());
+        } catch {
+          // Fall back to comma-separated values for simple types
+          parsedValue = field.value.split(',').map(v => {
+            const trimmed = v.trim();
+            try {
+              return deserialize(trimmed);
+            } catch {
+              return trimmed;
+            }
+          });
         }
       } else {
-        // Field type-based parsing for standard operators
-        switch (fieldType) {
-          case 'number':
-            parsedValue = parseFloat(field.value);
-            if (!_.isFinite(parsedValue)) return null;
-            break;
-          case 'decimal':
-            parsedValue = new Decimal(field.value);
-            if (!parsedValue.isFinite()) return null;
-            break;
-          case 'boolean':
-            parsedValue = field.value.toLowerCase() === 'true';
-            break;
-          case 'date':
-            parsedValue = new Date(field.value);
-            if (!_.isFinite(parsedValue.valueOf())) return null;
-            break;
-          case 'array':
-          case 'object':
-          case 'string[]':
-            const parsed = decodeValue(field.value);
-            verifyValue(parsed);
-            parsedValue = parsed;
-            break;
-          case 'pointer':
-            parsedValue = field.value;
-            break;
-          default:
-            // String and other types use raw value
-            parsedValue = field.value;
-            break;
+        // For all other operators, use deserialize for smart type detection
+        // This handles numbers, booleans, dates, decimals, objects automatically
+        try {
+          parsedValue = deserialize(field.value);
+        } catch {
+          // If deserialize fails, treat as string
+          parsedValue = field.value;
         }
       }
     } catch (error) {
