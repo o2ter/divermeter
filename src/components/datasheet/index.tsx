@@ -94,6 +94,32 @@ const DataSheetTable = <T extends object, C extends Column>({
   }), [state]);
   useRefHandle(ref, () => handler, [handler]);
 
+  const encodeClipboard = (e: ClipboardEvent | KeyboardEvent, clipboardData: any[][]) => {
+    const _encoders = {
+      ...defaultEncoders,
+      ...encoders ?? {},
+    };
+    if ('clipboardData' in e && e.clipboardData) {
+      for (const [format, encoder] of _.toPairs(_encoders)) {
+        const result = encoder(clipboardData);
+        if (typeof result === 'string') {
+          e.clipboardData.setData(format, result);
+        }
+      }
+    } else if (navigator.clipboard && navigator.clipboard.write) {
+      const items: Record<string, Blob> = {};
+      for (const [format, encoder] of _.toPairs(_encoders)) {
+        const result = encoder(clipboardData);
+        if (typeof result === 'string') {
+          items[format] = new Blob([result], { type: format });
+        } else if (result && typeof result === 'object' && 'size' in result) {
+          items[format] = result as Blob;
+        }
+      }
+      navigator.clipboard.write([new ClipboardItem(items)]);
+    }
+  };
+
   const {
     handleMouseDown,
     handleMouseUp,
@@ -188,32 +214,6 @@ const DataSheetTable = <T extends object, C extends Column>({
       const selectedRows = state.selectedRows?.sort().filter(x => x < data.length) ?? [];
       const columnKeys = _.map(columns, col => _.isString(col) ? col : col.key);
 
-      const encodeClipboard = (e: ClipboardEvent | KeyboardEvent, clipboardData: any[][]) => {
-        const _encoders = {
-          ...defaultEncoders,
-          ...encoders ?? {},
-        };
-        if ('clipboardData' in e && e.clipboardData) {
-          for (const [format, encoder] of _.toPairs(_encoders)) {
-            const result = encoder(clipboardData);
-            if (typeof result === 'string') {
-              e.clipboardData.setData(format, result);
-            }
-          }
-        } else if (navigator.clipboard && navigator.clipboard.write) {
-          const items: Record<string, Blob> = {};
-          for (const [format, encoder] of _.toPairs(_encoders)) {
-            const result = encoder(clipboardData);
-            if (typeof result === 'string') {
-              items[format] = new Blob([result], { type: format });
-            } else if (result && typeof result === 'object' && 'size' in result) {
-              items[format] = result as Blob;
-            }
-          }
-          navigator.clipboard.write([new ClipboardItem(items)]);
-        }
-      };
-
       if (!_.isEmpty(selectedRows)) {
         e.preventDefault();
         if (_.isFunction(onCopyRows)) {
@@ -256,32 +256,6 @@ const DataSheetTable = <T extends object, C extends Column>({
     },
     handleKeyDown: (e: KeyboardEvent) => {
       if (!allowSelection) return;
-
-      const encodeClipboard = (e: ClipboardEvent | KeyboardEvent, clipboardData: any[][]) => {
-        const _encoders = {
-          ...defaultEncoders,
-          ...encoders ?? {},
-        };
-        if ('clipboardData' in e && e.clipboardData) {
-          for (const [format, encoder] of _.toPairs(_encoders)) {
-            const result = encoder(clipboardData);
-            if (typeof result === 'string') {
-              e.clipboardData.setData(format, result);
-            }
-          }
-        } else if (navigator.clipboard && navigator.clipboard.write) {
-          const items: Record<string, Blob> = {};
-          for (const [format, encoder] of _.toPairs(_encoders)) {
-            const result = encoder(clipboardData);
-            if (typeof result === 'string') {
-              items[format] = new Blob([result], { type: format });
-            } else if (result && typeof result === 'object' && 'size' in result) {
-              items[format] = result as Blob;
-            }
-          }
-          navigator.clipboard.write([new ClipboardItem(items)]);
-        }
-      };
 
       // Handle copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
