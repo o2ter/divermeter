@@ -270,7 +270,7 @@ export const BrowserPage = () => {
           await performSaves([cloned]);
 
           // If we're in relation mode and this is a new item, add it to the relation
-          if (relationQuery && isNewItem && canEditInRelationMode && cloned.id) {
+          if (relationQuery && canEditInRelationMode) {
             const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
             parentObj.addToSet(relationQuery.field, [cloned]);
             await parentObj.save({ master: true });
