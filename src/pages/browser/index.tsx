@@ -75,92 +75,206 @@ const getOperatorsForType = (type: string) => {
   }
 };
 
-type FieldFilterCriteria = {
-  id: string;
-  type: 'field';
-  field: string;
-  operator: string;
-  value: string;
-};
-
 type GroupFilterCriteria = {
   id: string;
-  type: 'group';
-  combinator: '$and' | '$or';
+  operator: '$and' | '$or';
   children: FilterCriteria[];
 };
 
-type FilterCriteria = FieldFilterCriteria | GroupFilterCriteria;
+type CustomFilterCriteria = {
+  id: string;
+  operator: '$filter';
+  value: string;
+};
 
-const FilterGroup = ({
-  group,
+type FieldFilterCriteria = {
+  id: string;
+  operator: string; // $eq, $ne, $gt, etc.
+  field: string;
+  value: string;
+};
+
+type FilterCriteria = GroupFilterCriteria | CustomFilterCriteria | FieldFilterCriteria;
+
+const FilterItem = ({
+  criteria,
   fields,
   onUpdate,
   onRemove,
   depth = 0,
 }: {
-  group: GroupFilterCriteria;
+    criteria: FilterCriteria;
   fields: Record<string, any>;
-  onUpdate: (updated: GroupFilterCriteria) => void;
+    onUpdate: (updated: FilterCriteria) => void;
   onRemove: () => void;
   depth?: number;
 }) => {
   const theme = useTheme();
 
-  const updateChild = (index: number, updated: FilterCriteria) => {
-    const newChildren = [...group.children];
-    newChildren[index] = updated;
-    onUpdate({ ...group, children: newChildren });
-  };
+  // Group operators ($and, $or)
+  if (criteria.operator === '$and' || criteria.operator === '$or') {
+    const group = criteria as GroupFilterCriteria;
 
-  const removeChild = (index: number) => {
-    onUpdate({ ...group, children: group.children.filter((_, i) => i !== index) });
-  };
+    const addFilter = () => {
+      onUpdate({
+        ...group,
+        children: [
+          ...group.children,
+          { id: `${Date.now()}-${Math.random()}`, operator: '', field: '', value: '' } as FieldFilterCriteria,
+        ],
+      });
+    };
 
-  const addFilter = () => {
-    onUpdate({
-      ...group,
-      children: [
-        ...group.children,
-        { id: `${Date.now()}-${Math.random()}`, type: 'field', field: '', operator: '', value: '' },
-      ],
-    });
-  };
+    const updateChild = (index: number, updated: FilterCriteria) => {
+      const newChildren = [...group.children];
+      newChildren[index] = updated;
+      onUpdate({ ...group, children: newChildren });
+    };
 
-  const addGroup = () => {
-    onUpdate({
-      ...group,
-      children: [
-        ...group.children,
-        { id: `${Date.now()}-${Math.random()}`, type: 'group', combinator: '$and', children: [] },
-      ],
-    });
-  };
+    const removeChild = (index: number) => {
+      onUpdate({ ...group, children: group.children.filter((_, i) => i !== index) });
+    };
 
-  return (
-    <div style={{
-      marginLeft: depth > 0 ? `${theme.spacing.xl}px` : 0,
-      padding: theme.spacing.md,
-      border: `2px solid ${group.combinator === '$and' ? theme.colors['primary-300'] : theme.colors['tint-300']}`,
-      borderRadius: theme.borderRadius.md,
-      backgroundColor: group.combinator === '$and' ? theme.colors['primary-100'] : theme.colors['tint-100'],
-      marginBottom: theme.spacing.sm,
-    }}>
+    return (
+      <div style={{
+        marginLeft: depth > 0 ? `${theme.spacing.md}px` : 0,
+        padding: theme.spacing.xs,
+        border: `1px solid ${group.operator === '$and' ? theme.colors['primary-300'] : theme.colors['tint-300']}`,
+        borderRadius: theme.borderRadius.sm,
+        backgroundColor: group.operator === '$and' ? theme.colors['primary-100'] : theme.colors['tint-100'],
+        marginBottom: theme.spacing.xs,
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: theme.spacing.xs,
+          marginBottom: group.children.length > 0 ? theme.spacing.xs : 0,
+        }}>
+          {depth > 0 ? (
+            <select
+              value={group.operator}
+              onChange={(e) => {
+                const newOp = e.currentTarget.value;
+                if (newOp === '$and' || newOp === '$or') {
+                  onUpdate({ ...group, operator: newOp });
+                } else if (newOp === '$filter') {
+                  onUpdate({ id: group.id, operator: '$filter', value: '' } as CustomFilterCriteria);
+                } else {
+                  // Convert to field filter
+                  onUpdate({ id: group.id, operator: newOp, field: '', value: '' } as FieldFilterCriteria);
+                }
+              }}
+              style={{
+                padding: `2px ${theme.spacing.xs}px`,
+                fontSize: theme.fontSize.xs,
+                fontWeight: theme.fontWeight.semibold,
+                borderRadius: theme.borderRadius.sm,
+                border: `1px solid ${theme.colors['primary-400']}`,
+                backgroundColor: '#ffffff',
+                color: theme.colorContrast('#ffffff'),
+                '&:focus': {
+                  outline: 'none',
+                  borderColor: theme.colors.primary,
+                },
+              }}
+            >
+              <option value="$and">AND</option>
+              <option value="$or">OR</option>
+              <option value="$filter">custom filter</option>
+              <optgroup label="Field Operators">
+                {operators.filter(op => op.value !== '$filter').map(op => (
+                  <option key={op.value} value={op.value}>{op.label}</option>
+                ))}
+              </optgroup>
+            </select>
+          ) : null}
+          <span style={{
+            fontSize: theme.fontSize.xs,
+            color: theme.colorContrast(group.operator === '$and' ? theme.colors['primary-100'] : theme.colors['tint-100']),
+            opacity: 0.6,
+          }}>
+            ({group.children.length})
+          </span>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 2 }}>
+            <button
+              onClick={addFilter}
+              title="Add filter"
+              style={{
+                padding: `2px ${theme.spacing.xs}px`,
+                fontSize: theme.fontSize.xs,
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                color: theme.colors.primary,
+                opacity: 0.7,
+                '&:hover': { opacity: 1 },
+              }}
+            >
+              + Filter
+            </button>
+            {depth > 0 && (
+              <button
+                onClick={onRemove}
+                title="Remove"
+                style={{
+                  padding: `2px ${theme.spacing.xs}px`,
+                  fontSize: theme.fontSize.xs,
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  color: theme.colors.error,
+                  opacity: 0.7,
+                  '&:hover': { opacity: 1 },
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+        {group.children.map((child, index) => (
+          <FilterItem
+            key={child.id}
+            criteria={child}
+            fields={fields}
+            onUpdate={(updated) => updateChild(index, updated)}
+            onRemove={() => removeChild(index)}
+            depth={depth + 1}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Custom filter ($filter)
+  if (criteria.operator === '$filter') {
+    const custom = criteria as CustomFilterCriteria;
+    return (
       <div style={{
         display: 'flex',
-        alignItems: 'center',
-        gap: theme.spacing.sm,
-        marginBottom: group.children.length > 0 ? theme.spacing.md : 0,
+        gap: theme.spacing.xs,
+        alignItems: 'flex-start',
+        padding: `${theme.spacing.xs}px 0`,
       }}>
         <select
-          value={group.combinator}
-          onChange={(e) => onUpdate({ ...group, combinator: e.currentTarget.value as '$and' | '$or' })}
+          value={custom.operator}
+          onChange={(e) => {
+            const newOp = e.currentTarget.value;
+            if (newOp === '$and' || newOp === '$or') {
+              onUpdate({ id: custom.id, operator: newOp, children: [] } as GroupFilterCriteria);
+            } else if (newOp === '$filter') {
+              // Keep as is
+            } else {
+              // Convert to field filter
+              onUpdate({ id: custom.id, operator: newOp, field: '', value: '' } as FieldFilterCriteria);
+            }
+          }}
           style={{
-            padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-            fontSize: theme.fontSize.sm,
-            fontWeight: theme.fontWeight.semibold,
-            borderRadius: theme.borderRadius.md,
-            border: `1px solid ${theme.colors['primary-400']}`,
+            flex: '0 0 140px',
+            padding: `2px ${theme.spacing.xs}px`,
+            fontSize: theme.fontSize.xs,
+            borderRadius: theme.borderRadius.sm,
+            border: `1px solid ${theme.colors['primary-300']}`,
             backgroundColor: '#ffffff',
             color: theme.colorContrast('#ffffff'),
             '&:focus': {
@@ -171,74 +285,86 @@ const FilterGroup = ({
         >
           <option value="$and">AND</option>
           <option value="$or">OR</option>
+          <option value="$filter">custom filter</option>
+          <optgroup label="Field Operators">
+            {operators.filter(op => op.value !== '$filter').map(op => (
+              <option key={op.value} value={op.value}>{op.label}</option>
+            ))}
+          </optgroup>
         </select>
-        <span style={{
-          fontSize: theme.fontSize.sm,
-          color: theme.colorContrast(group.combinator === '$and' ? theme.colors['primary-100'] : theme.colors['tint-100']),
-          opacity: 0.7,
-        }}>
-          {group.children.length === 0 ? 'Empty group' : `${group.children.length} condition${group.children.length > 1 ? 's' : ''}`}
-        </span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: theme.spacing.xs }}>
-          <Button variant="ghost" color="primary" size="sm" onClick={addFilter}>
-            + Filter
-          </Button>
-          <Button variant="ghost" color="primary" size="sm" onClick={addGroup}>
-            + Group
-          </Button>
-          {depth > 0 && (
-            <Button variant="ghost" color="error" size="sm" onClick={onRemove}>
-              ✕
-            </Button>
-          )}
-        </div>
-      </div>
-      {group.children.map((child, index) => (
-        <FilterItem
-          key={child.id}
-          criteria={child}
-          fields={fields}
-          onUpdate={(updated) => updateChild(index, updated)}
-          onRemove={() => removeChild(index)}
-          depth={depth + 1}
-        />
-      ))}
-    </div>
-  );
-};
 
-const FilterField = ({
-  criteria,
-  fields,
-  onUpdate,
-  onRemove,
-  onConvertToGroup,
-}: {
-    criteria: FieldFilterCriteria;
-  fields: Record<string, any>;
-    onUpdate: (updated: FieldFilterCriteria) => void;
-  onRemove: () => void;
-    onConvertToGroup: () => void;
-}) => {
-  const theme = useTheme();
-  const fieldType = _typeOf(fields[criteria.field]);
+        <textarea
+          value={custom.value}
+          onChange={(e) => onUpdate({ ...custom, value: e.currentTarget.value })}
+          placeholder={'e.g. {"field": {"$gt": 10, "$lt": 100}}'}
+          rows={2}
+          style={{
+            flex: 1,
+            padding: `2px ${theme.spacing.xs}px`,
+            fontSize: theme.fontSize.xs,
+            borderRadius: theme.borderRadius.sm,
+            border: `1px solid ${theme.colors['primary-300']}`,
+            backgroundColor: '#ffffff',
+            color: theme.colorContrast('#ffffff'),
+            fontFamily: 'monospace',
+            resize: 'vertical' as const,
+            '&:focus': {
+              outline: 'none',
+              borderColor: theme.colors.primary,
+            },
+          }}
+        />
+
+        <button
+          onClick={onRemove}
+          title="Remove"
+          style={{
+            padding: `2px ${theme.spacing.xs}px`,
+            fontSize: theme.fontSize.xs,
+            border: 'none',
+            background: 'none',
+            cursor: 'pointer',
+            color: theme.colors.error,
+            opacity: 0.7,
+            flexShrink: 0,
+            '&:hover': { opacity: 1 },
+          }}
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  // Field filter (regular operators like $eq, $ne, etc.)
+  const field = criteria as FieldFilterCriteria;
+  const fieldType = field.field ? _typeOf(fields[field.field]) : '';
   const availableOperators = getOperatorsForType(fieldType ?? '');
 
   return (
     <div style={{
       display: 'flex',
-      gap: theme.spacing.sm,
+      gap: theme.spacing.xs,
       alignItems: 'flex-start',
-      padding: `${theme.spacing.sm}px 0`,
+      padding: `${theme.spacing.xs}px 0`,
     }}>
       <select
-        value={criteria.field}
-        onChange={(e) => onUpdate({ ...criteria, field: e.currentTarget.value })}
+        value={field.operator}
+        onChange={(e) => {
+          const newOp = e.currentTarget.value;
+          if (newOp === '$and' || newOp === '$or') {
+            onUpdate({ id: field.id, operator: newOp, children: [] } as GroupFilterCriteria);
+          } else if (newOp === '$filter') {
+            onUpdate({ id: field.id, operator: '$filter', value: '' } as CustomFilterCriteria);
+          } else {
+            onUpdate({ ...field, operator: newOp });
+          }
+        }}
         style={{
-          flex: '0 0 200px',
-          padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-          fontSize: theme.fontSize.sm,
-          borderRadius: theme.borderRadius.md,
+          flex: '0 0 140px',
+          padding: `2px ${theme.spacing.xs}px`,
+          fontSize: theme.fontSize.xs,
+          borderRadius: theme.borderRadius.sm,
           border: `1px solid ${theme.colors['primary-300']}`,
           backgroundColor: '#ffffff',
           color: theme.colorContrast('#ffffff'),
@@ -248,23 +374,26 @@ const FilterField = ({
           },
         }}
       >
-        <option value="">Select field...</option>
-        {_.map(fields, (type, key) => (
-          <option key={key} value={key}>
-            {key} ({_.isString(type) ? type : type.type})
-          </option>
-        ))}
+        <option value="">Select Operator</option>
+        <option value="$and">AND</option>
+        <option value="$or">OR</option>
+        <option value="$filter">custom filter</option>
+        <optgroup label="Field Operators">
+          {operators.filter(op => op.value !== '$filter').map(op => (
+            <option key={op.value} value={op.value}>{op.label}</option>
+          ))}
+        </optgroup>
       </select>
 
       <select
-        value={criteria.operator}
-        onChange={(e) => onUpdate({ ...criteria, operator: e.currentTarget.value })}
-        disabled={!criteria.field}
+        value={field.field}
+        onChange={(e) => onUpdate({ ...field, field: e.currentTarget.value })}
+        disabled={!field.operator || field.operator === '$and' || field.operator === '$or' || field.operator === '$filter'}
         style={{
-          flex: '0 0 150px',
-          padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-          fontSize: theme.fontSize.sm,
-          borderRadius: theme.borderRadius.md,
+          flex: '0 0 160px',
+          padding: `2px ${theme.spacing.xs}px`,
+          fontSize: theme.fontSize.xs,
+          borderRadius: theme.borderRadius.sm,
           border: `1px solid ${theme.colors['primary-300']}`,
           backgroundColor: '#ffffff',
           color: theme.colorContrast('#ffffff'),
@@ -278,134 +407,57 @@ const FilterField = ({
           },
         }}
       >
-        <option value="">Select operator...</option>
-        {operators
-          .filter(op => availableOperators.includes(op.value))
-          .map(op => (
-            <option key={op.value} value={op.value}>
-              {op.label}
-            </option>
-          ))}
+        <option value="">Select Field</option>
+        {_.map(fields, (type, key) => (
+          <option key={key} value={key}>
+            {key}
+          </option>
+        ))}
       </select>
 
-      {criteria.operator === '$filter' ? (
-        <textarea
-          value={criteria.value}
-          onChange={(e) => onUpdate({ ...criteria, value: e.currentTarget.value })}
-          placeholder={'JSON filter expression, e.g., {"$gt": 10, "$lt": 100}'}
-          rows={3}
-          style={{
-            flex: 1,
-            padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-            fontSize: theme.fontSize.sm,
-            borderRadius: theme.borderRadius.md,
-            border: `1px solid ${theme.colors['primary-300']}`,
-            backgroundColor: '#ffffff',
-            color: theme.colorContrast('#ffffff'),
-            fontFamily: 'monospace',
-            resize: 'vertical' as const,
-            '&:focus': {
-              outline: 'none',
-              borderColor: theme.colors.primary,
-            },
-          }}
-        />
-      ) : (
-          <input
-            type="text"
-            value={criteria.value}
-            onChange={(e) => onUpdate({ ...criteria, value: e.currentTarget.value })}
-            placeholder="Value..."
-            disabled={!criteria.operator || criteria.operator === '$exists'}
-            style={{
-              flex: 1,
-              padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-              fontSize: theme.fontSize.sm,
-              borderRadius: theme.borderRadius.md,
-              border: `1px solid ${theme.colors['primary-300']}`,
-              backgroundColor: '#ffffff',
-              color: theme.colorContrast('#ffffff'),
-              '&:focus': {
-                outline: 'none',
-                borderColor: theme.colors.primary,
-              },
-              '&:disabled': {
-                opacity: 0.5,
-                cursor: 'not-allowed',
-              },
-            }}
-          />
-      )}
+      <input
+        type="text"
+        value={field.value}
+        onChange={(e) => onUpdate({ ...field, value: e.currentTarget.value })}
+        placeholder="Enter Value"
+        disabled={!field.operator || field.operator === '$exists'}
+        style={{
+          flex: 1,
+          padding: `2px ${theme.spacing.xs}px`,
+          fontSize: theme.fontSize.xs,
+          borderRadius: theme.borderRadius.sm,
+          border: `1px solid ${theme.colors['primary-300']}`,
+          backgroundColor: '#ffffff',
+          color: theme.colorContrast('#ffffff'),
+          '&:focus': {
+            outline: 'none',
+            borderColor: theme.colors.primary,
+          },
+          '&:disabled': {
+            opacity: 0.5,
+            cursor: 'not-allowed',
+          },
+        }}
+      />
 
-      <Button
-        variant="ghost"
-        color="primary"
-        size="sm"
-        onClick={onConvertToGroup}
-        style={{ flexShrink: 0 }}
-        title="Convert to group"
-      >
-        ⊕
-      </Button>
-
-      <Button
-        variant="ghost"
-        color="error"
-        size="sm"
+      <button
         onClick={onRemove}
-        style={{ flexShrink: 0 }}
+        title="Remove"
+        style={{
+          padding: `2px ${theme.spacing.xs}px`,
+          fontSize: theme.fontSize.xs,
+          border: 'none',
+          background: 'none',
+          cursor: 'pointer',
+          color: theme.colors.error,
+          opacity: 0.7,
+          flexShrink: 0,
+          '&:hover': { opacity: 1 },
+        }}
       >
         ✕
-      </Button>
+      </button>
     </div>
-  );
-};
-
-const FilterItem = ({
-  criteria,
-  fields,
-  onUpdate,
-  onRemove,
-  depth = 0,
-}: {
-  criteria: FilterCriteria;
-  fields: Record<string, any>;
-  onUpdate: (updated: FilterCriteria) => void;
-  onRemove: () => void;
-  depth?: number;
-}) => {
-  const convertToGroup = () => {
-    if (criteria.type === 'field') {
-      const newGroup: GroupFilterCriteria = {
-        id: criteria.id,
-        type: 'group',
-        combinator: '$and',
-        children: [criteria],
-      };
-      onUpdate(newGroup);
-    }
-  };
-
-  if (criteria.type === 'group') {
-    return (
-      <FilterGroup
-        group={criteria}
-        fields={fields}
-        onUpdate={onUpdate as (updated: GroupFilterCriteria) => void}
-        onRemove={onRemove}
-        depth={depth}
-      />
-    );
-  }
-
-  return (
-    <FilterField
-      criteria={criteria}
-      fields={fields}
-      onUpdate={onUpdate as (updated: FieldFilterCriteria) => void}
-      onRemove={onRemove}
-      onConvertToGroup={convertToGroup}
-    />
   );
 };
 
@@ -418,8 +470,7 @@ export const BrowserPage = () => {
 
   const [rootGroup, setRootGroup] = useState<GroupFilterCriteria>({
     id: 'root',
-    type: 'group',
-    combinator: '$and',
+    operator: '$and',
     children: [],
   });
   const [filter, setFilter] = useState<QueryFilter[]>([]);
@@ -467,84 +518,92 @@ export const BrowserPage = () => {
       try {
         // Recursive function to convert FilterCriteria tree to QueryFilter
         const convertToQueryFilter = (criteria: FilterCriteria): QueryFilter | null => {
-          if (criteria.type === 'group') {
-            const childFilters = criteria.children
+          // Group operators ($and, $or)
+          if (criteria.operator === '$and' || criteria.operator === '$or') {
+            const group = criteria as GroupFilterCriteria;
+            const childFilters = group.children
               .map(convertToQueryFilter)
               .filter((f): f is QueryFilter => f !== null);
 
             if (childFilters.length === 0) return null;
             if (childFilters.length === 1) return childFilters[0];
 
-            return { [criteria.combinator]: childFilters };
+            return { [group.operator]: childFilters };
+          }
+
+          // Custom filter ($filter)
+          if (criteria.operator === '$filter') {
+            const custom = criteria as CustomFilterCriteria;
+            if (!custom.value) return null;
+            try {
+              return deserialize(custom.value) as QueryFilter;
+            } catch (error) {
+              alert.showError(`Failed to parse custom filter: ${error}`);
+              throw error;
+            }
           }
 
           // Field filter
-          if (!criteria.field || !criteria.operator) return null;
+          const field = criteria as FieldFilterCriteria;
+          if (!field.field || !field.operator) return null;
 
-          const fieldType = _typeOf(schema?.fields[criteria.field]);
-          let parsedValue: any = criteria.value;
+          const fieldType = _typeOf(schema?.fields[field.field]);
+          let parsedValue: any = field.value;
 
           // Parse value based on field type and operator
-          if (criteria.operator !== '$exists') {
+          if (field.operator !== '$exists') {
             try {
-              if (criteria.operator === '$filter') {
-                // Parse custom filter JSON
-                parsedValue = deserialize(criteria.value);
-              } else {
-                switch (fieldType) {
-                  case 'number':
-                    parsedValue = parseFloat(criteria.value);
-                    if (!_.isFinite(parsedValue)) return null;
-                    break;
-                  case 'decimal':
-                    parsedValue = new Decimal(criteria.value);
-                    if (!parsedValue.isFinite()) return null;
-                    break;
-                  case 'boolean':
-                    parsedValue = criteria.value.toLowerCase() === 'true';
-                    break;
-                  case 'date':
-                    parsedValue = new Date(criteria.value);
-                    if (!_.isFinite(parsedValue.valueOf())) return null;
-                    break;
-                  case 'array':
-                  case 'object':
-                  case 'string[]':
-                    if (criteria.operator === '$in' || criteria.operator === '$nin') {
-                      parsedValue = criteria.value.split(',').map(v => v.trim());
-                    } else {
-                      parsedValue = deserialize(criteria.value);
-                    }
-                    break;
-                  case 'pointer':
-                    if (criteria.operator === '$in' || criteria.operator === '$nin') {
-                      parsedValue = criteria.value.split(',').map(v => v.trim());
-                    } else {
-                      parsedValue = criteria.value;
-                    }
-                    break;
-                  default:
-                    if (criteria.operator === '$in' || criteria.operator === '$nin') {
-                      parsedValue = criteria.value.split(',').map(v => v.trim());
-                    }
-                    break;
-                }
+              switch (fieldType) {
+                case 'number':
+                  parsedValue = parseFloat(field.value);
+                  if (!_.isFinite(parsedValue)) return null;
+                  break;
+                case 'decimal':
+                  parsedValue = new Decimal(field.value);
+                  if (!parsedValue.isFinite()) return null;
+                  break;
+                case 'boolean':
+                  parsedValue = field.value.toLowerCase() === 'true';
+                  break;
+                case 'date':
+                  parsedValue = new Date(field.value);
+                  if (!_.isFinite(parsedValue.valueOf())) return null;
+                  break;
+                case 'array':
+                case 'object':
+                case 'string[]':
+                  if (field.operator === '$in' || field.operator === '$nin') {
+                    parsedValue = field.value.split(',').map(v => v.trim());
+                  } else {
+                    parsedValue = deserialize(field.value);
+                  }
+                  break;
+                case 'pointer':
+                  if (field.operator === '$in' || field.operator === '$nin') {
+                    parsedValue = field.value.split(',').map(v => v.trim());
+                  } else {
+                    parsedValue = field.value;
+                  }
+                  break;
+                default:
+                  if (field.operator === '$in' || field.operator === '$nin') {
+                    parsedValue = field.value.split(',').map(v => v.trim());
+                  }
+                  break;
               }
             } catch (error) {
-              alert.showError(`Failed to parse filter value for ${criteria.field}: ${error}`);
+              alert.showError(`Failed to parse filter value for ${field.field}: ${error}`);
               throw error;
             }
           }
 
           // Create filter object
-          if (criteria.operator === '$exists') {
-            return { [criteria.field]: { $exists: true } };
-          } else if (criteria.operator === '$eq') {
-            return { [criteria.field]: parsedValue };
-          } else if (criteria.operator === '$filter') {
-            return { [criteria.field]: parsedValue };
+          if (field.operator === '$exists') {
+            return { [field.field]: { $exists: true } };
+          } else if (field.operator === '$eq') {
+            return { [field.field]: parsedValue };
           } else {
-            return { [criteria.field]: { [criteria.operator]: parsedValue } };
+            return { [field.field]: { [field.operator]: parsedValue } };
           }
         };
 
@@ -561,8 +620,7 @@ export const BrowserPage = () => {
     handleClearFilters: () => {
       setRootGroup({
         id: 'root',
-        type: 'group',
-        combinator: '$and',
+        operator: '$and',
         children: [],
       });
       setFilter([]);
@@ -763,10 +821,10 @@ export const BrowserPage = () => {
       <Modal show={showFilterModal}>
         <div style={{
           backgroundColor: '#ffffff',
-          borderRadius: theme.borderRadius.lg,
-          padding: theme.spacing.xl,
-          minWidth: '600px',
-          maxWidth: '800px',
+          borderRadius: theme.borderRadius.md,
+          padding: theme.spacing.md,
+          minWidth: '500px',
+          maxWidth: '700px',
           maxHeight: '80vh',
           overflow: 'auto',
         }}>
@@ -774,15 +832,15 @@ export const BrowserPage = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: theme.spacing.lg,
+            marginBottom: theme.spacing.md,
           }}>
             <h3 style={{
               margin: 0,
-              fontSize: theme.fontSize.lg,
+              fontSize: theme.fontSize.md,
               fontWeight: theme.fontWeight.semibold,
               color: theme.colorContrast('#ffffff'),
             }}>
-              Search Filters
+              Filters
             </h3>
             <button
               onClick={() => setShowFilterModal(false)}
@@ -804,18 +862,23 @@ export const BrowserPage = () => {
           </div>
           {schema && (
             <>
-              <FilterGroup
-                group={rootGroup}
+              <FilterItem
+                criteria={rootGroup}
                 fields={schema.fields}
-                onUpdate={setRootGroup}
+                onUpdate={(updated) => {
+                  // Root must always be a group
+                  if (updated.operator === '$and' || updated.operator === '$or') {
+                    setRootGroup(updated as GroupFilterCriteria);
+                  }
+                }}
                 onRemove={() => { }}
                 depth={0}
               />
 
               <div style={{
                 display: 'flex',
-                gap: theme.spacing.sm,
-                marginTop: theme.spacing.lg,
+                gap: theme.spacing.xs,
+                marginTop: theme.spacing.sm,
                 justifyContent: 'flex-end',
               }}>
                 {rootGroup.children.length > 0 && (
@@ -825,7 +888,7 @@ export const BrowserPage = () => {
                     size="sm"
                     onClick={handleClearFilters}
                   >
-                    Clear All
+                    Clear
                   </Button>
                 )}
                 <Button
@@ -834,7 +897,7 @@ export const BrowserPage = () => {
                   size="sm"
                   onClick={handleApplyFilters}
                 >
-                  Apply Filters
+                  Apply
                 </Button>
               </div>
             </>
