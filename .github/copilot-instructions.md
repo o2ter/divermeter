@@ -1043,6 +1043,93 @@ const encodeClipboard = useMemo(() => (e: ClipboardEvent, data: any[][]) => {
 - Helper function is used in dependency arrays of other hooks
 - Helper function is expensive to create and not used with `_useCallbacks`
 
+#### CRITICAL: Never Use useEffect to Set State
+
+**If you're using `useEffect` to set state, you're doing something wrong.**
+
+`useEffect` in Frosty is ONLY for:
+- **Registering event listeners** (document, window, element events)
+- **Subscribing to external systems** (WebSocket connections, browser APIs)
+- **Cleanup tasks** (removing listeners, closing connections)
+
+**NEVER use `useEffect` for:**
+- Setting state based on props or other state
+- Deriving values from state or props
+- Synchronizing state
+
+```tsx
+// ❌ WRONG: Using useEffect to set state
+const MyComponent = ({ userId }) => {
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    setUser(getUserById(userId)); // WRONG!
+  }, [userId]);
+  
+  return <div>{user?.name}</div>;
+};
+
+// ✅ CORRECT: Derive values directly or use useMemo
+const MyComponent = ({ userId }) => {
+  const user = useMemo(() => getUserById(userId), [userId]);
+  
+  return <div>{user?.name}</div>;
+};
+
+// ❌ WRONG: Syncing state in useEffect
+const MyComponent = ({ isOpen }) => {
+  const [open, setOpen] = useState(false);
+  
+  useEffect(() => {
+    setOpen(isOpen); // WRONG! Just use the prop directly
+  }, [isOpen]);
+  
+  return <div>{open ? 'Open' : 'Closed'}</div>;
+};
+
+// ✅ CORRECT: Use props directly or derive locally
+const MyComponent = ({ isOpen }) => {
+  // Just use isOpen directly, or derive a local value
+  const displayText = isOpen ? 'Open' : 'Closed';
+  
+  return <div>{displayText}</div>;
+};
+
+// ✅ CORRECT: useEffect for event registration only
+const MyComponent = () => {
+  const doc = useDocument();
+  
+  const { handleKeyDown } = _useCallbacks({
+    handleKeyDown: (e: KeyboardEvent) => {
+      // Handle event
+    },
+  });
+  
+  useEffect(() => {
+    doc.addEventListener('keydown', handleKeyDown);
+    return () => doc.removeEventListener('keydown', handleKeyDown);
+  }, []); // This is the ONLY proper use of useEffect
+  
+  return <div>Content</div>;
+};
+```
+
+**Why this rule exists:**
+- **useEffect runs after render** - Setting state causes extra renders and can cause flashing
+- **Frosty handles reactivity automatically** - You don't need to manually sync state
+- **Performance** - Extra renders waste CPU cycles
+- **Code clarity** - Deriving values directly is more obvious than hidden useEffect logic
+- **Avoids infinite loops** - Setting state in useEffect can easily cause infinite render loops
+
+**What to do instead:**
+- **Direct value use** - Use props/state directly in render
+- **useMemo** - For expensive calculations that depend on changing values
+- **useState with initializer** - For one-time initialization: `useState(() => expensiveInit())`
+- **useResource** - For async data fetching (Frosty-specific hook)
+- **Computed values** - Calculate derived values during render, not in useEffect
+
+**Remember: If you find yourself setting state in `useEffect`, stop and refactor. There's always a better way.**
+
 ### Proto.io Integration
 - Dashboard requires `ProtoClient` as prop: `<Dashboard proto={protoClient} />`
 - Schema fetched asynchronously via `proto.schema({ master: true })`
@@ -1281,6 +1368,7 @@ const MyComponent = () => {
 16. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
 17. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
 18. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
+19. **Never use useEffect to set state** - If you're using `useEffect` to set state, you're doing something wrong. `useEffect` is ONLY for registering event listeners and subscribing to external systems, NOT for deriving values or syncing state. Use `useMemo` for derived values, use props directly, or calculate values during render. Setting state in `useEffect` causes extra renders, performance issues, and can lead to infinite loops.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
