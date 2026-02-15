@@ -601,7 +601,11 @@ This approach keeps all styling in JavaScript/TypeScript, maintains type safety,
 
 ### Event Handlers Pattern: _useCallbacks + useEffect
 
-**CRITICAL: Frosty uses `_useCallbacks` for stable event handler references with proper dependency tracking.**
+**CRITICAL: Frosty's `_useCallbacks` and `useCallback` automatically capture the latest state/props without dependency arrays.**
+
+**Key Difference from React:**
+- **Frosty**: Callbacks always have access to current state/props automatically - NO dependency arrays needed
+- **React**: Must manually specify dependencies or callbacks become stale
 
 When setting up document-level or persistent event listeners, use this pattern:
 
@@ -657,17 +661,19 @@ const MyComponent = ({ onAction, data }) => {
 
 #### Key Points
 - **Use `_useCallbacks`** to define event handlers that need access to current props/state
-- **Handlers automatically update** - `_useCallbacks` manages dependencies internally
+- **Handlers automatically update** - In Frosty, callbacks ALWAYS capture latest state/props (no deps needed)
 - **useEffect with empty deps** - Register listeners once, they always call latest handler version
 - **Always clean up** - Return cleanup function from useEffect to remove listeners
 - **Document-level listeners** - Use `useDocument()` from `frosty/web` for document events
 - **Ref access in handlers** - Handlers can safely access refs without causing re-registration
+- **No dependency arrays** - Unlike React, Frosty's `_useCallbacks` and `useCallback` don't need deps
 
 #### Why This Pattern?
 - **Prevents listener thrashing** - Listeners aren't removed/re-added on every render
-- **Always current** - Handlers have access to latest props/state without re-registration
+- **Always current** - Handlers have access to latest props/state automatically (Frosty feature)
 - **Memory safe** - Cleanup function ensures no listener leaks
 - **Type-safe** - Full TypeScript support for event types
+- **Simpler than React** - No need to manage dependency arrays manually
 
 #### Real Example
 See [src/components/datasheet/index.tsx](src/components/datasheet/index.tsx) for a complete implementation:
@@ -711,12 +717,50 @@ useEffect(() => {
 #### When NOT to Use This Pattern
 - **Simple inline handlers** - Use regular inline functions for onClick, onChange, etc.
 - **Direct element events** - For events on JSX elements, use inline handlers
-- **Single-use callbacks** - Use `useCallback` for memoizing individual callbacks
+- **Single-use callbacks** - Use `useCallback` for memoizing individual callbacks (no deps needed in Frosty)
 
 This pattern is specifically for:
 - Document-level or window-level event listeners
 - Event listeners that need to be registered once but access changing data
 - Complex event handling logic that needs current state/props
+
+#### Helper Functions Inside _useCallbacks
+**IMPORTANT: Don't wrap helper functions in `useMemo` when they're only used inside `_useCallbacks`.**
+
+Since `_useCallbacks` manages dependencies automatically and always provides handlers with current closures, helper functions defined outside can be regular functions:
+
+```tsx
+// ✅ CORRECT: Regular function, no useMemo needed
+const encodeClipboard = (e: ClipboardEvent, data: any[][]) => {
+  const encoders = { ...defaultEncoders, ...customEncoders };
+  // ... encoding logic
+};
+
+const { handleCopy } = _useCallbacks({
+  handleCopy: (e: ClipboardEvent) => {
+    // This handler has access to latest encodeClipboard
+    encodeClipboard(e, selectedData);
+  },
+});
+
+// ❌ WRONG: Unnecessary useMemo
+const encodeClipboard = useMemo(() => (e: ClipboardEvent, data: any[][]) => {
+  const encoders = { ...defaultEncoders, ...customEncoders };
+  // ... encoding logic
+}, [customEncoders]);
+```
+
+**Why not useMemo?**
+- `_useCallbacks` already captures latest values - handlers always call the current version of helper functions
+- Helper function is recreated on each render, but it doesn't matter because `_useCallbacks` provides stable references
+- Adding `useMemo` adds complexity without performance benefit in this pattern
+- The event listeners registered in `useEffect` don't change, they just call the latest handler from `_useCallbacks`
+- **Frosty's callbacks auto-capture latest state** - Unlike React, no manual dependency management needed
+
+**When to use useMemo for helpers:**
+- Helper function is passed as a prop to child components (prevents unnecessary re-renders)
+- Helper function is used in dependency arrays of other hooks
+- Helper function is expensive to create and not used with `_useCallbacks`
 
 ### Proto.io Integration
 - Dashboard requires `ProtoClient` as prop: `<Dashboard proto={protoClient} />`
@@ -796,6 +840,50 @@ Before submitting code, verify:
 - [ ] Remove unused variables and constants
 - [ ] Remove commented-out code
 - [ ] Remove debug console.log statements
+
+#### 2.5. No Code Duplication
+**CRITICAL: Always extract duplicated code into shared functions.**
+
+- [ ] **Scan for duplicated code blocks** - If the same logic appears in multiple places, extract it
+- [ ] **Create shared functions** - Extract common patterns into reusable functions
+- [ ] **DRY principle** - Don't Repeat Yourself - each piece of logic should exist in one place
+- [ ] **Check before and after changes** - When modifying code, look for duplication opportunities
+
+**Example - Duplicated encoding logic:**
+```tsx
+// ❌ WRONG: Same encodeClipboard function defined in handleCopy AND handleKeyDown
+const { handleCopy, handleKeyDown } = _useCallbacks({
+  handleCopy: (e: ClipboardEvent) => {
+    const encodeClipboard = (e, data) => { /* 25 lines of encoding logic */ };
+    encodeClipboard(e, selectedData);
+  },
+  handleKeyDown: (e: KeyboardEvent) => {
+    const encodeClipboard = (e, data) => { /* SAME 25 lines duplicated! */ };
+    encodeClipboard(e, selectedData);
+  },
+});
+
+// ✅ CORRECT: Extract to shared function
+const encodeClipboard = (e: ClipboardEvent | KeyboardEvent, data: any[][]) => {
+  /* 25 lines of encoding logic - defined ONCE */
+};
+
+const { handleCopy, handleKeyDown } = _useCallbacks({
+  handleCopy: (e: ClipboardEvent) => encodeClipboard(e, selectedData),
+  handleKeyDown: (e: KeyboardEvent) => encodeClipboard(e, selectedData),
+});
+```
+
+**Benefits of eliminating duplication:**
+- **Single source of truth** - Bug fixes and improvements only need to be made once
+- **Maintainability** - Changes don't need to be synchronized across multiple locations
+- **Readability** - Intent is clearer when logic isn't obscured by repetition
+- **Smaller file size** - Less code to load and parse
+
+**When to extract:**
+- Code block appears 2+ times (even if slightly different - parameterize the differences)
+- Logic is complex enough that a descriptive function name would aid understanding
+- Pattern is likely to be reused elsewhere in the future
 
 #### 3. Type Errors
 - [ ] **RUN `get_errors` IMMEDIATELY after writing/modifying code**
