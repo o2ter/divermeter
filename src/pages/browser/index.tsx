@@ -138,7 +138,10 @@ export const BrowserPage = () => {
     for (const item of items) {
       await item.save({ master: true });
     }
-    setResource((prev) => _.map(prev, i => items.find(it => it.id === i.id) ?? i));
+    setResource((prev) => [
+      ..._.map(prev, i => items.find(it => it.id === i.id) ?? i),
+      ..._.filter(items, it => !_.some(prev, p => p.id === it.id))
+    ]);
   };
 
   const {
