@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
-import { QueryFilter, TObject, useProto, useProtoSchema } from '../../proto';
+import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
 import { _useCallbacks, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
 import { _typeOf, typeOf } from './utils';
@@ -463,6 +463,39 @@ const FilterItem = ({
   );
 };
 
+// Helper: Expand schema fields into columns (flatten object types but not arrays)
+const expandColumns = (fields: TSchema['fields']) => {
+  const columns: Array<{
+    key: string;
+    baseField: string;
+    fieldType: any;
+  }> = [];
+
+  const expandField = (fieldName: string, fieldType: TSchema['fields'][string], path: string[] = []) => {
+    
+    if (!_.isString(fieldType) && fieldType.type === 'shape') {
+      // Expand object properties into separate columns
+      for (const [propName, propType] of Object.entries(fieldType.shape)) {
+        expandField(fieldName, propType, [...path, propName]);
+      }
+    } else {
+      // Regular field or non-expandable type
+      const key = path.length > 0 ? `${fieldName}.${path.join('.')}` : fieldName;
+      columns.push({
+        key,
+        baseField: fieldName,
+        fieldType,
+      });
+    }
+  };
+
+  for (const [fieldName, fieldType] of Object.entries(fields)) {
+    expandField(fieldName, fieldType);
+  }
+
+  return columns;
+};
+
 export const BrowserPage = () => {
   const theme = useTheme();
   const alert = useAlert();
@@ -485,6 +518,9 @@ export const BrowserPage = () => {
   const [columnWidth, setColumnWidth] = useState<Record<string, number>>({});
 
   const startActivity = useActivity();
+
+  // Expand columns from schema  
+  const expandedColumns = schema ? expandColumns(schema.fields) : [];
 
   const {
     resource: {
@@ -933,8 +969,8 @@ export const BrowserPage = () => {
           {schema && <DataSheet
             key={className}
             data={items}
-            columns={_.map(schema.fields, (v, k) => ({
-              key: k,
+            columns={expandedColumns.map(col => ({
+              key: col.key,
               label: (
                 <div
                   style={{
@@ -944,22 +980,24 @@ export const BrowserPage = () => {
                     userSelect: 'none',
                   }}
                   onClick={(e) => {
+                    // Only allow sorting by base field (not nested properties)
+                    const sortKey = col.baseField;
                     setSort(sort => ({
-                      ...e.shiftKey ? _.omit(sort, k) : {},
-                      [k]: sort[k] === 1 ? -1 : 1,
+                      ...e.shiftKey ? _.omit(sort, sortKey) : {},
+                      [sortKey]: sort[sortKey] === 1 ? -1 : 1,
                     }));
                   }}
                 >
-                  <span>{k}</span>
+                  <span>{col.key}</span>
                   <span style={{
                     color: theme.colorContrast(theme.colors['primary-100']),
                     opacity: 0.5,
                     paddingLeft: theme.spacing.xs,
-                  }}>({typeOf(v)})</span>
+                  }}>({typeOf(col.fieldType)})</span>
                   <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-                    {sort[k] === 1 ? (
+                    {sort[col.baseField] === 1 ? (
                       <Icon name="sortAsc" size="md" />
-                    ) : sort[k] === -1 ? (
+                    ) : sort[col.baseField] === -1 ? (
                         <Icon name="sortDesc" size="md" />
                     ) : null}
                   </span>
@@ -967,15 +1005,19 @@ export const BrowserPage = () => {
               ),
             }))}
             showEmptyLastRow
-            columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
+            columnWidth={expandedColumns.map(col => columnWidth[col.key] || 150)}
             startRowNumber={offset + 1}
             allowEditForCell={(row, col) => {
-              const columnKey = _.keys(schema.fields)[col];
-              return !readonlyKeys.includes(columnKey);
+              const column = expandedColumns[col];
+              if (!column) return false;
+              // Can't edit system fields or the base field of system fields
+              return !readonlyKeys.includes(column.baseField);
             }}
             onColumnWidthChange={(col, width) => {
-              const columnKey = _.keys(schema.fields)[col];
-              setColumnWidth(prev => ({ ...prev, [columnKey]: width }));
+              const column = expandedColumns[col];
+              if (column) {
+                setColumnWidth(prev => ({ ...prev, [column.key]: width }));
+              }
             }}
             renderItem={({ item, columnKey, isEditing }) => (
               <TableCell
@@ -989,18 +1031,21 @@ export const BrowserPage = () => {
             )}
             encodeValue={(v, k) => encodeValue(v.get(k))}
             onStartEditing={(row, col) => {
-              const columnKey = _.keys(schema.fields)[col];
-              const currentValue = items[row]?.get(columnKey);
+              const column = expandedColumns[col];
+              if (!column) return;
+              const currentValue = items[row]?.get(column.key);
               setEditingValue(currentValue);
             }}
             onEndEditing={(row, col) => {
-              const columnKey = _.keys(schema.fields)[col];
+              const column = expandedColumns[col];
+              if (!column) return;
+
               const item = items[row] ?? proto.Object(className);
-              const currentValue = item.get(columnKey);
+              const currentValue = item.get(column.key);
 
               // Only save if value changed
               if (!_.isEqual(editingValue, currentValue)) {
-                handleUpdateItem(item, columnKey, editingValue);
+                handleUpdateItem(item, column.key, editingValue);
               }
 
               setEditingValue(undefined);
@@ -1016,7 +1061,9 @@ export const BrowserPage = () => {
                     for (const [obj, values] of _.zip(objs, data)) {
                       const _obj = obj?.clone() ?? proto.Object(className);
                       for (const [column, value] of _.toPairs(values)) {
-                        if (!_.includes(readonlyKeys, column)) {
+                        // Proto handles dot notation automatically - extract base field for readonly check
+                        const baseField = column.split('.')[0];
+                        if (!_.includes(readonlyKeys, baseField)) {
                           await _obj.set(column, value);
                         }
                       }
@@ -1025,15 +1072,17 @@ export const BrowserPage = () => {
                   } else if (type === 'raw') {
                     for (const [obj, values] of _.zip(objs, data)) {
                       const _obj = obj?.clone() ?? proto.Object(className);
-                      for (const [column = '', value] of _.zip(_.keys(schema.fields), values)) {
-                        if (!_.includes(readonlyKeys, column)) {
+                      for (const [column, value] of _.zip(expandedColumns, values)) {
+                        if (!column) continue;
+
+                        if (!_.includes(readonlyKeys, column.baseField)) {
                           if (_.isNil(value)) {
-                            if (_obj.id) _obj.set(column, null);
+                            if (_obj.id) _obj.set(column.key, null);
                           } else if (_.isString(value)) {
-                            const _value = await decodeRawValue(_typeOf(schema.fields[column]) ?? '', value);
-                            if (!_.isNil(_value)) _obj.set(column, _value as any);
+                            const _value = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
+                            if (!_.isNil(_value)) _obj.set(column.key, _value as any);
                           } else {
-                            throw Error(`Invalid value for column ${column}: ${value}`);
+                            throw Error(`Invalid value for column ${column.key}: ${value}`);
                           }
                         }
                       }
@@ -1051,24 +1100,25 @@ export const BrowserPage = () => {
             onPasteCells={(cells, clipboard) => {
               startActivity(async () => {
                 try {
-                  const _columns = _.keys(schema.fields);
                   const _rows = _.range(cells.start.row, cells.end.row + 1);
-                  const _cols = _.range(cells.start.col, cells.end.col + 1).map(c => _columns[c]);
+                  const _cols = _.range(cells.start.col, cells.end.col + 1).map(c => expandedColumns[c]).filter(Boolean);
                   const { data } = await decodeClipboardData(clipboard, false) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data)) return;
                   const objs = _.compact(_.map(_rows, row => items[row]));
                   const updates: TObject[] = [];
                   for (const [obj, values] of _.zip(objs, data)) {
                     const _obj = obj?.clone() ?? proto.Object(className);
-                    for (const [column = '', value] of _.zip(_cols, values)) {
-                      if (!_.includes(readonlyKeys, column)) {
+                    for (const [column, value] of _.zip(_cols, values)) {
+                      if (!column) continue;
+
+                      if (!_.includes(readonlyKeys, column.baseField)) {
                         if (_.isNil(value)) {
-                          if (_obj.id) _obj.set(column, null);
+                          if (_obj.id) _obj.set(column.key, null);
                         } else if (_.isString(value)) {
-                          const _value = await decodeRawValue(_typeOf(schema.fields[column]) ?? '', value);
-                          if (!_.isNil(_value)) _obj.set(column, _value as any);
+                          const _value = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
+                          if (!_.isNil(_value)) _obj.set(column.key, _value as any);
                         } else {
-                          throw Error(`Invalid value for column ${column}: ${value}`);
+                          throw Error(`Invalid value for column ${column.key}: ${value}`);
                         }
                       }
                     }
@@ -1089,12 +1139,14 @@ export const BrowserPage = () => {
               }
             }}
             onDeleteCells={(cells) => {
-              const _columns = _.keys(schema.fields);
               const _rows = _.range(cells.start.row, cells.end.row + 1);
-              const _cols = _.range(cells.start.col, cells.end.col + 1).map(c => _columns[c]);
+              const _cols = _.range(cells.start.col, cells.end.col + 1)
+                .map(c => expandedColumns[c])
+                .filter(Boolean);
 
-              // Filter out readonly columns
-              const editableCols = _.filter(_cols, col => !_.includes(readonlyKeys, col));
+              // Filter out readonly columns (check base field)
+              const editableCols = _.filter(_cols, col => !_.includes(readonlyKeys, col.baseField))
+                .map(col => col.key);
               const selectedItems = _.compact(_.map(_rows, row => items[row]));
 
               if (!_.isEmpty(editableCols) && !_.isEmpty(selectedItems)) {
