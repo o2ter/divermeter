@@ -147,17 +147,31 @@ const DataSheetTable = <T extends object, C extends Column>({
         let hasSelectionChanged = false;
         let newState = currentState;
 
-        if (!_.isEmpty((currentState as any).selectingRows)) {
+        if (!_.isEmpty(currentState._selectRows)) {
           hasSelectionChanged = true;
+          const _rows = _.range(
+            Math.min(currentState._selectRows.start, currentState._selectRows.end),
+            Math.max(currentState._selectRows.start, currentState._selectRows.end) + 1,
+          );
           newState = {
             ..._.omit(currentState, ...selectionKeys, 'editing'),
-            selectedRows: (currentState as any).selectingRows,
+            selectedRows: currentState.shiftKey ? _.union(currentState.selectedRows ?? [], _rows) : currentState.metaKey ? _.xor(currentState.selectedRows ?? [], _rows) : _rows,
           };
-        } else if (!_.isEmpty((currentState as any)._selectingCells)) {
+        } else if (currentState._selectStart && currentState._selectEnd) {
           hasSelectionChanged = true;
+          const bound = {
+            start: {
+              row: Math.min(currentState._selectStart.row, currentState._selectEnd.row),
+              col: Math.min(currentState._selectStart.col, currentState._selectEnd.col),
+            },
+            end: {
+              row: Math.max(currentState._selectStart.row, currentState._selectEnd.row),
+              col: Math.max(currentState._selectStart.col, currentState._selectEnd.col),
+            },
+          };
           newState = {
             ..._.omit(currentState, ...selectionKeys, 'editing'),
-            selectedCells: (currentState as any)._selectingCells,
+            selectedCells: bound,
           };
         }
 
