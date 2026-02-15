@@ -35,6 +35,7 @@ import { useAlert } from '../../components/alert';
 import { useActivity } from '../../components/activity';
 import { Decimal, deserialize, serialize } from 'proto.io';
 import { Button } from '../../components/button';
+import { Modal } from '../../components/modal';
 
 // System fields that cannot be edited
 const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
@@ -208,6 +209,7 @@ export const BrowserPage = () => {
 
   const [searchCriteria, setSearchCriteria] = useState<FilterCriteria[]>([]);
   const [filter, setFilter] = useState<QueryFilter[]>([]);
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   const [limit, setLimit] = useState(20);
   const [offset, setOffset] = useState(0);
@@ -328,11 +330,13 @@ export const BrowserPage = () => {
       }
       setFilter(filters);
       setOffset(0); // Reset pagination when filters change
+      setShowFilterModal(false); // Close modal after applying
     },
     handleClearFilters: () => {
       setSearchCriteria([]);
       setFilter([]);
       setOffset(0);
+      setShowFilterModal(false); // Close modal after clearing
     },
   });
 
@@ -491,103 +495,144 @@ export const BrowserPage = () => {
         borderBottom: `1px solid ${theme.colors['primary-200']}`,
         backgroundColor: theme.colors['primary-100'],
       }}>
-        <h2 style={{
-          margin: 0,
-          fontSize: theme.fontSize.lg,
-          fontWeight: theme.fontWeight.semibold,
-          color: theme.colors.primary,
-        }}>
-          {className}
-        </h2>
-        <div style={{
-          marginTop: theme.spacing.xs,
-          fontSize: theme.fontSize.sm,
-          color: theme.colorContrast(theme.colors['primary-100']),
-          opacity: 0.7,
-        }}>
-          {count} {count === 1 ? 'record' : 'records'}
-          {filter.length > 0 && ` (${filter.length} ${filter.length === 1 ? 'filter' : 'filters'} applied)`}
-        </div>
-      </div>
-      <div style={{
-        padding: `${theme.spacing.md}px ${theme.spacing.xl}px`,
-        borderBottom: `1px solid ${theme.colors['primary-200']}`,
-        backgroundColor: '#ffffff',
-      }}>
         <div style={{
           display: 'flex',
-          alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: searchCriteria.length > 0 ? theme.spacing.md : 0,
+          alignItems: 'center',
         }}>
-          <h3 style={{
-            margin: 0,
-            fontSize: theme.fontSize.md,
-            fontWeight: theme.fontWeight.semibold,
-            color: theme.colorContrast('#ffffff'),
+          <div>
+            <h2 style={{
+              margin: 0,
+              fontSize: theme.fontSize.lg,
+              fontWeight: theme.fontWeight.semibold,
+              color: theme.colors.primary,
+            }}>
+              {className}
+            </h2>
+            <div style={{
+              marginTop: theme.spacing.xs,
+              fontSize: theme.fontSize.sm,
+              color: theme.colorContrast(theme.colors['primary-100']),
+              opacity: 0.7,
+            }}>
+              {count} {count === 1 ? 'record' : 'records'}
+              {filter.length > 0 && ` • ${filter.length} ${filter.length === 1 ? 'filter' : 'filters'} active`}
+            </div>
+          </div>
+          <Button
+            variant={filter.length > 0 ? 'solid' : 'outline'}
+            color="primary"
+            size="sm"
+            onClick={() => setShowFilterModal(true)}
+          >
+            🔍 Filters {filter.length > 0 && `(${filter.length})`}
+          </Button>
+        </div>
+      </div>
+      <Modal show={showFilterModal}>
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: theme.borderRadius.lg,
+          padding: theme.spacing.xl,
+          minWidth: '600px',
+          maxWidth: '800px',
+          maxHeight: '80vh',
+          overflow: 'auto',
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: theme.spacing.lg,
           }}>
-            Search Criteria
-          </h3>
-          <div style={{ display: 'flex', gap: theme.spacing.sm }}>
-            <Button
-              variant="outline"
-              color="primary"
-              size="sm"
-              onClick={handleAddCriteria}
+            <h3 style={{
+              margin: 0,
+              fontSize: theme.fontSize.lg,
+              fontWeight: theme.fontWeight.semibold,
+              color: theme.colorContrast('#ffffff'),
+            }}>
+              Search Filters
+            </h3>
+            <button
+              onClick={() => setShowFilterModal(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: theme.fontSize.lg,
+                cursor: 'pointer',
+                color: theme.colorContrast('#ffffff'),
+                opacity: 0.6,
+                padding: 0,
+                '&:hover': {
+                  opacity: 1,
+                },
+              }}
             >
-              + Add Filter
-            </Button>
-            {(searchCriteria.length > 0 || filter.length > 0) && (
-              <>
+              ✕
+            </button>
+          </div>
+          {schema && (
+            <>
+              {searchCriteria.map((criteria) => (
+                <FilterRow
+                  key={criteria.id}
+                  criteria={criteria}
+                  fields={schema.fields}
+                  onUpdate={handleUpdateCriteria}
+                  onRemove={() => handleRemoveCriteria(criteria.id)}
+                />
+              ))}
+              {searchCriteria.length === 0 && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: `${theme.spacing.xl}px 0`,
+                  color: theme.colorContrast('#ffffff'),
+                  opacity: 0.5,
+                  fontSize: theme.fontSize.sm,
+                }}>
+                  No filters added yet
+                </div>
+              )}
+              <div style={{
+                display: 'flex',
+                gap: theme.spacing.sm,
+                marginTop: theme.spacing.lg,
+                justifyContent: 'space-between',
+              }}>
                 <Button
-                  variant="solid"
+                  variant="outline"
                   color="primary"
                   size="sm"
-                  onClick={handleApplyFilters}
-                  disabled={searchCriteria.length === 0}
+                  onClick={handleAddCriteria}
                 >
-                  Apply Filters
+                  + Add Filter
                 </Button>
-                <Button
-                  variant="ghost"
-                  color="error"
-                  size="sm"
-                  onClick={handleClearFilters}
-                >
-                  Clear All
-                </Button>
-              </>
-            )}
-          </div>
+                <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+                  {(searchCriteria.length > 0 || filter.length > 0) && (
+                    <Button
+                      variant="ghost"
+                      color="error"
+                      size="sm"
+                      onClick={handleClearFilters}
+                    >
+                      Clear All
+                    </Button>
+                  )}
+                  <Button
+                    variant="solid"
+                    color="primary"
+                    size="sm"
+                    onClick={handleApplyFilters}
+                    disabled={searchCriteria.length === 0}
+                  >
+                    Apply Filters
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
-        {searchCriteria.length > 0 && schema && (
-          <div style={{
-            backgroundColor: theme.colors['primary-100'],
-            borderRadius: theme.borderRadius.md,
-            padding: theme.spacing.md,
-          }}>
-            {searchCriteria.map((criteria) => (
-              <FilterRow
-                key={criteria.id}
-                criteria={criteria}
-                fields={schema.fields}
-                onUpdate={handleUpdateCriteria}
-                onRemove={() => handleRemoveCriteria(criteria.id)}
-              />
-            ))}
-          </div>
-        )}
-        {filter.length > 0 && (
-          <div style={{
-            marginTop: theme.spacing.md,
-            fontSize: theme.fontSize.sm,
-            color: theme.colorContrast('#ffffff'),
-            opacity: 0.7,
-          }}>
-            Active filters: {filter.length}
-          </div>
-        )}
-      </div>
+      </Modal>
       <div style={{
         flex: 1,
         position: 'relative',
@@ -775,6 +820,93 @@ export const BrowserPage = () => {
               }
             }}
           />}
+        </div>
+      </div>
+      <div style={{
+        padding: `${theme.spacing.md}px ${theme.spacing.xl}px`,
+        borderTop: `1px solid ${theme.colors['primary-200']}`,
+        backgroundColor: theme.colors['primary-100'],
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <div style={{
+          fontSize: theme.fontSize.sm,
+          color: theme.colorContrast(theme.colors['primary-100']),
+        }}>
+          Showing {Math.min(offset + 1, count)} - {Math.min(offset + limit, count)} of {count}
+        </div>
+        <div style={{
+          display: 'flex',
+          gap: theme.spacing.xs,
+          alignItems: 'center',
+        }}>
+          <Button
+            variant="ghost"
+            color="primary"
+            size="sm"
+            onClick={() => setOffset(0)}
+            disabled={offset === 0}
+          >
+            « First
+          </Button>
+          <Button
+            variant="ghost"
+            color="primary"
+            size="sm"
+            onClick={() => setOffset(Math.max(0, offset - limit))}
+            disabled={offset === 0}
+          >
+            ‹ Prev
+          </Button>
+          <div style={{
+            padding: `0 ${theme.spacing.sm}px`,
+            fontSize: theme.fontSize.sm,
+            color: theme.colorContrast(theme.colors['primary-100']),
+          }}>
+            Page {Math.floor(offset / limit) + 1} of {Math.max(1, Math.ceil(count / limit))}
+          </div>
+          <Button
+            variant="ghost"
+            color="primary"
+            size="sm"
+            onClick={() => setOffset(offset + limit)}
+            disabled={offset + limit >= count}
+          >
+            Next ›
+          </Button>
+          <Button
+            variant="ghost"
+            color="primary"
+            size="sm"
+            onClick={() => setOffset(Math.floor((count - 1) / limit) * limit)}
+            disabled={offset + limit >= count}
+          >
+            Last »
+          </Button>
+          <select
+            value={`${limit}`}
+            onChange={(e) => {
+              const newLimit = parseInt(e.currentTarget.value);
+              setLimit(newLimit);
+              setOffset(0);
+            }}
+            style={{
+              marginLeft: theme.spacing.md,
+              padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
+              fontSize: theme.fontSize.sm,
+              borderRadius: theme.borderRadius.md,
+              border: `1px solid ${theme.colors['primary-300']}`,
+              backgroundColor: '#ffffff',
+              color: theme.colorContrast('#ffffff'),
+            }}
+          >
+            <option value="10">10 / page</option>
+            <option value="20">20 / page</option>
+            <option value="50">50 / page</option>
+            <option value="100">100 / page</option>
+            <option value="200">200 / page</option>
+          </select>
         </div>
       </div>
     </div>
