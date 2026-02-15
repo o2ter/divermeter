@@ -58,8 +58,6 @@ const operators = [
   // Array operations
   { value: '$size', label: 'size' },
   { value: '$empty', label: 'is empty' },
-  // Field existence
-  { value: '$exists', label: 'exists' },
   // Custom filter
   { value: '$filter', label: 'custom filter' },
 ];
@@ -337,7 +335,7 @@ const FilterItem = ({
 
   // Render type-aware value input
   const renderValueInput = () => {
-    const disabled = !field.operator || field.operator === '$exists';
+    const disabled = !field.operator;
 
     const baseStyle = {
       flex: 1,
@@ -398,9 +396,32 @@ const FilterItem = ({
       );
     }
 
-    // For array operators ($in, $nin, $subset, $superset, $intersect), use comma-separated input
+    // For array operators ($in, $nin, $subset, $superset, $intersect)
     if (field.operator === '$in' || field.operator === '$nin' ||
       field.operator === '$subset' || field.operator === '$superset' || field.operator === '$intersect') {
+
+      // For complex field types, use JSCode editor with custom format
+      if (fieldType === 'array' || fieldType === 'object' || fieldType === 'string[]') {
+        return (
+          <div style={{
+            flex: 1,
+            minHeight: '60px',
+            border: `1px solid ${theme.colors['primary-300']}`,
+            borderRadius: theme.borderRadius.sm,
+            overflow: 'auto',
+            '&:focus-within': {
+              borderColor: theme.colors.primary,
+            },
+          }}>
+            <JSCode
+              initialValue={field.value}
+              onChangeValue={(text) => onUpdate({ ...field, value: text })}
+            />
+          </div>
+        );
+      }
+
+      // For simple types, use comma-separated text input
       return (
         <input
           type="text"
@@ -634,64 +655,68 @@ export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProp
     let parsedValue: any = field.value;
 
     // Parse value based on operator and field type
-    if (field.operator !== '$exists') {
-      try {
-        // Operator-specific parsing (overrides field type)
-        if (field.operator === '$size') {
-          // $size expects a number
-          parsedValue = parseFloat(field.value);
-          if (!_.isFinite(parsedValue)) return null;
-        } else if (field.operator === '$empty') {
-          // $empty expects a boolean
-          parsedValue = field.value.toLowerCase() === 'true';
-        } else if (field.operator === '$in' || field.operator === '$nin' ||
-          field.operator === '$subset' || field.operator === '$superset' || field.operator === '$intersect') {
-          // Array operators expect arrays (comma-separated input)
-          parsedValue = field.value.split(',').map(v => v.trim());
+    try {
+      // Operator-specific parsing (overrides field type)
+      if (field.operator === '$size') {
+        // $size expects a number
+        parsedValue = parseFloat(field.value);
+        if (!_.isFinite(parsedValue)) return null;
+      } else if (field.operator === '$empty') {
+        // $empty expects a boolean
+        parsedValue = field.value.toLowerCase() === 'true';
+      } else if (field.operator === '$in' || field.operator === '$nin' ||
+        field.operator === '$subset' || field.operator === '$superset' || field.operator === '$intersect') {
+        // Array operators expect arrays
+        // For complex field types, parse using custom format
+        if (fieldType === 'array' || fieldType === 'object' || fieldType === 'string[]') {
+          const parsed = decodeValue(field.value);
+          verifyValue(parsed);
+          parsedValue = parsed;
         } else {
-        // Field type-based parsing for standard operators
-          switch (fieldType) {
-            case 'number':
-              parsedValue = parseFloat(field.value);
-              if (!_.isFinite(parsedValue)) return null;
-              break;
-            case 'decimal':
-              parsedValue = new Decimal(field.value);
-              if (!parsedValue.isFinite()) return null;
-              break;
-            case 'boolean':
-              parsedValue = field.value.toLowerCase() === 'true';
-              break;
-            case 'date':
-              parsedValue = new Date(field.value);
-              if (!_.isFinite(parsedValue.valueOf())) return null;
-              break;
-            case 'array':
-            case 'object':
-            case 'string[]':
-              const parsed = decodeValue(field.value);
-              verifyValue(parsed);
-              parsedValue = parsed;
-              break;
-            case 'pointer':
-              parsedValue = field.value;
-              break;
-            default:
-              // String and other types use raw value
-              parsedValue = field.value;
-              break;
-          }
+          // For simple types, use comma-separated values
+          parsedValue = field.value.split(',').map(v => v.trim());
         }
-      } catch (error) {
-        alert.showError(`Failed to parse filter value for ${field.field}: ${error}`);
-        throw error;
+      } else {
+        // Field type-based parsing for standard operators
+        switch (fieldType) {
+          case 'number':
+            parsedValue = parseFloat(field.value);
+            if (!_.isFinite(parsedValue)) return null;
+            break;
+          case 'decimal':
+            parsedValue = new Decimal(field.value);
+            if (!parsedValue.isFinite()) return null;
+            break;
+          case 'boolean':
+            parsedValue = field.value.toLowerCase() === 'true';
+            break;
+          case 'date':
+            parsedValue = new Date(field.value);
+            if (!_.isFinite(parsedValue.valueOf())) return null;
+            break;
+          case 'array':
+          case 'object':
+          case 'string[]':
+            const parsed = decodeValue(field.value);
+            verifyValue(parsed);
+            parsedValue = parsed;
+            break;
+          case 'pointer':
+            parsedValue = field.value;
+            break;
+          default:
+            // String and other types use raw value
+            parsedValue = field.value;
+            break;
+        }
       }
+    } catch (error) {
+      alert.showError(`Failed to parse filter value for ${field.field}: ${error}`);
+      throw error;
     }
 
     // Create filter object
-    if (field.operator === '$exists') {
-      return { [field.field]: { $exists: true } };
-    } else if (field.operator === '$eq') {
+    if (field.operator === '$eq') {
       return { [field.field]: parsedValue };
     } else {
       return { [field.field]: { [field.operator]: parsedValue } };
