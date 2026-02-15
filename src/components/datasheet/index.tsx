@@ -131,8 +131,8 @@ const DataSheetTable = <T extends object, C extends Column>({
         const _data = _.map(selectedRows, row => _.pick(data[row], columnKeys as any));
         onCopyRows(selectedRows, _data, handler);
       } else {
-        const _encodeValue = encodeValue ?? ((v: any) => v);
-        const _data = _.map(selectedRows, row => _.map(columnKeys, col => _encodeValue(data[row]?.[col as keyof T])));
+        const _encodeValue = encodeValue ?? ((item: T, key: string) => item[key as keyof T]);
+        const _data = _.map(selectedRows, row => _.map(columnKeys, col => _encodeValue(data[row], col)));
         encodeClipboard(e, _data);
       }
     }
@@ -145,8 +145,8 @@ const DataSheetTable = <T extends object, C extends Column>({
         const _data = _.map(_rows, row => _.pick(data[row], _.map(_cols, col => columnKeys[col]) as any));
         onCopyCells(selectedCells, _data, handler);
       } else {
-        const _encodeValue = encodeValue ?? ((v: any) => v);
-        const _data = _.map(_rows, row => _.map(_cols, col => _encodeValue(data[row]?.[columnKeys[col] as keyof T])));
+        const _encodeValue = encodeValue ?? ((item: T, key: string) => item[key as keyof T]);
+        const _data = _.map(_rows, row => _.map(_cols, col => _encodeValue(data[row], columnKeys[col])));
         encodeClipboard(e, _data);
       }
     }

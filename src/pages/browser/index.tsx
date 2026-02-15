@@ -188,13 +188,6 @@ export const BrowserPage = () => {
     return serialize(x);
   }
 
-  const encoders = {
-    'text/plain': (data: any[][]) => tsvFormatRows(_.map(data, row => _.map(row, val => encodeValue(val?.value)))),
-    'application/json': (data: any[][]) => serialize(_.map(data, row => _.fromPairs(_.compact(_.map(row, (
-      item => item ? [item.column, item.value] : undefined
-    )))))),
-  };
-
   return (
     <div style={{
       display: 'flex',
@@ -296,7 +289,7 @@ export const BrowserPage = () => {
                 setEditingValue={setEditingValue}
               />
             )}
-            encoders={encoders}
+            encodeValue={(v, k) => encodeValue(v.get(k))}
             onStartEditing={(row, col) => {
               const columnKey = _.keys(schema.fields)[col];
               const currentValue = resource[row].get(columnKey);

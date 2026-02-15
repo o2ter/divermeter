@@ -53,7 +53,7 @@ export type DataSheetProps<T extends object, C extends Column> = {
   data: T[];
   columns: C[];
   encoders?: Record<string, (data: any[][]) => string | Blob | PromiseLike<string | Blob>>;
-  encodeValue?: (data: T[keyof T]) => any;
+  encodeValue?: (item: T, key: string) => any;
   allowSelection?: boolean;
   allowEditForCell?: boolean | ((row: number, col: number) => boolean);
   columnWidth?: number[];
