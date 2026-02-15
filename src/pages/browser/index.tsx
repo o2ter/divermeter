@@ -227,7 +227,9 @@ const FilterItem = ({
                   '&:hover': { opacity: 1 },
                 }}
               >
-                ✕
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M9.5 2.5L2.5 9.5M2.5 2.5L9.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
               </button>
             )}
           </div>
@@ -330,7 +332,9 @@ const FilterItem = ({
             '&:hover': { opacity: 1 },
           }}
         >
-          ✕
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M9.5 2.5L2.5 9.5M2.5 2.5L9.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
         </button>
       </div>
     );
@@ -455,7 +459,9 @@ const FilterItem = ({
           '&:hover': { opacity: 1 },
         }}
       >
-        ✕
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M9.5 2.5L2.5 9.5M2.5 2.5L9.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
       </button>
     </div>
   );
@@ -814,7 +820,13 @@ export const BrowserPage = () => {
             size="sm"
             onClick={() => setShowFilterModal(true)}
           >
-            🔍 Filters {filter.length > 0 && `(${filter.length})`}
+            <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M11 11L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <span>Filters {filter.length > 0 && `(${filter.length})`}</span>
+            </div>
           </Button>
         </div>
       </div>
@@ -857,7 +869,9 @@ export const BrowserPage = () => {
                 },
               }}
             >
-              ✕
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
             </button>
           </div>
           {schema && (
@@ -1119,7 +1133,13 @@ export const BrowserPage = () => {
             onClick={() => setOffset(0)}
             disabled={offset === 0}
           >
-            « First
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M8 10L4 6L8 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M5 10L1 6L5 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>First</span>
+            </div>
           </Button>
           <Button
             variant="ghost"
@@ -1128,7 +1148,12 @@ export const BrowserPage = () => {
             onClick={() => setOffset(Math.max(0, offset - limit))}
             disabled={offset === 0}
           >
-            ‹ Prev
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M7 10L3 6L7 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>Prev</span>
+            </div>
           </Button>
           <div style={{
             padding: `0 ${theme.spacing.sm}px`,
@@ -1144,7 +1169,12 @@ export const BrowserPage = () => {
             onClick={() => setOffset(offset + limit)}
             disabled={offset + limit >= count}
           >
-            Next ›
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span>Next</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M5 2L9 6L5 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
           </Button>
           <Button
             variant="ghost"
@@ -1153,7 +1183,13 @@ export const BrowserPage = () => {
             onClick={() => setOffset(Math.floor((count - 1) / limit) * limit)}
             disabled={offset + limit >= count}
           >
-            Last »
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span>Last</span>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7 2L11 6L7 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
           </Button>
           <select
             value={`${limit}`}
