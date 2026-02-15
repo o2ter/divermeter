@@ -81,6 +81,32 @@ export const BrowserPage = () => {
         }
       });
     },
+    handleDeleteItems: (items: TObject[]) => {
+      startActivity(async () => {
+        try {
+          await Promise.all(items.map(item => item.destroy({ master: true })));
+          setResource((prev) => _.filter(prev, i => !items.includes(i)));
+          alert.showSuccess(`${items.length} object(s) deleted successfully`);
+        } catch (error) {
+          console.error('Failed to delete items:', error);
+          alert.showError(error instanceof Error ? error.message : 'Failed to delete items');
+        }
+      });
+    },
+    handleDeleteKeys: (item: TObject, keys: string[]) => {
+      startActivity(async () => {
+        try {
+          const cloned = item.clone();
+          keys.forEach(key => cloned.set(key, null));
+          await cloned.save({ master: true });
+          setResource((prev) => _.map(prev, i => i === item ? cloned : i));
+          alert.showSuccess(`Fields ${keys.join(', ')} deleted successfully`);
+        } catch (error) {
+          console.error('Failed to delete fields:', error);
+          alert.showError(error instanceof Error ? error.message : 'Failed to delete fields');
+        }
+      });
+    },
   });
 
   return (
