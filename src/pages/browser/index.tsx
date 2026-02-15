@@ -100,7 +100,6 @@ export const BrowserPage = () => {
   // Parse URL search params for state persistence
   const { filter, relationQuery, limit, offset, sort } = useMemo(() => {
     const params = searchParams;
-    const id = params.get('id');
     const relationOf = params.get('relationOf');
     const relationId = params.get('relationId');
     const relationField = params.get('relationField');
@@ -113,18 +112,31 @@ export const BrowserPage = () => {
     let filter: QueryFilter[] = [];
     let relationQuery: { className: string; objectId: string; field: string } | null = null;
 
-    if (id) {
-      // Priority 1: id parameter
-      filter = [{ _id: { $eq: id } }];
-    } else if (relationOf && relationId && relationField) {
-      // Priority 2: relation parameters
+    if (relationOf && relationId && relationField) {
+    // Priority 1: relation parameters
       relationQuery = { className: relationOf, objectId: relationId, field: relationField };
-    } else if (filterParam) {
-      // Priority 3: filter parameter
-      try {
-        filter = JSON.parse(filterParam);
-      } catch {
-        filter = [];
+    } else {
+      // Priority 2: Parse filter[col]=val parameters
+      const filterParams: Record<string, string> = {};
+      for (const [key, value] of params.entries()) {
+        const match = key.match(/^filter\[(.+)\]$/);
+        if (match) {
+          filterParams[match[1]] = value;
+        }
+      }
+
+      if (Object.keys(filterParams).length > 0) {
+        // Convert filter[col]=val to QueryFilter format
+        filter = Object.entries(filterParams).map(([col, val]) => ({
+          [col]: { $eq: val }
+        }));
+      } else if (filterParam) {
+        // Priority 3: Legacy filter parameter (JSON format)
+        try {
+          filter = JSON.parse(filterParam);
+        } catch {
+          filter = [];
+        }
       }
     }
 
@@ -150,12 +162,29 @@ export const BrowserPage = () => {
   // Helper functions to update URL params
   const updateFilter = (newFilter: QueryFilter[]) => {
     setSearchParams(params => {
-      // Don't delete relation params - allow filtering within relations
-      params.delete('id');
+      // Delete existing filter parameters
+      const keysToDelete: string[] = [];
+      for (const key of params.keys()) {
+        if (key.match(/^filter\[.+\]$/)) {
+          keysToDelete.push(key);
+        }
+      }
+      keysToDelete.forEach(key => params.delete(key));
+      params.delete('filter');
+
+      // Set new filter parameters in filter[col]=val format
       if (newFilter.length > 0) {
-        params.set('filter', JSON.stringify(newFilter));
-      } else {
-        params.delete('filter');
+        newFilter.forEach(filterItem => {
+          // Handle simple equality filters
+          Object.entries(filterItem).forEach(([col, condition]) => {
+            if (_.isObject(condition) && '$eq' in condition) {
+              params.set(`filter[${col}]`, String(condition.$eq));
+            } else {
+        // For complex filters, fall back to JSON format
+              params.set('filter', JSON.stringify(newFilter));
+            }
+          });
+        });
       }
       params.delete('offset');
       return params;
