@@ -27,8 +27,8 @@ import _ from 'lodash';
 import { tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
-import { _useCallbacks, useEffect, useMemo, useResource, useState } from 'frosty';
-import { useLocation } from 'frosty/web';
+import { _useCallbacks, useMemo, useResource, useState } from 'frosty';
+import { useSearchParams } from 'frosty/web';
 import { DataSheet } from '../../components/datasheet';
 import { _typeOf, typeOf } from './utils';
 import { TableCell } from './cell';
@@ -90,43 +90,110 @@ export const BrowserPage = () => {
   const proto = useProto();
   const schemas = useProtoSchema();
   const { [className]: schema } = schemas;
-  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [filter, setFilter] = useState<QueryFilter[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [relationQuery, setRelationQuery] = useState<{ className: string; objectId: string; field: string } | null>(null);
-
-  const [limit, setLimit] = useState(20);
-  const [offset, setOffset] = useState(0);
-  const [sort, setSort] = useState<Record<string, 1 | -1>>({});
-
   const [columnWidth, setColumnWidth] = useState<Record<string, number>>({});
 
   const startActivity = useActivity();
 
-  // Expand columns from schema  
-  const expandedColumns = useMemo(() => schema ? expandColumns(schema.fields) : [], [schema]);
-
-  // Read filter from URL query params (e.g., ?id=123 or ?relationOf=User&relationId=123&relationField=posts)
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
+  // Parse URL search params for state persistence
+  const { filter, relationQuery, limit, offset, sort } = useMemo(() => {
+    const params = searchParams;
     const id = params.get('id');
     const relationOf = params.get('relationOf');
     const relationId = params.get('relationId');
     const relationField = params.get('relationField');
+    const filterParam = params.get('filter');
+    const limitParam = params.get('limit');
+    const offsetParam = params.get('offset');
+    const sortParam = params.get('sort');
+
+    // Derive filter and relationQuery
+    let filter: QueryFilter[] = [];
+    let relationQuery: { className: string; objectId: string; field: string } | null = null;
 
     if (id) {
-      setFilter([{ _id: { $eq: id } }]);
-      setRelationQuery(null);
+      // Priority 1: id parameter
+      filter = [{ _id: { $eq: id } }];
     } else if (relationOf && relationId && relationField) {
-      // Store relation query params to use proto.Relation in the query
-      setRelationQuery({ className: relationOf, objectId: relationId, field: relationField });
-      setFilter([]);
-    } else {
-      setFilter([]);
-      setRelationQuery(null);
+      // Priority 2: relation parameters
+      relationQuery = { className: relationOf, objectId: relationId, field: relationField };
+    } else if (filterParam) {
+      // Priority 3: filter parameter
+      try {
+        filter = JSON.parse(filterParam);
+      } catch {
+        filter = [];
+      }
     }
-  }, [location.search]);
+
+    // Parse limit
+    const limit = limitParam ? parseInt(limitParam) : 20;
+
+    // Parse offset
+    const offset = offsetParam ? parseInt(offsetParam) : 0;
+
+    // Parse sort
+    let sort: Record<string, 1 | -1> = {};
+    if (sortParam) {
+      try {
+        sort = JSON.parse(sortParam);
+      } catch {
+        sort = {};
+      }
+    }
+
+    return { filter, relationQuery, limit, offset, sort };
+  }, [searchParams]);
+
+  // Helper functions to update URL params
+  const updateFilter = (newFilter: QueryFilter[]) => {
+    setSearchParams(params => {
+      // Don't delete relation params - allow filtering within relations
+      params.delete('id');
+      if (newFilter.length > 0) {
+        params.set('filter', JSON.stringify(newFilter));
+      } else {
+        params.delete('filter');
+      }
+      params.delete('offset');
+      return params;
+    });
+  };
+
+  const updateSort = (newSort: Record<string, 1 | -1>) => {
+    setSearchParams(params => {
+      if (Object.keys(newSort).length > 0) {
+        params.set('sort', JSON.stringify(newSort));
+      } else {
+        params.delete('sort');
+      }
+      return params;
+    });
+  };
+
+  const updateLimit = (newLimit: number) => {
+    setSearchParams(params => {
+      params.set('limit', String(newLimit));
+      params.delete('offset');
+      return params;
+    });
+  };
+
+  const updateOffset = (newOffset: number) => {
+    setSearchParams(params => {
+      if (newOffset > 0) {
+        params.set('offset', String(newOffset));
+      } else {
+        params.delete('offset');
+      }
+      return params;
+    });
+  };
+
+  // Expand columns from schema  
+  const expandedColumns = useMemo(() => schema ? expandColumns(schema.fields) : [], [schema]);
 
   const {
     resource: {
@@ -136,10 +203,13 @@ export const BrowserPage = () => {
     setResource,
     refresh,
   } = useResource(async () => {
-    // Build query: either from relation or regular query with filters
-    const q = relationQuery
+    // Build query: start with relation or regular query, then apply filters
+    let q = relationQuery
       ? proto.Relation(proto.Object(relationQuery.className, relationQuery.objectId), relationQuery.field)
-      : _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
+      : proto.Query(className);
+
+    // Apply filters to the query (works for both relation and regular queries)
+    q = _.reduce(filter, (query, f) => query.filter(f), q);
 
     const count = await q.count({ master: true });
     const relation = _.filter(expandedColumns, ({ fieldType: type }) => !_.isString(type) && (type.type === 'pointer' || type.type === 'relation'));
@@ -169,8 +239,7 @@ export const BrowserPage = () => {
     : true;
 
   const handleApplyFilters = (filters: QueryFilter[]) => {
-    setFilter(filters);
-    setOffset(0);
+    updateFilter(filters);
     setShowFilterModal(false);
   };
 
@@ -390,7 +459,6 @@ export const BrowserPage = () => {
             color="primary"
             size="sm"
             onClick={() => setShowFilterModal(true)}
-            disabled={!!relationQuery}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
               <Icon name="search" size="sm" />
@@ -432,10 +500,10 @@ export const BrowserPage = () => {
                   onClick={(e) => {
                     // Only allow sorting by base field (not nested properties)
                     const sortKey = col.baseField;
-                    setSort(sort => ({
+                    updateSort({
                       ...e.shiftKey ? _.omit(sort, sortKey) : {},
                       [sortKey]: sort[sortKey] === 1 ? -1 : 1,
-                    }));
+                    });
                   }}
                 >
                   <span>{col.key}</span>
@@ -808,7 +876,7 @@ export const BrowserPage = () => {
             variant="ghost"
             color="primary"
             size="sm"
-            onClick={() => setOffset(0)}
+            onClick={() => updateOffset(0)}
             disabled={offset === 0}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -820,7 +888,7 @@ export const BrowserPage = () => {
             variant="ghost"
             color="primary"
             size="sm"
-            onClick={() => setOffset(Math.max(0, offset - limit))}
+            onClick={() => updateOffset(Math.max(0, offset - limit))}
             disabled={offset === 0}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -839,7 +907,7 @@ export const BrowserPage = () => {
             variant="ghost"
             color="primary"
             size="sm"
-            onClick={() => setOffset(offset + limit)}
+            onClick={() => updateOffset(offset + limit)}
             disabled={offset + limit >= count}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -851,7 +919,7 @@ export const BrowserPage = () => {
             variant="ghost"
             color="primary"
             size="sm"
-            onClick={() => setOffset(Math.floor((count - 1) / limit) * limit)}
+            onClick={() => updateOffset(Math.floor((count - 1) / limit) * limit)}
             disabled={offset + limit >= count}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -863,8 +931,7 @@ export const BrowserPage = () => {
             value={`${limit}`}
             onChange={(e) => {
               const newLimit = parseInt(e.currentTarget.value);
-              setLimit(newLimit);
-              setOffset(0);
+              updateLimit(newLimit);
             }}
             style={{
               marginLeft: theme.spacing.md,
