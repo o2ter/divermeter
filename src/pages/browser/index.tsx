@@ -27,7 +27,7 @@ import _ from 'lodash';
 import { tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
-import { _useCallbacks, useResource, useState } from 'frosty';
+import { _useCallbacks, useMemo, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
 import { _typeOf, typeOf } from './utils';
 import { TableCell } from './cell';
@@ -520,7 +520,7 @@ export const BrowserPage = () => {
   const startActivity = useActivity();
 
   // Expand columns from schema  
-  const expandedColumns = schema ? expandColumns(schema.fields) : [];
+  const expandedColumns = useMemo(() => schema ? expandColumns(schema.fields) : [], [schema]);
 
   const {
     resource: {
