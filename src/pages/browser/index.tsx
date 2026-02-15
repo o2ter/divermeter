@@ -281,6 +281,7 @@ export const BrowserPage = () => {
                 </div>
               ),
             }))}
+            showEmptyLastRow
             columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
             startRowNumber={offset + 1}
             allowEditForCell={(row, col) => {
@@ -291,9 +292,9 @@ export const BrowserPage = () => {
               const columnKey = _.keys(schema.fields)[col];
               setColumnWidth(prev => ({ ...prev, [columnKey]: width }));
             }}
-            renderItem={({ row, columnKey, isEditing }) => (
+            renderItem={({ item, columnKey, isEditing }) => (
               <TableCell
-                item={row}
+                item={item}
                 column={columnKey}
                 schema={schema}
                 isEditing={isEditing}

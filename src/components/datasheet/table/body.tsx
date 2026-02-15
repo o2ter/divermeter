@@ -128,7 +128,7 @@ export const DataSheetBody = <T extends object, C extends Column>({
       onMouseDown={allowSelection && !state.editing ? handleMouseDown : undefined}
       onMouseOver={allowSelection && !state.editing ? handleMouseOver : undefined}
     >
-      {_.map(data, (items, row) => (
+      {_.map(data, (item, row) => (
         <tr key={row}>
           {!_.isNil(startRowNumber) && (
             <RowNumberCell
@@ -141,7 +141,6 @@ export const DataSheetBody = <T extends object, C extends Column>({
           )}
           {_.map(columns, (column, col) => {
             const key = _.isString(column) ? column : column.key;
-            const item = items[key as keyof T];
             return (
               <BodyCell
                 key={col}
@@ -170,7 +169,6 @@ export const DataSheetBody = <T extends object, C extends Column>({
                 >
                   {renderItem({
                     item,
-                    row: items,
                     column,
                     columnKey: key,
                     rowIdx: row,
@@ -192,23 +190,45 @@ export const DataSheetBody = <T extends object, C extends Column>({
               stickyRowNumbers={stickyRowNumbers}
             />
           )}
-          {_.map(columns, (column, col) => (
-            <BodyCell
-              key={col}
-              row={data.length}
-              col={col}
-              highlightColor={highlightColor}
-              allowEditForCell={false}
-              rowNumbers={!_.isNil(startRowNumber)}
-            >
-              <span style={{
-                fontFamily: 'monospace',
-                display: 'inline-block',
-                minHeight: theme.fontSize.md,
-                lineHeight: `${theme.fontSize.md}px`,
-              }}>{' '}</span>
-            </BodyCell>
-          ))}
+          {_.map(columns, (column, col) => {
+            const key = _.isString(column) ? column : column.key;
+            return (
+              <BodyCell
+                key={col}
+                row={data.length}
+                col={col}
+                highlightColor={highlightColor}
+                allowEditForCell={allowEditForCell}
+                rowNumbers={!_.isNil(startRowNumber)}
+                onStartEditing={onStartEditing}
+              >
+                <span style={{
+                  fontFamily: 'monospace',
+                  display: 'inline-block',
+                  minHeight: theme.fontSize.md,
+                  lineHeight: `${theme.fontSize.md}px`,
+                }}>{' '}</span>
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    padding: isCellEditing(data.length, col) ? 0 : theme.spacing.xs,
+                  }}
+                >
+                  {renderItem({
+                    column,
+                    columnKey: key,
+                    rowIdx: data.length,
+                    columnIdx: col,
+                    isEditing: isCellEditing(data.length, col),
+                  })}
+                </div>
+              </BodyCell>
+            );
+          })}
         </tr>
       )}
     </tbody>

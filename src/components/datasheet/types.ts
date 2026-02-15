@@ -39,8 +39,7 @@ export type DataSheetRef = {
 };
 
 export type RanderItemParams<T extends object, C extends Column> = {
-  item: T[keyof T];
-  row: T;
+  item?: T;
   column: C;
   columnKey: string;
   rowIdx: number;

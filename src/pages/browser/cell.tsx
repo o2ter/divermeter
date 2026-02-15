@@ -30,7 +30,7 @@ import { useTheme } from '../../components/theme';
 import { normalizeColor, getRed, getGreen, getBlue, rgba, toHexString } from '@o2ter/colors.js';
 
 type TableCellProps = {
-  item: TObject;
+  item?: TObject;
   column: string;
   schema: TSchema;
   isEditing: boolean;
@@ -89,7 +89,7 @@ export const TableCell = ({
 
   const proto = useProto();
 
-  const value = item.get(column);
+  const value = item?.get(column);
 
   // Helper to create color with opacity
   const withOpacity = (color: string, opacity: number) => {
@@ -241,6 +241,10 @@ export const TableCell = ({
           />
         );
     }
+  }
+
+  if (_.isNil(item)) {
+    return <div style={cellStyle} />;
   }
 
   // Display mode
