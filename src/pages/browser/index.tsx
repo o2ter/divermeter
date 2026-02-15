@@ -71,7 +71,7 @@ export const BrowserPage = () => {
 
   const readonlyKeys = [
     ...systemFields,
-    ..._.keys(_.pickBy(schema.fields, type => !_.isString(type) && type.type === 'relation' && !_.isNil(type.foreignField))),
+    ..._.keys(_.pickBy(schema?.fields, type => !_.isString(type) && type.type === 'relation' && !_.isNil(type.foreignField))),
   ];
 
   const decodeClipboardData = async (
