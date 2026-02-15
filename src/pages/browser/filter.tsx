@@ -767,14 +767,13 @@ const FilterItem = ({
 };
 
 export type FilterModalProps = {
-  show: boolean;
   schema: TSchema | null;
   currentFilters?: QueryFilter[];
   onApply: (filters: QueryFilter[]) => void;
   onCancel: () => void;
 };
 
-export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCancel }: FilterModalProps) => {
+export const FilterModal = ({ schema, currentFilters = [], onApply, onCancel }: FilterModalProps) => {
   const theme = useTheme();
   const alert = useAlert();
 
@@ -864,16 +863,10 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
     return result;
   };
 
+  // Initialize state from props - no useEffect needed, key prop resets component
   const [criteria, setCriteria] = useState<FilterCriteria[]>(() =>
     convertFromQueryFilter(currentFilters)
   );
-
-  // Update state when currentFilters change (e.g., when modal opens)
-  useEffect(() => {
-    if (show) {
-      setCriteria(convertFromQueryFilter(currentFilters));
-    }
-  }, [show, currentFilters]);
 
   // Helper: Parse a string value based on field type
   const parseFieldValue = (value: string, fieldType: string | undefined): any => {
@@ -1045,7 +1038,7 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
   });
 
   return (
-    <Modal show={show}>
+    <Modal show={true}>
       <div style={{
         backgroundColor: '#ffffff',
         borderRadius: theme.borderRadius.md,

@@ -43,7 +43,6 @@ import { Modal } from '../../components/modal';
 
 // Column Settings Modal Component
 type ColumnSettingsModalProps = {
-  show: boolean;
   columns: Array<{ key: string; baseField: string; fieldType: TSchema['fields'][string] }>;
   columnOrder: string[];
   hiddenColumns: Set<string>;
@@ -51,20 +50,12 @@ type ColumnSettingsModalProps = {
   onCancel: () => void;
 };
 
-const ColumnSettingsModal = ({ show, columns, columnOrder, hiddenColumns, onApply, onCancel }: ColumnSettingsModalProps) => {
+const ColumnSettingsModal = ({ columns, columnOrder, hiddenColumns, onApply, onCancel }: ColumnSettingsModalProps) => {
   const theme = useTheme();
-  const [localOrder, setLocalOrder] = useState<string[]>(columnOrder);
-  const [localHidden, setLocalHidden] = useState<Set<string>>(hiddenColumns);
-
-  // Sync local state when modal opens
-  useEffect(() => {
-    if (show) {
-      // If columnOrder is empty, use all columns from schema
-      const order = columnOrder.length > 0 ? columnOrder : columns.map(col => col.key);
-      setLocalOrder(order);
-      setLocalHidden(new Set(hiddenColumns));
-    }
-  }, [show, columnOrder, hiddenColumns, columns]);
+  // Initialize state from props - no useEffect needed, key prop resets component
+  const initialOrder = columnOrder.length > 0 ? columnOrder : columns.map(col => col.key);
+  const [localOrder, setLocalOrder] = useState<string[]>(initialOrder);
+  const [localHidden, setLocalHidden] = useState<Set<string>>(new Set(hiddenColumns));
 
   const moveColumn = (index: number, direction: 'up' | 'down') => {
     const newOrder = [...localOrder];
@@ -95,7 +86,7 @@ const ColumnSettingsModal = ({ show, columns, columnOrder, hiddenColumns, onAppl
   };
 
   return (
-    <Modal show={show}>
+    <Modal show={true}>
       <div style={{
         width: '600px',
         maxHeight: '80vh',
@@ -342,8 +333,8 @@ export const BrowserPage = () => {
   const { [className]: schema } = schemas;
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState<number>();
+  const [showColumnSettings, setShowColumnSettings] = useState<number>();
   const [columnWidth, setColumnWidth] = useState<Record<string, number>>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
@@ -514,7 +505,7 @@ export const BrowserPage = () => {
 
   const handleApplyFilters = (filters: QueryFilter[]) => {
     updateFilter(filters);
-    setShowFilterModal(false);
+    setShowFilterModal(undefined);
   };
 
   const decodeClipboardData = async (
@@ -918,7 +909,7 @@ export const BrowserPage = () => {
               variant={filter.length > 0 || relationQuery ? 'solid' : 'outline'}
               color="primary"
               size="sm"
-              onClick={() => setShowFilterModal(true)}
+              onClick={() => setShowFilterModal(Date.now())}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
                 <Icon name="search" size="sm" />
@@ -929,7 +920,7 @@ export const BrowserPage = () => {
               variant={hiddenColumns.size > 0 ? 'solid' : 'outline'}
               color="primary"
               size="sm"
-              onClick={() => setShowColumnSettings(true)}
+              onClick={() => setShowColumnSettings(Date.now())}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
                 <span>Columns {hiddenColumns.size > 0 && `(${expandedColumns.length - hiddenColumns.size}/${expandedColumns.length})`}</span>
@@ -938,25 +929,29 @@ export const BrowserPage = () => {
           </div>
         </div>
       </div>
-      <FilterModal
-        show={showFilterModal}
-        schema={schema}
-        currentFilters={filter}
-        onApply={handleApplyFilters}
-        onCancel={() => setShowFilterModal(false)}
-      />
-      <ColumnSettingsModal
-        show={showColumnSettings}
-        columns={expandedColumns}
-        columnOrder={columnOrder}
-        hiddenColumns={hiddenColumns}
-        onApply={(order, hidden) => {
-          setColumnOrder(order);
-          setHiddenColumns(hidden);
-          setShowColumnSettings(false);
-        }}
-        onCancel={() => setShowColumnSettings(false)}
-      />
+      {showFilterModal && (
+        <FilterModal
+          key={showFilterModal}
+          schema={schema}
+          currentFilters={filter}
+          onApply={handleApplyFilters}
+          onCancel={() => setShowFilterModal(undefined)}
+        />
+      )}
+      {showColumnSettings && (
+        <ColumnSettingsModal
+          key={showColumnSettings}
+          columns={expandedColumns}
+          columnOrder={columnOrder}
+          hiddenColumns={hiddenColumns}
+          onApply={(order, hidden) => {
+            setColumnOrder(order);
+            setHiddenColumns(hidden);
+            setShowColumnSettings(undefined);
+          }}
+          onCancel={() => setShowColumnSettings(undefined)}
+        />
+      )}
       <div style={{
         flex: 1,
         position: 'relative',

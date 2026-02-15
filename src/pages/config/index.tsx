@@ -54,8 +54,7 @@ export const ConfigPage = () => {
   const alert = useAlert();
   const startActivity = useActivity();
   const [editingState, setEditingState] = useState<EditingState>(null);
-  const [newEntry, setNewEntry] = useState<{ key: string; value: string; acl: string }>({ key: '', value: '', acl: '' });
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState<number>();
 
   const {
     resource: data,
@@ -140,27 +139,26 @@ export const ConfigPage = () => {
     });
   };
 
-  // Handle add new entry
-  const handleAddEntry = () => {
+  // Handle add new entry (callback passed to modal)
+  const handleAddEntry = (key: string, value: string, acl: string) => {
     startActivity(async () => {
       try {
-        if (!newEntry.key.trim()) {
+        if (!key.trim()) {
           alert.showError('Key is required');
           return;
         }
 
         // Check if key already exists
-        if (data?.some(entry => entry.key === newEntry.key)) {
-          alert.showError(`Key "${newEntry.key}" already exists`);
+        if (data?.some(entry => entry.key === key)) {
+          alert.showError(`Key "${key}" already exists`);
           return;
         }
 
-        const value = newEntry.value.trim() ? decodeValue(newEntry.value) : undefined;
-        const acl = newEntry.acl.trim() ? decodeAcl(newEntry.acl) : undefined;
-        await proto.setConfig({ [newEntry.key]: value }, { master: true, acl });
+        const parsedValue = value.trim() ? decodeValue(value) : undefined;
+        const parsedAcl = acl.trim() ? decodeAcl(acl) : undefined;
+        await proto.setConfig({ [key]: parsedValue }, { master: true, acl: parsedAcl });
 
-        setShowAddModal(false);
-        setNewEntry({ key: '', value: '', acl: '' });
+        setShowAddModal(undefined);
         await refresh();
         alert.showSuccess('Configuration entry added');
       } catch (e: any) {
@@ -287,7 +285,7 @@ export const ConfigPage = () => {
           variant="solid"
           color="primary"
           size="md"
-          onClick={() => setShowAddModal(true)}
+          onClick={() => setShowAddModal(Date.now())}
         >
           Add Entry
         </Button>
@@ -413,95 +411,135 @@ export const ConfigPage = () => {
 
       {/* Add Entry Modal */}
       {showAddModal && (
-        <Modal show={true}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: theme.borderRadius.md,
-            padding: theme.spacing.xl,
-            minWidth: 400,
-            maxWidth: 600,
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: theme.spacing.lg,
-            }}>
-              <h2 style={{
-                fontSize: theme.fontSize.lg,
-                fontWeight: theme.fontWeight.semibold,
-                margin: 0,
-                color: textPrimary,
-              }}>
-                Add Configuration Entry
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowAddModal(false);
-                  setNewEntry({ key: '', value: '', acl: '' });
-                }}
-              >
-                <Icon name="close" size="sm" />
-              </Button>
-            </div>
-
-            <div style={modalContentStyle}>
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>Key *</label>
-                <input
-                  type="text"
-                  value={newEntry.key}
-                  onChange={(e) => setNewEntry({ ...newEntry, key: e.currentTarget.value })}
-                  style={inputStyle}
-                  placeholder="config.key"
-                />
-              </div>
-
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>Value</label>
-                <div style={{ minHeight: '120px' }}>
-                  <JSCode
-                    initialValue={newEntry.value}
-                    onChangeValue={(text) => setNewEntry({ ...newEntry, value: text })}
-                  />
-                </div>
-              </div>
-
-              <div style={inputGroupStyle}>
-                <label style={labelStyle}>ACL</label>
-                <input
-                  type="text"
-                  value={newEntry.acl}
-                  onChange={(e) => setNewEntry({ ...newEntry, acl: e.currentTarget.value })}
-                  style={inputStyle}
-                  placeholder='role:admin, *'
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: theme.spacing.sm, justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setNewEntry({ key: '', value: '', acl: '' });
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="solid"
-                  color="primary"
-                  onClick={handleAddEntry}
-                >
-                  Add Entry
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Modal>
+        <AddEntryModal
+          key={showAddModal}
+          onSave={handleAddEntry}
+          onCancel={() => setShowAddModal(undefined)}
+        />
       )}
     </div>
+  );
+};
+
+// Separate AddEntryModal component to leverage key prop for state reset
+type AddEntryModalProps = {
+  onSave: (key: string, value: string, acl: string) => void;
+  onCancel: () => void;
+};
+
+const AddEntryModal = ({ onSave, onCancel }: AddEntryModalProps) => {
+  const theme = useTheme();
+  const textPrimary = theme.colorContrast('#ffffff');
+  // Initialize state fresh for each modal open (via key prop)
+  const [newEntry, setNewEntry] = useState({ key: '', value: '', acl: '' });
+
+  // Modal-specific styles
+  const borderColor = mixColor(theme.colors.primary, '#dee2e6', 0.1);
+  const modalContentStyle = {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: theme.spacing.md,
+  };
+  const inputGroupStyle = {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: theme.spacing.xs,
+  };
+  const labelStyle = {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.medium,
+    color: textPrimary,
+  };
+  const inputStyle = {
+    padding: theme.spacing.sm,
+    border: `1px solid ${borderColor}`,
+    borderRadius: theme.borderRadius.sm,
+    fontSize: theme.fontSize.sm,
+    fontFamily: 'var(--font-monospace)',
+  };
+
+  return (
+    <Modal show={true}>
+      <div style={{
+        backgroundColor: '#ffffff',
+        borderRadius: theme.borderRadius.md,
+        padding: theme.spacing.xl,
+        minWidth: 400,
+        maxWidth: 600,
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: theme.spacing.lg,
+        }}>
+          <h2 style={{
+            fontSize: theme.fontSize.lg,
+            fontWeight: theme.fontWeight.semibold,
+            margin: 0,
+            color: textPrimary,
+          }}>
+            Add Configuration Entry
+          </h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCancel}
+          >
+            <Icon name="close" size="sm" />
+          </Button>
+        </div>
+
+        <div style={modalContentStyle}>
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Key *</label>
+            <input
+              type="text"
+              value={newEntry.key}
+              onChange={(e) => setNewEntry({ ...newEntry, key: e.currentTarget.value })}
+              style={inputStyle}
+              placeholder="config.key"
+            />
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>Value</label>
+            <div style={{ minHeight: '120px' }}>
+              <JSCode
+                initialValue={newEntry.value}
+                onChangeValue={(text) => setNewEntry({ ...newEntry, value: text })}
+              />
+            </div>
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>ACL</label>
+            <input
+              type="text"
+              value={newEntry.acl}
+              onChange={(e) => setNewEntry({ ...newEntry, acl: e.currentTarget.value })}
+              style={inputStyle}
+              placeholder='role:admin, *'
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: theme.spacing.sm, justifyContent: 'flex-end' }}>
+            <Button
+              variant="outline"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="solid"
+              color="primary"
+              onClick={() => onSave(newEntry.key, newEntry.value, newEntry.acl)}
+            >
+              Add Entry
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Modal>
   );
 };

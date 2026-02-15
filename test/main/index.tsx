@@ -37,7 +37,7 @@ const CustomPage = () => {
     showWarning,
     showError,
   } = useAlert();
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState<number>();
   return (
     <>
       <div style={{ padding: 20 }}>This is a custom page added through the Dashboard's pages prop.</div>
@@ -45,14 +45,16 @@ const CustomPage = () => {
       <button onClick={() => showInfo('This is an info message!')}>Show Info Alert</button>
       <button onClick={() => showWarning('This is a warning message!')}>Show Warning Alert</button>
       <button onClick={() => showError('This is an error message!')}>Show Error Alert</button>
-      <button onClick={() => setShowModal(true)}>Show Modal</button>
-      <Modal show={showModal}>
-        <div style={{ backgroundColor: 'white', padding: 20, borderRadius: 4 }}>
-          <h1>Custom Modal</h1>
-          <p>This is a custom modal content.</p>
-          <button onClick={() => setShowModal(false)}>Close Modal</button>
-        </div>
-      </Modal>
+      <button onClick={() => setShowModal(Date.now())}>Show Modal</button>
+      {showModal && (
+        <Modal key={showModal} show={true}>
+          <div style={{ backgroundColor: 'white', padding: 20, borderRadius: 4 }}>
+            <h1>Custom Modal</h1>
+            <p>This is a custom modal content.</p>
+            <button onClick={() => setShowModal(undefined)}>Close Modal</button>
+          </div>
+        </Modal>
+      )}
       <Button>Click me</Button>
 
       <Button variant="subtle" color="primary">Subtle</Button>

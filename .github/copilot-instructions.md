@@ -1045,41 +1045,97 @@ const encodeClipboard = useMemo(() => (e: ClipboardEvent, data: any[][]) => {
 
 #### CRITICAL: Never Use useEffect to Set State
 
-**If you're using `useEffect` to set state, you're doing something wrong... USUALLY.**
+**If you're using `useEffect` to set state, you're doing something wrong.**
 
 `useEffect` in Frosty is ONLY for:
 - **Registering event listeners** (document, window, element events)
 - **Subscribing to external systems** (WebSocket connections, browser APIs)
 - **Cleanup tasks** (removing listeners, closing connections)
-- **Syncing local modal/dialog state when it opens** (legitimate exception - see below)
 
 **NEVER use `useEffect` for:**
 - Setting state based on props or other state (derive instead)
 - Deriving values from state or props
-- Synchronizing most state (use props directly)
+- Synchronizing state (including modal state - use key prop pattern instead)
 
-**Exception: Modal/Dialog State Synchronization**
-When a modal opens, it's valid to use `useEffect` to sync local editing state from props:
+#### Modal State Management: The Key Prop Pattern
+
+**CRITICAL: Use timestamp-based state with key prop for modal state management, NOT useEffect.**
+
+When you need modal/dialog state to reset on each open, use the React key prop pattern:
+
 ```tsx
-// ✅ CORRECT: Sync modal state when it opens
+// ✅ CORRECT: Timestamp-based modal state with key prop
+const MyPage = () => {
+  const [showModal, setShowModal] = useState<number>(); // number for timestamp, undefined for closed
+  
+  return (
+    <div>
+      <Button onClick={() => setShowModal(Date.now())}>Open Modal</Button>
+      
+      {showModal && (
+        <MyModal
+          key={showModal}  // Key prop causes component remount on change
+          onClose={() => setShowModal(undefined)}
+          initialData={someData}
+        />
+      )}
+    </div>
+  );
+};
+
+const MyModal = ({ onClose, initialData }) => {
+  // State initialized fresh on each mount (via key change)
+  const [localData, setLocalData] = useState(initialData);
+  
+  return (
+    <Modal show={true}>  {/* Always show={true} - visibility controlled by conditional render */}
+      {/* Modal content using localData */}
+      <Button onClick={onClose}>Close</Button>
+    </Modal>
+  );
+};
+```
+
+**Why This Pattern:**
+- **No useEffect needed** - Component remounts with fresh state when key changes
+- **Cleaner code** - No synchronization logic, no dependency tracking
+- **Automatic reset** - Each modal open creates a new component instance
+- **Type-safe** - `number | undefined` clearly indicates open/closed state
+- **Works with any initial state** - Props passed on mount are guaranteed fresh
+
+**Opening and Closing:**
+```tsx
+// Open modal (new timestamp = new component instance)
+setShowModal(Date.now());
+
+// Close modal (undefined = don't render)
+setShowModal(undefined);
+
+// Check if open
+if (showModal) { /* modal is open */ }
+```
+
+**Pattern Benefits:**
+- Modal component doesn't need `show` prop logic
+- No prop synchronization code needed
+- Parent controls visibility, child manages editing state
+- Component automatically resets on each open
+
+**❌ WRONG: Using useEffect to sync modal state**
+```tsx
+// DON'T DO THIS
 const MyModal = ({ show, initialData }) => {
   const [localData, setLocalData] = useState(initialData);
   
   useEffect(() => {
     if (show) {
-      // Reset local state when modal opens
-      setLocalData(initialData);
+      setLocalData(initialData); // WRONG - unnecessary
     }
   }, [show, initialData]);
   
   return <Modal show={show}>...</Modal>;
 };
 ```
-
-This is valid because:
-- The modal is a temporary editing context
-- You want fresh state each time it opens
-- Local state isolates changes until "Apply" is clicked
 
 **Common mistakes:**
 ```tsx
@@ -1474,7 +1530,7 @@ const MyComponent = () => {
 16. **Missing theme imports** - Every component with styles needs `import { useTheme } from '../components/theme'`
 17. **StyleProvider maintenance** - When modifying or removing ANY component, always audit StyleProvider ([src/components/style/index.tsx](src/components/style/index.tsx)) for unused styles. Search for `style.componentName.*` usage patterns across the codebase before and after changes. Remove unused style properties and intermediate calculation variables. Dead code in StyleProvider creates unnecessary computation overhead on every render and maintenance burden.
 18. **Event handler dependencies** - Use `_useCallbacks` for document-level event listeners instead of `useCallback`. Register listeners with empty dependency array in `useEffect` - `_useCallbacks` handles updates automatically.
-19. **Never use useEffect to set state (usually)** - If you're using `useEffect` to set state, you're doing something wrong. `useEffect` is ONLY for registering event listeners and subscribing to external systems, NOT for deriving values or syncing most state. EXCEPTION: It's valid to sync local modal/dialog state when it opens via `useEffect`. Use `useMemo` for derived values, use props directly, or calculate values during render. Setting state in `useEffect` causes extra renders, performance issues, and can lead to infinite loops.
+19. **Never use useEffect to set state** - If you're using `useEffect` to set state, you're doing something wrong. `useEffect` is ONLY for registering event listeners and subscribing to external systems, NOT for deriving values or syncing state. For modal state that needs to reset on each open, use the timestamp + key prop pattern: `const [showModal, setShowModal] = useState<number>()`, `setShowModal(Date.now())` to open, `{showModal && <Modal key={showModal}>}` for automatic reset. Use `useMemo` for derived values, use props directly, or calculate values during render. Setting state in `useEffect` causes extra renders, performance issues, and can lead to infinite loops.
 20. **NEVER use useMemo for side effects** - `useMemo` is for computing and caching values, NOT for performing actions like setting state, calling functions with side effects, or registering event listeners. If your `useMemo` doesn't return a value that's used elsewhere, you're using the wrong hook. Use `useEffect` for side effects, `useMemo` ONLY for computing values. React/Frosty may skip memoized computations, so side effects in `useMemo` won't reliably execute.
 21. **Always use master mode** - This is a database admin dashboard. Every proto API call MUST include `{ master: true }` option. Without it, ACL restrictions apply and dashboard features will fail. Use `proto.schema({ master: true })`, `proto.Query('Class').find({ master: true })`, `object.save({ master: true })`, etc.
 
