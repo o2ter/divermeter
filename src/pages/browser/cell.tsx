@@ -28,6 +28,8 @@ import { Decimal } from 'proto.io';
 import { TObject, TSchema, useProto } from '../../proto';
 import { useTheme } from '../../components/theme';
 import { normalizeColor, getRed, getGreen, getBlue, rgba, toHexString } from '@o2ter/colors.js';
+import { JSCode } from '../../components/jscode';
+import { typeOf, encodeValue, decodeValue, verifyValue } from './utils';
 
 type TableCellProps = {
   item?: TObject;
@@ -36,47 +38,6 @@ type TableCellProps = {
   isEditing: boolean;
   editingValue?: any;
   setEditingValue?: (value: any) => void;
-};
-
-export const _typeOf = (x?: TSchema['fields'][string]) => _.isString(x) ? x : x?.type;
-export const typeOf = (x?: TSchema['fields'][string]) => _.isString(x) ? x : x?.type === 'pointer' && x.target === 'File' ? 'file' : x?.type;
-
-const encodeValue = (value: any, space = 2) => {
-  const normalName = /^[a-z_][a-z\d_]\w*$/gi;
-  const _encodeValue = (value: any, space: number, padding: number): string => {
-    const newline = space ? '\n' : '';
-    if (_.isNil(value)) return 'null';
-    if (_.isBoolean(value)) return value ? 'true' : 'false';
-    if (_.isNumber(value)) return value.toString();
-    if (_.isString(value)) return JSON.stringify(value);
-    if (_.isDate(value)) return `ISODate('${value.toISOString()}')`;
-    if (value instanceof Decimal) return `Decimal('${value.toString()}')`;
-    if (_.isArray(value)) return _.isEmpty(value) ? '[]' : `[${newline}${_.map(value, v => (
-      `${_.padStart('', padding, ' ')}${_encodeValue(v, space, padding + space)}`
-    )).join(`,${newline || ' '}`)}${newline}${_.padStart('', padding - space, ' ')}]`;
-    return _.isEmpty(value) ? '{}' : `{${newline}${_.map(value as object, (v, k) => (
-      `${_.padStart('', padding, ' ')}${k.match(normalName) ? k : `"${k.replace(/[\\"]/g, '\\$&')}"`}: ${_encodeValue(v, space, padding + space)}`
-    )).join(`,${newline || ' '}`)}${newline}${_.padStart('', padding - space, ' ')}}`;
-  };
-  return _encodeValue(value, space, space);
-};
-
-export const verifyValue = (value: any) => {
-  if (_.isNil(value) || _.isBoolean(value) || _.isNumber(value) || _.isString(value) || _.isDate(value)) return;
-  if (value instanceof Decimal) return;
-  if (_.isArray(value)) {
-    for (const item of value) {
-      verifyValue(item);
-    }
-    return;
-  }
-  if (_.isPlainObject(value)) {
-    for (const v of _.values(value)) {
-      verifyValue(v);
-    }
-    return;
-  }
-  throw Error('Invalid value');
 };
 
 export const TableCell = ({
@@ -221,24 +182,25 @@ export const TableCell = ({
           />
         );
       default:
-        // For complex types, use textarea with JSON - allow resizing
+        // For complex types, use JSCode component with proper parser
         return (
-          <textarea
-            style={{ ...inputStyle, resize: 'both', minHeight: '60px' }}
-            value={editingValue !== undefined ? encodeValue(editingValue, 0) : encodeValue(value, 0)}
-            onInput={(e) => {
-              try {
-                // Try to parse the value
-                const parsed = eval(`(${e.currentTarget.value})`);
-                verifyValue(parsed);
-                setEditingValue?.(parsed);
-              } catch {
-                // If parsing fails, store the raw string
-                setEditingValue?.(e.currentTarget.value);
-              }
-            }}
-            autofocus
-          />
+          <div style={{ ...inputStyle, minHeight: '120px', height: '120px', overflow: 'hidden' }}>
+            <JSCode
+              initialValue={editingValue !== undefined ? encodeValue(editingValue, 2) : encodeValue(value, 2)}
+              onChangeValue={(text) => {
+                try {
+                  const parsed = decodeValue(text);
+                  verifyValue(parsed);
+                  setEditingValue?.(parsed);
+                } catch (error) {
+                  // Keep the raw text as editing value when parsing fails
+                  // This allows the user to continue typing
+                  setEditingValue?.(text);
+                }
+              }}
+              autoFocus
+            />
+          </div>
         );
     }
   }

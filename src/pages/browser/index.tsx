@@ -29,7 +29,8 @@ import { useParams } from '../../components/router';
 import { QueryFilter, TObject, useProto, useProtoSchema } from '../../proto';
 import { _useCallbacks, useResource, useState } from 'frosty';
 import { DataSheet } from '../../components/datasheet';
-import { _typeOf, TableCell } from './cell';
+import { _typeOf } from './utils';
+import { TableCell } from './cell';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
 import { useActivity } from '../../components/activity';
@@ -380,7 +381,7 @@ const FilterItem = ({
         <option value="$or">OR</option>
         <option value="$filter">custom filter</option>
         <optgroup label="Field Operators">
-          {operators.filter(op => op.value !== '$filter').map(op => (
+          {operators.filter(op => op.value !== '$filter' && availableOperators.includes(op.value)).map(op => (
             <option key={op.value} value={op.value}>{op.label}</option>
           ))}
         </optgroup>
