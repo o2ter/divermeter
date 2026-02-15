@@ -74,7 +74,7 @@ export const BrowserPage = () => {
           cloned.set(columnKey, value);
           await cloned.save({ master: true });
           setResource((prev) => _.map(prev, i => i === item ? cloned : i));
-          alert.showSuccess(`Object (${item.id}) updated successfully`);
+          alert.showSuccess(`Object ${item.id} updated successfully`);
         } catch (error) {
           console.error('Failed to update item:', error);
           alert.showError(error instanceof Error ? error.message : 'Failed to update item');
