@@ -42,6 +42,13 @@ import { FilterModal } from './filter';
 
 // System fields that cannot be edited
 const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
+const readonlyKeysForSchema = (schema?: TSchema) => {
+  if (!schema) return systemFields;
+  return [
+    ...systemFields,
+    ..._.keys(_.pickBy(schema.fields, type => !_.isString(type) && type.type === 'relation' && !_.isNil(type.foreignField))),
+  ];
+};
 
 // Helper: Expand schema fields into columns (flatten object types but not arrays)
 const expandColumns = (fields: TSchema['fields']) => {
@@ -81,7 +88,8 @@ export const BrowserPage = () => {
   const alert = useAlert();
   const { schema: className } = useParams() as { schema: string; };
   const proto = useProto();
-  const { [className]: schema } = useProtoSchema();
+  const schemas = useProtoSchema();
+  const { [className]: schema } = schemas;
   const location = useLocation();
 
   const [filter, setFilter] = useState<QueryFilter[]>([]);
@@ -153,14 +161,11 @@ export const BrowserPage = () => {
 
   const [editingValue, setEditingValue] = useState<any>();
 
-  const readonlyKeys = [
-    ...systemFields,
-    ..._.keys(_.pickBy(schema?.fields, type => !_.isString(type) && type.type === 'relation' && !_.isNil(type.foreignField))),
-  ];
+  const readonlyKeys = readonlyKeysForSchema(schema);
 
   // Check if we can edit in relation mode (relation field must be editable)
   const canEditInRelationMode = relationQuery
-    ? !readonlyKeys.includes(relationQuery.field.split('.')[0])
+    ? !_.includes(readonlyKeysForSchema(schemas[relationQuery.className]), relationQuery.field.split('.')[0])
     : true;
 
   const handleApplyFilters = (filters: QueryFilter[]) => {
