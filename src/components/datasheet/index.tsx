@@ -272,19 +272,13 @@ const DataSheetTable = <T extends object, C extends Column>({
       });
     },
     handleCopy: (e: ClipboardEvent) => {
-      // Only handle copy if the event originated from within the datasheet
-      if (!isChildNode(tableRef.current, e.target, doc)) return;
       performCopy(e);
     },
     handlePaste: (e: ClipboardEvent) => {
-      // Only handle paste if the event originated from within the datasheet
-      if (!isChildNode(tableRef.current, e.target, doc)) return;
       performPaste(e);
     },
     handleKeyDown: (e: KeyboardEvent) => {
       if (!allowSelection) return;
-      // Only handle keyboard events if the event originated from within the datasheet
-      if (!isChildNode(tableRef.current, e.target, doc)) return;
 
       // Handle copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
@@ -311,25 +305,23 @@ const DataSheetTable = <T extends object, C extends Column>({
     },
   });
 
-  // Register all event listeners
+  // Register document-level listeners for mouse events only
   useEffect(() => {
     doc.addEventListener('mousedown', handleMouseDown);
     doc.addEventListener('mouseup', handleMouseUp);
-    doc.addEventListener('copy', handleCopy);
-    doc.addEventListener('paste', handlePaste);
-    doc.addEventListener('keydown', handleKeyDown);
     return () => {
       doc.removeEventListener('mousedown', handleMouseDown);
       doc.removeEventListener('mouseup', handleMouseUp);
-      doc.removeEventListener('copy', handleCopy);
-      doc.removeEventListener('paste', handlePaste);
-      doc.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
   return (
     <table
       ref={tableRef}
+      tabIndex={-1}
+      onCopy={handleCopy}
+      onPaste={handlePaste}
+      onKeyDown={handleKeyDown}
       style={{
         borderCollapse: 'separate',
         borderSpacing: 0,
@@ -339,6 +331,7 @@ const DataSheetTable = <T extends object, C extends Column>({
         msUserSelect: 'none',
         MozUserSelect: 'none',
         WebkitUserSelect: 'none',
+        outline: 'none',
       }}
     >
       <DataSheetHeader
