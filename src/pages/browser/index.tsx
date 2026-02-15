@@ -495,7 +495,7 @@ export const BrowserPage = () => {
     refresh,
   } = useResource(async () => {
     const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
-    const count = await q.count();
+    const count = await q.count({ master: true });
     q.limit(limit);
     if (offset > 0) q.skip(offset);
     if (!_.isEmpty(sort)) q.sort(sort);
