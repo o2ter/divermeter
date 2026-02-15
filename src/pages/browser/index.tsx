@@ -721,9 +721,8 @@ export const BrowserPage = () => {
           // Handle file upload - check if value is a browser File object
           if (value instanceof File) {
             // Upload the file to proto.io
-            const arrayBuffer = await value.arrayBuffer();
-            const uint8Array = new Uint8Array(arrayBuffer);
-            const protoFile = proto.File(value.name, uint8Array);
+            const protoFile = proto.File(value.name, value);
+            await protoFile.save({ master: true });
             cloned.set(columnKey, protoFile);
           } else {
             cloned.set(columnKey, value);
