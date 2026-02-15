@@ -120,6 +120,55 @@ const DataSheetTable = <T extends object, C extends Column>({
     }
   };
 
+  const performCopy = (e: ClipboardEvent | KeyboardEvent) => {
+    if (!allowSelection) return;
+    const selectedRows = state.selectedRows?.sort().filter(x => x < data.length) ?? [];
+    const columnKeys = _.map(columns, col => _.isString(col) ? col : col.key);
+
+    if (!_.isEmpty(selectedRows)) {
+      e.preventDefault();
+      if (_.isFunction(onCopyRows)) {
+        const _data = _.map(selectedRows, row => _.pick(data[row], columnKeys as any));
+        onCopyRows(selectedRows, _data, handler);
+      } else {
+        const _encodeValue = encodeValue ?? ((v: any) => v);
+        const _data = _.map(selectedRows, row => _.map(columnKeys, col => _encodeValue(data[row]?.[col as keyof T])));
+        encodeClipboard(e, _data);
+      }
+    }
+    if (!_.isEmpty(state.selectedCells)) {
+      e.preventDefault();
+      const selectedCells = state.selectedCells;
+      const _rows = _.range(selectedCells.start.row, selectedCells.end.row + 1);
+      const _cols = _.range(selectedCells.start.col, selectedCells.end.col + 1);
+      if (_.isFunction(onCopyCells)) {
+        const _data = _.map(_rows, row => _.pick(data[row], _.map(_cols, col => columnKeys[col]) as any));
+        onCopyCells(selectedCells, _data, handler);
+      } else {
+        const _encodeValue = encodeValue ?? ((v: any) => v);
+        const _data = _.map(_rows, row => _.map(_cols, col => _encodeValue(data[row]?.[columnKeys[col] as keyof T])));
+        encodeClipboard(e, _data);
+      }
+    }
+  };
+
+  const performPaste = (e: ClipboardEvent | KeyboardEvent) => {
+    if (!allowSelection) return;
+    const selectedRows = state.selectedRows?.sort() ?? [];
+    const clipboard = 'clipboardData' in e && e.clipboardData && !_.isEmpty(e.clipboardData.types)
+      ? e.clipboardData
+      : navigator.clipboard;
+
+    if (!_.isEmpty(selectedRows)) {
+      e.preventDefault();
+      if (_.isFunction(onPasteRows)) onPasteRows(selectedRows, clipboard, handler);
+    }
+    if (!_.isEmpty(state.selectedCells)) {
+      e.preventDefault();
+      if (_.isFunction(onPasteCells)) onPasteCells(state.selectedCells, clipboard, handler);
+    }
+  };
+
   const {
     handleMouseDown,
     handleMouseUp,
@@ -210,98 +259,22 @@ const DataSheetTable = <T extends object, C extends Column>({
       });
     },
     handleCopy: (e: ClipboardEvent) => {
-      if (!allowSelection) return;
-      const selectedRows = state.selectedRows?.sort().filter(x => x < data.length) ?? [];
-      const columnKeys = _.map(columns, col => _.isString(col) ? col : col.key);
-
-      if (!_.isEmpty(selectedRows)) {
-        e.preventDefault();
-        if (_.isFunction(onCopyRows)) {
-          const _data = _.map(selectedRows, row => _.pick(data[row], columnKeys as any));
-          onCopyRows(selectedRows, _data, handler);
-        } else {
-          const _encodeValue = encodeValue ?? ((v: any) => v);
-          const _data = _.map(selectedRows, row => _.map(columnKeys, col => _encodeValue(data[row]?.[col as keyof T])));
-          encodeClipboard(e, _data);
-        }
-      }
-      if (!_.isEmpty(state.selectedCells)) {
-        e.preventDefault();
-        const selectedCells = state.selectedCells;
-        const _rows = _.range(selectedCells.start.row, selectedCells.end.row + 1);
-        const _cols = _.range(selectedCells.start.col, selectedCells.end.col + 1);
-        if (_.isFunction(onCopyCells)) {
-          const _data = _.map(_rows, row => _.pick(data[row], _.map(_cols, col => columnKeys[col]) as any));
-          onCopyCells(selectedCells, _data, handler);
-        } else {
-          const _encodeValue = encodeValue ?? ((v: any) => v);
-          const _data = _.map(_rows, row => _.map(_cols, col => _encodeValue(data[row]?.[columnKeys[col] as keyof T])));
-          encodeClipboard(e, _data);
-        }
-      }
+      performCopy(e);
     },
     handlePaste: (e: ClipboardEvent) => {
-      if (!allowSelection) return;
-      const selectedRows = state.selectedRows?.sort() ?? [];
-      const clipboard = e.clipboardData && !_.isEmpty(e.clipboardData.types) ? e.clipboardData : navigator.clipboard;
-
-      if (!_.isEmpty(selectedRows)) {
-        e.preventDefault();
-        if (_.isFunction(onPasteRows)) onPasteRows(selectedRows, clipboard, handler);
-      }
-      if (!_.isEmpty(state.selectedCells)) {
-        e.preventDefault();
-        if (_.isFunction(onPasteCells)) onPasteCells(state.selectedCells, clipboard, handler);
-      }
+      performPaste(e);
     },
     handleKeyDown: (e: KeyboardEvent) => {
       if (!allowSelection) return;
 
       // Handle copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-        const selectedRows = state.selectedRows?.sort().filter(x => x < data.length) ?? [];
-        const columnKeys = _.map(columns, col => _.isString(col) ? col : col.key);
-
-        if (!_.isEmpty(selectedRows)) {
-          e.preventDefault();
-          if (_.isFunction(onCopyRows)) {
-            const _data = _.map(selectedRows, row => _.pick(data[row], columnKeys as any));
-            onCopyRows(selectedRows, _data, handler);
-          } else {
-            const _encodeValue = encodeValue ?? ((v: any) => v);
-            const _data = _.map(selectedRows, row => _.map(columnKeys, col => _encodeValue(data[row]?.[col as keyof T])));
-            encodeClipboard(e, _data);
-          }
-        }
-        if (!_.isEmpty(state.selectedCells)) {
-          e.preventDefault();
-          const selectedCells = state.selectedCells;
-          const _rows = _.range(selectedCells.start.row, selectedCells.end.row + 1);
-          const _cols = _.range(selectedCells.start.col, selectedCells.end.col + 1);
-          if (_.isFunction(onCopyCells)) {
-            const _data = _.map(_rows, row => _.pick(data[row], _.map(_cols, col => columnKeys[col]) as any));
-            onCopyCells(selectedCells, _data, handler);
-          } else {
-            const _encodeValue = encodeValue ?? ((v: any) => v);
-            const _data = _.map(_rows, row => _.map(_cols, col => _encodeValue(data[row]?.[columnKeys[col] as keyof T])));
-            encodeClipboard(e, _data);
-          }
-        }
+        performCopy(e);
       }
 
       // Handle paste
       if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-        const selectedRows = state.selectedRows?.sort() ?? [];
-        const clipboard = navigator.clipboard;
-
-        if (!_.isEmpty(selectedRows)) {
-          e.preventDefault();
-          if (_.isFunction(onPasteRows)) onPasteRows(selectedRows, clipboard, handler);
-        }
-        if (!_.isEmpty(state.selectedCells)) {
-          e.preventDefault();
-          if (_.isFunction(onPasteCells)) onPasteCells(state.selectedCells, clipboard, handler);
-        }
+        performPaste(e);
       }
 
       // Handle delete
