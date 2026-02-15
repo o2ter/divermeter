@@ -244,6 +244,7 @@ export const BrowserPage = () => {
       const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
       parentObj.addToSet(relationQuery.field, creates);
       await parentObj.save({ master: true });
+    }
     setResource((prev) => {
       const prevItems = prev?.items ?? [];
       const newItems = [
@@ -255,7 +256,6 @@ export const BrowserPage = () => {
         count: prev?.count ?? newItems.length,
       };
     });
-    }
   };
 
   const {
