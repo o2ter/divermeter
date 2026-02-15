@@ -34,9 +34,170 @@ import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
 import { useActivity } from '../../components/activity';
 import { Decimal, deserialize, serialize } from 'proto.io';
+import { Button } from '../../components/button';
 
 // System fields that cannot be edited
 const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
+
+// Search operators
+const operators = [
+  { value: '$eq', label: 'equals' },
+  { value: '$ne', label: 'not equals' },
+  { value: '$gt', label: 'greater than' },
+  { value: '$gte', label: 'greater or equal' },
+  { value: '$lt', label: 'less than' },
+  { value: '$lte', label: 'less or equal' },
+  { value: '$in', label: 'in' },
+  { value: '$nin', label: 'not in' },
+  { value: '$exists', label: 'exists' },
+  { value: '$regex', label: 'matches regex' },
+  { value: '$text', label: 'text search' },
+];
+
+// Type-specific operators
+const getOperatorsForType = (type: string) => {
+  switch (type) {
+    case 'string':
+      return ['$eq', '$ne', '$in', '$nin', '$exists', '$regex', '$text'];
+    case 'number':
+    case 'decimal':
+    case 'date':
+      return ['$eq', '$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin', '$exists'];
+    case 'boolean':
+      return ['$eq', '$ne', '$exists'];
+    case 'pointer':
+    case 'relation':
+      return ['$eq', '$ne', '$in', '$nin', '$exists'];
+    default:
+      return ['$eq', '$ne', '$exists'];
+  }
+};
+
+type FilterCriteria = {
+  id: string;
+  field: string;
+  operator: string;
+  value: string;
+};
+
+const FilterRow = ({
+  criteria,
+  fields,
+  onUpdate,
+  onRemove,
+}: {
+  criteria: FilterCriteria;
+  fields: Record<string, any>;
+  onUpdate: (updated: FilterCriteria) => void;
+  onRemove: () => void;
+}) => {
+  const theme = useTheme();
+  const fieldType = _typeOf(fields[criteria.field]);
+  const availableOperators = getOperatorsForType(fieldType ?? '');
+
+  return (
+    <div style={{
+      display: 'flex',
+      gap: theme.spacing.sm,
+      alignItems: 'center',
+      padding: `${theme.spacing.sm}px 0`,
+    }}>
+      <select
+        value={criteria.field}
+        onChange={(e) => onUpdate({ ...criteria, field: e.currentTarget.value })}
+        style={{
+          flex: '0 0 200px',
+          padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
+          fontSize: theme.fontSize.sm,
+          borderRadius: theme.borderRadius.md,
+          border: `1px solid ${theme.colors['primary-300']}`,
+          backgroundColor: '#ffffff',
+          color: theme.colorContrast('#ffffff'),
+          '&:focus': {
+            outline: 'none',
+            borderColor: theme.colors.primary,
+          },
+        }}
+      >
+        <option value="">Select field...</option>
+        {_.map(fields, (type, key) => (
+          <option key={key} value={key}>
+            {key} ({_.isString(type) ? type : type.type})
+          </option>
+        ))}
+      </select>
+
+      <select
+        value={criteria.operator}
+        onChange={(e) => onUpdate({ ...criteria, operator: e.currentTarget.value })}
+        disabled={!criteria.field}
+        style={{
+          flex: '0 0 150px',
+          padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
+          fontSize: theme.fontSize.sm,
+          borderRadius: theme.borderRadius.md,
+          border: `1px solid ${theme.colors['primary-300']}`,
+          backgroundColor: '#ffffff',
+          color: theme.colorContrast('#ffffff'),
+          '&:focus': {
+            outline: 'none',
+            borderColor: theme.colors.primary,
+          },
+          '&:disabled': {
+            opacity: 0.5,
+            cursor: 'not-allowed',
+          },
+        }}
+      >
+        <option value="">Select operator...</option>
+        {operators
+          .filter(op => availableOperators.includes(op.value))
+          .map(op => (
+            <option key={op.value} value={op.value}>
+              {op.label}
+            </option>
+          ))}
+      </select>
+
+      <input
+        type="text"
+        value={criteria.value}
+        onChange={(e) => onUpdate({ ...criteria, value: e.currentTarget.value })}
+        placeholder="Value..."
+        disabled={!criteria.operator || criteria.operator === '$exists'}
+        style={{
+          flex: 1,
+          padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
+          fontSize: theme.fontSize.sm,
+          borderRadius: theme.borderRadius.md,
+          border: `1px solid ${theme.colors['primary-300']}`,
+          backgroundColor: '#ffffff',
+          color: theme.colorContrast('#ffffff'),
+          '&:focus': {
+            outline: 'none',
+            borderColor: theme.colors.primary,
+          },
+          '&:disabled': {
+            opacity: 0.5,
+            cursor: 'not-allowed',
+          },
+        }}
+      />
+
+      <Button
+        variant="ghost"
+        color="error"
+        size="sm"
+        onClick={onRemove}
+        style={{
+          flexShrink: 0,
+        }}
+      >
+        ✕
+      </Button>
+    </div>
+  );
+};
 
 export const BrowserPage = () => {
   const theme = useTheme();
@@ -45,6 +206,7 @@ export const BrowserPage = () => {
   const proto = useProto();
   const { [className]: schema } = useProtoSchema();
 
+  const [searchCriteria, setSearchCriteria] = useState<FilterCriteria[]>([]);
   const [filter, setFilter] = useState<QueryFilter[]>([]);
 
   const [limit, setLimit] = useState(20);
@@ -56,15 +218,22 @@ export const BrowserPage = () => {
   const startActivity = useActivity();
 
   const {
-    resource = [],
+    resource: {
+      items = [],
+      count = 0,
+    } = {},
     setResource,
     refresh,
   } = useResource(async () => {
     const q = _.reduce(filter, (query, f) => query.filter(f), proto.Query(className));
+    const count = await q.count();
     q.limit(limit);
     if (offset > 0) q.skip(offset);
     if (!_.isEmpty(sort)) q.sort(sort);
-    return await q.find({ master: true });
+    return {
+      count,
+      items: await q.find({ master: true }),
+    };
   }, [className, filter, limit, offset, sort]);
 
   const [editingValue, setEditingValue] = useState<any>();
@@ -73,6 +242,99 @@ export const BrowserPage = () => {
     ...systemFields,
     ..._.keys(_.pickBy(schema?.fields, type => !_.isString(type) && type.type === 'relation' && !_.isNil(type.foreignField))),
   ];
+
+  const {
+    handleAddCriteria,
+    handleUpdateCriteria,
+    handleRemoveCriteria,
+    handleApplyFilters,
+    handleClearFilters,
+  } = _useCallbacks({
+    handleAddCriteria: () => {
+      setSearchCriteria(prev => [
+        ...prev,
+        { id: `${Date.now()}-${Math.random()}`, field: '', operator: '', value: '' }
+      ]);
+    },
+    handleUpdateCriteria: (updated: FilterCriteria) => {
+      setSearchCriteria(prev => prev.map(c => c.id === updated.id ? updated : c));
+    },
+    handleRemoveCriteria: (id: string) => {
+      setSearchCriteria(prev => prev.filter(c => c.id !== id));
+    },
+    handleApplyFilters: () => {
+      const filters: QueryFilter[] = [];
+      for (const criteria of searchCriteria) {
+        if (!criteria.field || !criteria.operator) continue;
+
+        const fieldType = _typeOf(schema?.fields[criteria.field]);
+        let parsedValue: any = criteria.value;
+
+        // Parse value based on field type and operator
+        if (criteria.operator !== '$exists') {
+          try {
+            switch (fieldType) {
+              case 'number':
+                parsedValue = parseFloat(criteria.value);
+                if (!_.isFinite(parsedValue)) continue;
+                break;
+              case 'decimal':
+                parsedValue = new Decimal(criteria.value);
+                if (!parsedValue.isFinite()) continue;
+                break;
+              case 'boolean':
+                parsedValue = criteria.value.toLowerCase() === 'true';
+                break;
+              case 'date':
+                parsedValue = new Date(criteria.value);
+                if (!_.isFinite(parsedValue.valueOf())) continue;
+                break;
+              case 'array':
+              case 'object':
+              case 'string[]':
+                if (criteria.operator === '$in' || criteria.operator === '$nin') {
+                  parsedValue = criteria.value.split(',').map(v => v.trim());
+                } else {
+                  parsedValue = deserialize(criteria.value);
+                }
+                break;
+              case 'pointer':
+                if (criteria.operator === '$in' || criteria.operator === '$nin') {
+                  parsedValue = criteria.value.split(',').map(v => v.trim());
+                } else {
+                  parsedValue = criteria.value;
+                }
+                break;
+              default:
+                if (criteria.operator === '$in' || criteria.operator === '$nin') {
+                  parsedValue = criteria.value.split(',').map(v => v.trim());
+                }
+                break;
+            }
+          } catch (error) {
+            console.error('Failed to parse filter value:', error);
+            continue;
+          }
+        }
+
+        // Create filter object
+        if (criteria.operator === '$exists') {
+          filters.push({ [criteria.field]: { $exists: true } });
+        } else if (criteria.operator === '$eq') {
+          filters.push({ [criteria.field]: parsedValue });
+        } else {
+          filters.push({ [criteria.field]: { [criteria.operator]: parsedValue } });
+        }
+      }
+      setFilter(filters);
+      setOffset(0); // Reset pagination when filters change
+    },
+    handleClearFilters: () => {
+      setSearchCriteria([]);
+      setFilter([]);
+      setOffset(0);
+    },
+  });
 
   const decodeClipboardData = async (
     clipboard: DataTransfer | Clipboard,
@@ -138,10 +400,17 @@ export const BrowserPage = () => {
     for (const item of items) {
       await item.save({ master: true });
     }
-    setResource((prev) => [
-      ..._.map(prev, i => items.find(it => it.id === i.id) ?? i),
-      ..._.filter(items, it => !_.some(prev, p => p.id === it.id))
-    ]);
+    setResource((prev) => {
+      const prevItems = prev?.items ?? [];
+      const newItems = [
+        ..._.map(prevItems, i => items.find(it => it.id === i.id) ?? i),
+        ..._.filter(items, it => !_.some(prevItems, p => p.id === it.id))
+      ];
+      return {
+        items: newItems,
+        count: prev?.count ?? newItems.length,
+      };
+    });
   };
 
   const {
@@ -166,7 +435,14 @@ export const BrowserPage = () => {
       startActivity(async () => {
         try {
           await Promise.all(items.map(item => item.destroy({ master: true })));
-          setResource((prev) => _.filter(prev, i => !items.includes(i)));
+          setResource((prev) => {
+            const prevItems = prev?.items ?? [];
+            const newItems = _.filter(prevItems, i => !items.includes(i));
+            return {
+              items: newItems,
+              count: Math.max(0, (prev?.count ?? 0) - items.length),
+            };
+          });
           alert.showSuccess(`${items.length} object(s) deleted successfully`);
         } catch (error) {
           console.error('Failed to delete items:', error);
@@ -229,8 +505,88 @@ export const BrowserPage = () => {
           color: theme.colorContrast(theme.colors['primary-100']),
           opacity: 0.7,
         }}>
-          {resource.length} {resource.length === 1 ? 'record' : 'records'}
+          {count} {count === 1 ? 'record' : 'records'}
+          {filter.length > 0 && ` (${filter.length} ${filter.length === 1 ? 'filter' : 'filters'} applied)`}
         </div>
+      </div>
+      <div style={{
+        padding: `${theme.spacing.md}px ${theme.spacing.xl}px`,
+        borderBottom: `1px solid ${theme.colors['primary-200']}`,
+        backgroundColor: '#ffffff',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: searchCriteria.length > 0 ? theme.spacing.md : 0,
+        }}>
+          <h3 style={{
+            margin: 0,
+            fontSize: theme.fontSize.md,
+            fontWeight: theme.fontWeight.semibold,
+            color: theme.colorContrast('#ffffff'),
+          }}>
+            Search Criteria
+          </h3>
+          <div style={{ display: 'flex', gap: theme.spacing.sm }}>
+            <Button
+              variant="outline"
+              color="primary"
+              size="sm"
+              onClick={handleAddCriteria}
+            >
+              + Add Filter
+            </Button>
+            {(searchCriteria.length > 0 || filter.length > 0) && (
+              <>
+                <Button
+                  variant="solid"
+                  color="primary"
+                  size="sm"
+                  onClick={handleApplyFilters}
+                  disabled={searchCriteria.length === 0}
+                >
+                  Apply Filters
+                </Button>
+                <Button
+                  variant="ghost"
+                  color="error"
+                  size="sm"
+                  onClick={handleClearFilters}
+                >
+                  Clear All
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+        {searchCriteria.length > 0 && schema && (
+          <div style={{
+            backgroundColor: theme.colors['primary-100'],
+            borderRadius: theme.borderRadius.md,
+            padding: theme.spacing.md,
+          }}>
+            {searchCriteria.map((criteria) => (
+              <FilterRow
+                key={criteria.id}
+                criteria={criteria}
+                fields={schema.fields}
+                onUpdate={handleUpdateCriteria}
+                onRemove={() => handleRemoveCriteria(criteria.id)}
+              />
+            ))}
+          </div>
+        )}
+        {filter.length > 0 && (
+          <div style={{
+            marginTop: theme.spacing.md,
+            fontSize: theme.fontSize.sm,
+            color: theme.colorContrast('#ffffff'),
+            opacity: 0.7,
+          }}>
+            Active filters: {filter.length}
+          </div>
+        )}
       </div>
       <div style={{
         flex: 1,
@@ -245,7 +601,7 @@ export const BrowserPage = () => {
         >
           {schema && <DataSheet
             key={className}
-            data={resource}
+            data={items}
             columns={_.map(schema.fields, (v, k) => ({
               key: k,
               label: (
@@ -307,12 +663,12 @@ export const BrowserPage = () => {
             encodeValue={(v, k) => encodeValue(v.get(k))}
             onStartEditing={(row, col) => {
               const columnKey = _.keys(schema.fields)[col];
-              const currentValue = resource[row]?.get(columnKey);
+              const currentValue = items[row]?.get(columnKey);
               setEditingValue(currentValue);
             }}
             onEndEditing={(row, col) => {
               const columnKey = _.keys(schema.fields)[col];
-              const item = resource[row] ?? proto.Object(className);
+              const item = items[row] ?? proto.Object(className);
               const currentValue = item.get(columnKey);
 
               // Only save if value changed
@@ -327,7 +683,7 @@ export const BrowserPage = () => {
                 try {
                   const { type, data } = await decodeClipboardData(clipboard, true) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data)) return;
-                  const objs = _.compact(_.map(rows, row => resource[row]));
+                  const objs = _.compact(_.map(rows, row => items[row]));
                   const updates: TObject[] = [];
                   if (type === 'json') {
                     for (const [obj, values] of _.zip(objs, data)) {
@@ -373,7 +729,7 @@ export const BrowserPage = () => {
                   const _cols = _.range(cells.start.col, cells.end.col + 1).map(c => _columns[c]);
                   const { data } = await decodeClipboardData(clipboard, false) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data)) return;
-                  const objs = _.compact(_.map(_rows, row => resource[row]));
+                  const objs = _.compact(_.map(_rows, row => items[row]));
                   const updates: TObject[] = [];
                   for (const [obj, values] of _.zip(objs, data)) {
                     const _obj = obj?.clone() ?? proto.Object(className);
@@ -400,9 +756,9 @@ export const BrowserPage = () => {
               });
             }}
             onDeleteRows={(rows) => {
-              const items = _.compact(_.map(rows, row => resource[row]));
-              if (!_.isEmpty(items)) {
-                handleDeleteItems(items);
+              const selectedItems = _.compact(_.map(rows, row => items[row]));
+              if (!_.isEmpty(selectedItems)) {
+                handleDeleteItems(selectedItems);
               }
             }}
             onDeleteCells={(cells) => {
@@ -412,10 +768,10 @@ export const BrowserPage = () => {
 
               // Filter out readonly columns
               const editableCols = _.filter(_cols, col => !_.includes(readonlyKeys, col));
-              const items = _.compact(_.map(_rows, row => resource[row]));
+              const selectedItems = _.compact(_.map(_rows, row => items[row]));
 
-              if (!_.isEmpty(editableCols) && !_.isEmpty(items)) {
-                handleDeleteKeys(items, editableCols);
+              if (!_.isEmpty(editableCols) && !_.isEmpty(selectedItems)) {
+                handleDeleteKeys(selectedItems, editableCols);
               }
             }}
           />}
