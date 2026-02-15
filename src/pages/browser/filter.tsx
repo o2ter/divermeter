@@ -92,7 +92,7 @@ export const decodeFiltersFromURLParams = (params: URLSearchParams, proto: Retur
  * Encode QueryFilter[] into URLSearchParams
  * Uses filter[col]=val format for simple equality filters, JSON for complex filters
  */
-export const encodeFiltersToURLParams = (filters: QueryFilter[], params: URLSearchParams, proto: ProtoClient): void => {
+export const encodeFiltersToURLParams = (filters: QueryFilter[], params: URLSearchParams, proto: ReturnType<typeof useProto>): void => {
   // Delete existing filter parameters
   const keysToDelete: string[] = [];
   for (const key of params.keys()) {
