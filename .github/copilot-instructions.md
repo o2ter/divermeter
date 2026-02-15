@@ -100,6 +100,72 @@ const text = theme.colorContrast('#ffffff');
 // No errors - continue
 ```
 
+### Always Refactor Duplicated Code Immediately
+
+**CRITICAL: If you discover duplicated code at ANY time, refactor it immediately. Do not wait or ask permission.**
+
+Key guidelines:
+
+1. **Proactive refactoring** - Eliminate duplication as soon as you spot it
+2. **Any time means any time** - While reading, editing, debugging, or reviewing code
+3. **Don't ask permission** - Refactoring duplication is always the right thing to do
+4. **Extract to shared functions** - Create reusable functions with clear names
+5. **Parameterize differences** - If code is similar but not identical, parameterize the variations
+
+**When duplication occurs:**
+- Same logic in multiple event handlers (e.g., `handleCopy` and keyboard shortcut handler)
+- Repeated data transformations or validations
+- Similar UI rendering patterns across components
+- Identical utility logic scattered across files
+
+**Benefits:**
+- **Single source of truth** - Fix bugs once, not multiple times
+- **Easier maintenance** - Update logic in one place
+- **Better readability** - Clear function names express intent
+- **Smaller codebase** - Less code to understand and maintain
+
+**Example:**
+```tsx
+// ❌ WRONG: Duplicated copy logic in two handlers
+const { handleCopy, handleKeyDown } = _useCallbacks({
+  handleCopy: (e: ClipboardEvent) => {
+    const selectedRows = state.selectedRows?.sort().filter(x => x < data.length) ?? [];
+    const columnKeys = _.map(columns, col => _.isString(col) ? col : col.key);
+    if (!_.isEmpty(selectedRows)) {
+      e.preventDefault();
+      // ... 20 more lines of logic
+    }
+  },
+  handleKeyDown: (e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+      // SAME 25 lines duplicated here!
+      const selectedRows = state.selectedRows?.sort().filter(x => x < data.length) ?? [];
+      const columnKeys = _.map(columns, col => _.isString(col) ? col : col.key);
+      // ... 20 more lines of identical logic
+    }
+  },
+});
+
+// ✅ CORRECT: Extract to shared function
+const performCopy = (e: ClipboardEvent | KeyboardEvent) => {
+  const selectedRows = state.selectedRows?.sort().filter(x => x < data.length) ?? [];
+  const columnKeys = _.map(columns, col => _.isString(col) ? col : col.key);
+  if (!_.isEmpty(selectedRows)) {
+    e.preventDefault();
+    // ... 20 lines of logic - defined ONCE
+  }
+};
+
+const { handleCopy, handleKeyDown } = _useCallbacks({
+  handleCopy: (e: ClipboardEvent) => performCopy(e),
+  handleKeyDown: (e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'c') performCopy(e);
+  },
+});
+```
+
+**This is not optional** - code duplication creates technical debt and makes the codebase harder to maintain. Always refactor it immediately.
+
 ## Architecture & Key Dependencies
 
 ### JSX Runtime: Frosty (Not React)
@@ -844,10 +910,13 @@ Before submitting code, verify:
 #### 2.5. No Code Duplication
 **CRITICAL: Always extract duplicated code into shared functions.**
 
+**PROACTIVE REFACTORING: If you discover duplicated code at any time during development, refactor it immediately. Do not wait or ask permission - eliminate duplication as soon as you spot it.**
+
 - [ ] **Scan for duplicated code blocks** - If the same logic appears in multiple places, extract it
 - [ ] **Create shared functions** - Extract common patterns into reusable functions
 - [ ] **DRY principle** - Don't Repeat Yourself - each piece of logic should exist in one place
 - [ ] **Check before and after changes** - When modifying code, look for duplication opportunities
+- [ ] **Refactor on discovery** - Whenever you encounter duplicated code while reading, editing, or debugging, refactor it immediately
 
 **Example - Duplicated encoding logic:**
 ```tsx
