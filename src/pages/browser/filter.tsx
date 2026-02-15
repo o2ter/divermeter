@@ -24,7 +24,7 @@
 //
 
 import _ from 'lodash';
-import { _useCallbacks, useState } from 'frosty';
+import { _useCallbacks, useMemo, useState } from 'frosty';
 import { QueryFilter, TSchema } from '../../proto';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
@@ -34,6 +34,30 @@ import { Icon } from '../../components/icon';
 import { Decimal } from 'proto.io';
 import { _typeOf, encodeValue, decodeValue, verifyValue } from './utils';
 import { JSCode } from '../../components/jscode';
+
+// Helper: Expand schema fields into flat list (flatten shape types)
+const expandFields = (fields: TSchema['fields']) => {
+  const expanded: Record<string, TSchema['fields'][string]> = {};
+
+  const expandField = (fieldName: string, fieldType: TSchema['fields'][string], path: string[] = []) => {
+    if (!_.isString(fieldType) && fieldType.type === 'shape') {
+      // Expand shape properties into separate fields with dot notation
+      for (const [propName, propType] of Object.entries(fieldType.shape)) {
+        expandField(fieldName, propType, [...path, propName]);
+      }
+    } else {
+      // Regular field or non-expandable type
+      const key = path.length > 0 ? `${fieldName}.${path.join('.')}` : fieldName;
+      expanded[key] = fieldType;
+    }
+  };
+
+  for (const [fieldName, fieldType] of Object.entries(fields)) {
+    expandField(fieldName, fieldType);
+  }
+
+  return expanded;
+};
 
 // Search operators supported by proto.io TFieldQuerySelector
 const operators = [
@@ -613,6 +637,12 @@ export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProp
   const theme = useTheme();
   const alert = useAlert();
 
+  // Expand shape fields into flat list with dot notation
+  const expandedFields = useMemo(() => {
+    if (!schema) return {};
+    return expandFields(schema.fields);
+  }, [schema]);
+
   const [rootGroup, setRootGroup] = useState<GroupFilterCriteria>({
     id: 'root',
     operator: '$and',
@@ -651,7 +681,7 @@ export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProp
     const field = criteria as FieldFilterCriteria;
     if (!field.field || !field.operator) return null;
 
-    const fieldType = _typeOf(schema?.fields[field.field]);
+    const fieldType = _typeOf(expandedFields[field.field]);
     let parsedValue: any = field.value;
 
     // Parse value based on operator and field type
@@ -715,7 +745,7 @@ export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProp
       throw error;
     }
 
-    // Create filter object
+    // Create filter object - proto.io handles dot notation automatically
     if (field.operator === '$eq') {
       return { [field.field]: parsedValue };
     } else {
@@ -790,7 +820,7 @@ export const FilterModal = ({ show, schema, onApply, onCancel }: FilterModalProp
           <>
             <FilterItem
               criteria={rootGroup}
-              fields={schema.fields}
+              fields={expandedFields}
               onUpdate={(updated) => {
                 // Root must always be a group
                 if (updated.operator === '$and' || updated.operator === '$or') {
