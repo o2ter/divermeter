@@ -248,8 +248,25 @@ export const TableCell = ({
 }: TableCellProps) => {
   const theme = useTheme();
   const location = useLocation();
-  const field = schema.fields[column];
-  const isSecure = schema.secureFields?.includes(column);
+
+  // Helper to extract field type from dot-notated column names
+  const getFieldFromColumn = (column: string) => {
+    const parts = column.split('.');
+    let currentField = schema.fields[parts[0]];
+
+    // Traverse through nested shape properties
+    for (let i = 1; i < parts.length; i++) {
+      if (!currentField || _.isString(currentField)) return undefined;
+      if (currentField.type !== 'shape' || !currentField.shape) return undefined;
+      currentField = currentField.shape[parts[i]];
+    }
+
+    return currentField;
+  };
+
+  const field = getFieldFromColumn(column);
+  const baseField = column.split('.')[0];
+  const isSecure = schema.secureFields?.includes(baseField);
   const type = typeOf(field);
 
   const proto = useProto();
@@ -428,12 +445,12 @@ export const TableCell = ({
               }}
               value={editingValue?.id ?? value?.id ?? ''}
               onInput={(e) => {
-                if (_.isString(field) || field.type !== 'pointer' || !field.target) return;
+                if (!field || _.isString(field) || field.type !== 'pointer' || !field.target) return;
                 setEditingValue?.(proto.Object(field.target, e.currentTarget.value));
               }}
               autofocus
             />
-            {(editingValue?.id || value?.id) && !_.isString(field) && field.type === 'pointer' && field.target && (
+            {(editingValue?.id || value?.id) && field && !_.isString(field) && field.type === 'pointer' && field.target && (
               <button
                 style={{
                   background: 'none',
@@ -445,7 +462,7 @@ export const TableCell = ({
                   alignItems: 'center',
                 }}
                 onClick={() => {
-                  if (_.isString(field) || field.type !== 'pointer' || !field.target) return;
+                  if (!field || _.isString(field) || field.type !== 'pointer' || !field.target) return;
                   const targetId = editingValue?.id ?? value?.id;
                   location.pushState({}, `/classes/${field.target}?filter=${encodeURIComponent(`id == "${targetId}"`)}`);
                 }}
@@ -471,7 +488,7 @@ export const TableCell = ({
             <Modal show={showRelationModal}>
               <RelationEditor
                 value={editingValue ?? value ?? []}
-                targetClassName={!_.isString(field) && field.type === 'relation' && field.target ? field.target : 'Object'}
+                targetClassName={field && !_.isString(field) && field.type === 'relation' && field.target ? field.target : 'Object'}
                 onSave={(items) => setEditingValue?.(items)}
                 onClose={() => setShowRelationModal(false)}
               />
@@ -554,7 +571,7 @@ export const TableCell = ({
             <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {value.id}
             </span>
-            {!_.isString(field) && field.type === 'pointer' && field.target && (
+            {field && !_.isString(field) && field.type === 'pointer' && field.target && (
               <button
                 style={{
                   background: 'none',
@@ -568,7 +585,7 @@ export const TableCell = ({
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (_.isString(field) || field.type !== 'pointer' || !field.target) return;
+                  if (!field || _.isString(field) || field.type !== 'pointer' || !field.target) return;
                   location.pushState({}, `/classes/${field.target}?filter=${encodeURIComponent(`id == "${value.id}"`)}`);
                 }}
               >
