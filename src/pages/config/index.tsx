@@ -34,6 +34,7 @@ import { useAlert } from '../../components/alert';
 import { useActivity } from '../../components/activity';
 import { normalizeColor, getRed, getGreen, getBlue, rgba, toHexString, mixColor } from '@o2ter/colors.js';
 import { encodeValue, decodeValue } from '../browser/utils';
+import { JSCode } from '../../components/jscode';
 
 type ConfigEntry = {
   key: string;
@@ -329,12 +330,13 @@ export const ConfigPage = () => {
                     </td>
                     <td style={tdStyle}>
                       {isEditing ? (
-                        <textarea
-                          value={editingState.value}
-                          onChange={(e) => setEditingState({ ...editingState, value: e.currentTarget.value })}
-                          style={textareaStyle}
-                          autofocus
-                        />
+                        <div style={{ minHeight: '120px' }}>
+                          <JSCode
+                            initialValue={editingState.value}
+                            onChangeValue={(text) => setEditingState({ ...editingState, value: text })}
+                            autoFocus
+                          />
+                        </div>
                       ) : (
                         <div style={cellContentStyle}>
                           {_.isNil(entry.value) ? (
@@ -460,12 +462,12 @@ export const ConfigPage = () => {
 
               <div style={inputGroupStyle}>
                 <label style={labelStyle}>Value</label>
-                <textarea
-                  value={newEntry.value}
-                  onChange={(e) => setNewEntry({ ...newEntry, value: e.currentTarget.value })}
-                  style={textareaStyle}
-                  placeholder='{ string: "text", number: 123, date: ISODate("2026-02-15T00:00:00.000Z"), decimal: Decimal("0.001") }'
-                />
+                <div style={{ minHeight: '120px' }}>
+                  <JSCode
+                    initialValue={newEntry.value}
+                    onChangeValue={(text) => setNewEntry({ ...newEntry, value: text })}
+                  />
+                </div>
               </div>
 
               <div style={inputGroupStyle}>
