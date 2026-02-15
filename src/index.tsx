@@ -37,6 +37,7 @@ import { ConfigPage } from './pages/config';
 import { NotFoundPage } from './pages/notfound';
 import { AlertProvider, useAlert } from './components/alert';
 import { ModalProvider } from './components/modal';
+import { ActivityProvider } from './components/activity';
 
 export { useTheme } from './components/theme';
 export { useParams, Outlet } from './components/router';
@@ -86,9 +87,11 @@ export const Dashboard: ComponentType<{
     <StyleProvider>
       <AlertProvider>
         <ModalProvider>
-          <ProtoProvider proto={proto}>
-            <Main pages={pages} />
-          </ProtoProvider>
+          <ActivityProvider>
+            <ProtoProvider proto={proto}>
+              <Main pages={pages} />
+            </ProtoProvider>
+          </ActivityProvider>
         </ModalProvider>
       </AlertProvider>
     </StyleProvider>

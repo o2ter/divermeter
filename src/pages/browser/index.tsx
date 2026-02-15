@@ -31,6 +31,7 @@ import { DataSheet } from '../../components/datasheet';
 import { TableCell } from './cell';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
+import { useActivity } from '../../components/activity';
 
 export const BrowserPage = () => {
   const theme = useTheme();
@@ -46,6 +47,8 @@ export const BrowserPage = () => {
   const [sort, setSort] = useState<Record<string, 1 | -1>>({});
 
   const [columnWidth, setColumnWidth] = useState<Record<string, number>>({});
+
+  const startActivity = useActivity();
 
   const {
     resource = [],
@@ -64,16 +67,19 @@ export const BrowserPage = () => {
   const {
     handleUpdateItem,
   } = _useCallbacks({
-    handleUpdateItem: async (item: TObject, columnKey: string, value: any) => {
-      try {
-        const cloned = item.clone();
-        cloned.set(columnKey, value);
-        await cloned.save({ master: true });
-        setResource((prev) => _.map(prev, i => i === item ? cloned : i));
-      } catch (error) {
-        console.error('Failed to update item:', error);
-        alert.showError(error instanceof Error ? error.message : 'Failed to update item');
-      }
+    handleUpdateItem: (item: TObject, columnKey: string, value: any) => {
+      startActivity(async () => {
+        try {
+          const cloned = item.clone();
+          cloned.set(columnKey, value);
+          await cloned.save({ master: true });
+          setResource((prev) => _.map(prev, i => i === item ? cloned : i));
+          alert.showSuccess(`Object (${item.id}) updated successfully`);
+        } catch (error) {
+          console.error('Failed to update item:', error);
+          alert.showError(error instanceof Error ? error.message : 'Failed to update item');
+        }
+      });
     },
   });
 
