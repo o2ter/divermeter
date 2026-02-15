@@ -58,25 +58,6 @@ const operators = [
   { value: '$filter', label: 'custom filter' },
 ];
 
-// Type-specific operators
-const getOperatorsForType = (type: string) => {
-  switch (type) {
-    case 'string':
-      return ['$eq', '$ne', '$in', '$nin', '$exists', '$regex', '$text', '$filter'];
-    case 'number':
-    case 'decimal':
-    case 'date':
-      return ['$eq', '$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin', '$exists', '$filter'];
-    case 'boolean':
-      return ['$eq', '$ne', '$exists', '$filter'];
-    case 'pointer':
-    case 'relation':
-      return ['$eq', '$ne', '$in', '$nin', '$exists', '$filter'];
-    default:
-      return ['$eq', '$ne', '$exists', '$filter'];
-  }
-};
-
 type GroupFilterCriteria = {
   id: string;
   operator: '$and' | '$or';
@@ -340,8 +321,6 @@ const FilterItem = ({
 
   // Field filter (regular operators like $eq, $ne, etc.)
   const field = criteria as FieldFilterCriteria;
-  const fieldType = field.field ? _typeOf(fields[field.field]) : '';
-  const availableOperators = getOperatorsForType(fieldType ?? '');
 
   return (
     <div style={{
