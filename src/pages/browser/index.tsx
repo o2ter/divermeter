@@ -44,10 +44,11 @@ import { FilterModal, decodeFiltersFromURLParams, encodeFiltersToURLParams } fro
 const systemFields = ['_id', '_created_at', '_updated_at', '__v', '__i'];
 const readonlyKeysForSchema = (schema?: TSchema) => {
   if (!schema) return systemFields;
-  return [
+  return _.uniq([
     ...systemFields,
     ..._.keys(_.pickBy(schema.fields, type => !_.isString(type) && type.type === 'relation' && !_.isNil(type.foreignField))),
-  ];
+    ...schema.secureFields ?? [],
+  ]);
 };
 
 // Helper: Expand schema fields into columns (flatten object types but not arrays)
