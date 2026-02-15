@@ -23,7 +23,7 @@
 //  THE SOFTWARE.
 //
 
-import _ from 'lodash';
+import _, { set } from 'lodash';
 import { tsvFormatRows, tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, useProto, useProtoSchema } from '../../proto';
@@ -132,6 +132,13 @@ export const BrowserPage = () => {
         break;
       default: break;
     }
+  };
+
+  const performSaves = async (items: TObject[]) => {
+    for (const item of items) {
+      await item.save({ master: true });
+    }
+    setResource((prev) => _.map(prev, i => items.includes(i) ? items.find(it => it.id === i.id) ?? i : i));
   };
 
   const {
@@ -342,6 +349,8 @@ export const BrowserPage = () => {
                       updates.push(_obj);
                     }
                   }
+                  await performSaves(updates);
+                  alert.showSuccess(`${updates.length} object(s) updated successfully`);
                 } catch (error) {
                   console.error('Failed to paste data:', error);
                   alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
@@ -374,6 +383,8 @@ export const BrowserPage = () => {
                     }
                     updates.push(_obj);
                   }
+                  await performSaves(updates);
+                  alert.showSuccess(`${updates.length} object(s) updated successfully`);
                 } catch (error) {
                   console.error('Failed to paste data:', error);
                   alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
