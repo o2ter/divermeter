@@ -259,13 +259,19 @@ const DataSheetTable = <T extends object, C extends Column>({
       });
     },
     handleCopy: (e: ClipboardEvent) => {
+      // Only handle copy if the event originated from within the datasheet
+      if (!isChildNode(tableRef.current, e.target, doc)) return;
       performCopy(e);
     },
     handlePaste: (e: ClipboardEvent) => {
+      // Only handle paste if the event originated from within the datasheet
+      if (!isChildNode(tableRef.current, e.target, doc)) return;
       performPaste(e);
     },
     handleKeyDown: (e: KeyboardEvent) => {
       if (!allowSelection) return;
+      // Only handle keyboard events if the event originated from within the datasheet
+      if (!isChildNode(tableRef.current, e.target, doc)) return;
 
       // Handle copy
       if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
