@@ -124,7 +124,7 @@ export const BrowserPage = () => {
             columns={_.map(schema.fields, (v, k) => ({
               key: k,
               label: (
-                <span onClick={(e) => {
+                <div onClick={(e) => {
                   setSort(sort => ({
                     ...e.shiftKey ? _.omit(sort, k) : {},
                     [k]: sort[k] === 1 ? -1 : 1,
@@ -136,7 +136,7 @@ export const BrowserPage = () => {
                     opacity: 0.5,
                     paddingLeft: theme.spacing.xs,
                   }}>({_.isString(v) ? v : v.type})</span>
-                </span>
+                </div>
               ),
             }))}
             columnWidth={_.keys(schema.fields).map(key => columnWidth[key] || 150)}
