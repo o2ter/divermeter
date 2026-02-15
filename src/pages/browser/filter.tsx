@@ -1012,12 +1012,7 @@ export const FilterModal = ({ show, schema, currentFilters = [], onApply, onCanc
       throw error;
     }
 
-    // Create filter object - proto.io handles dot notation automatically
-    if (field.operator === '$eq') {
-      return { [field.field]: parsedValue };
-    } else {
-      return { [field.field]: { [field.operator]: parsedValue } };
-    }
+    return { [field.field]: { [field.operator]: parsedValue } };
   };
 
   const convertToQueryFilter = (criteriaList: FilterCriteria[]): QueryFilter[] => {
