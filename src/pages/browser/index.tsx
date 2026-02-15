@@ -189,7 +189,17 @@ export const BrowserPage = () => {
     } = {},
     setResource,
     refresh,
-  } = useResource(async () => {
+  } = useResource<{
+    className: string;
+    count: number;
+    items: TObject[];
+  }>(async ({ prevState, dispatch }) => {
+
+    if (prevState?.className !== className) {
+      // Reset state when switching to a different class
+      dispatch({ className, count: 0, items: [] });
+    }
+
     // Build query: start with relation or regular query, then apply filters
     let q = relationQuery
       ? proto.Relation(proto.Object(relationQuery.className, relationQuery.objectId), relationQuery.field)
@@ -211,6 +221,7 @@ export const BrowserPage = () => {
     if (offset > 0) q.skip(offset);
     if (!_.isEmpty(sort)) q.sort(sort);
     return {
+      className,
       count,
       items: await q.find({ master: true }),
     };
