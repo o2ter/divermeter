@@ -75,23 +75,23 @@ export const decodeValue = (text: string): any => {
     skipWhitespace();
 
     // null
-    if (text.substr(pos, 4) === 'null') {
+    if (text.slice(pos, pos + 4) === 'null') {
       pos += 4;
       return null;
     }
 
     // boolean
-    if (text.substr(pos, 4) === 'true') {
+    if (text.slice(pos, pos + 4) === 'true') {
       pos += 4;
       return true;
     }
-    if (text.substr(pos, 5) === 'false') {
+    if (text.slice(pos, pos + 5) === 'false') {
       pos += 5;
       return false;
     }
 
     // ISODate
-    if (text.substr(pos, 8) === 'ISODate(') {
+    if (text.slice(pos, pos + 8) === 'ISODate(') {
       pos += 8;
       skipWhitespace();
       const str = parseString();
@@ -102,7 +102,7 @@ export const decodeValue = (text: string): any => {
     }
 
     // Decimal
-    if (text.substr(pos, 8) === 'Decimal(') {
+    if (text.slice(pos, pos + 8) === 'Decimal(') {
       pos += 8;
       skipWhitespace();
       const str = parseString();
