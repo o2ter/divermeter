@@ -35,6 +35,7 @@ import { Modal } from '../../components/modal';
 import { Button } from '../../components/button';
 import { Icon } from '../../components/icon';
 import { typeOf, encodeValue, decodeValue, verifyValue } from './utils';
+import { Resize } from '../../components/resize';
 
 // Helper component: Switch for boolean values
 const Switch = ({ checked, onChange, disabled }: { checked: boolean; onChange: (value: boolean) => void; disabled?: boolean }) => {
@@ -348,7 +349,14 @@ export const TableCell = ({
         // For complex types, use JSCode component with proper parser
         const displayValue = editingValue !== undefined ? editingValue : value;
         return (
-          <div style={{ ...inputStyle, padding: 0, paddingRight: theme.spacing.md, minHeight: '120px', height: '120px', resize: 'both', overflow: 'auto' }}>
+          <Resize
+            style={{
+              ...inputStyle,
+              padding: 0,
+              paddingRight: theme.spacing.md,
+              minHeight: '120px',
+            }}
+          >
             <JSCode
               initialValue={_.isNil(displayValue) ? '' : encodeValue(displayValue, 2)}
               onChangeValue={(text) => {
@@ -364,7 +372,7 @@ export const TableCell = ({
               }}
               autoFocus
             />
-          </div>
+          </Resize>
         );
     }
   }
