@@ -92,10 +92,7 @@ export const Routes = ({
       const matched = matchRoute(parentPath, route, location.pathname);
       if (route.children) {
         const found = resolve(route.children, `${_.trimEnd(parentPath, '/')}/${_.trimStart(route.path, '/')}`);
-        if (found.length) {
-          found.push({ ...route, matched });
-          return found;
-        }
+        if (found.length) return [...found, { ...route, matched }];
       }
       if (matched) {
         return [{ ...route, matched }];
