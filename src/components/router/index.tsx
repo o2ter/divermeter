@@ -104,11 +104,22 @@ export const Routes = ({
     return [];
   };
 
-  return _.reduce(resolve(routes, parent.path), (outlet, { element, matched = {} }) => (
-    <Context value={{ ...matched, outlet }}>
-      {element || outlet}
-    </Context>
-  ), <></>);
+  const stacks = resolve(routes, parent.path);
+  const title = stacks.find(x => x.title)?.title;
+  const matched = stacks.find(x => x.matched)?.matched;
+
+  return (
+    <>
+      {!!title && (
+        <head><title>{_.isFunction(title) ? title(matched?.params) : title}</title></head>
+      )}
+      {_.reduce(stacks, (outlet, { element, matched = {} }) => (
+        <Context value={{ ...matched, outlet }}>
+          {element || outlet}
+        </Context>
+      ), <></>)}
+    </>
+  );
 };
 
 export const Route = ({ }: RouteProps) => (
