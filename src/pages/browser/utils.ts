@@ -145,14 +145,35 @@ export const decodeValue = (text: string): any => {
       if (text[pos] === '\\') {
         pos++;
         if (pos >= text.length) throw new Error('Unexpected end of string');
-        switch (text[pos]) {
+        const c = text[pos];
+        switch (c) {
+          case 'b': str += '\b'; break;
+          case 'f': str += '\f'; break;
           case 'n': str += '\n'; break;
-          case 't': str += '\t'; break;
           case 'r': str += '\r'; break;
-          case '\\': str += '\\'; break;
+          case 't': str += '\t'; break;
+          case 'v': str += '\v'; break;
           case '"': str += '"'; break;
           case "'": str += "'"; break;
-          default: str += text[pos];
+          case '\\': str += '\\'; break;
+          case 'u': {
+            // Unicode escape \uXXXX
+            const hex = text.slice(pos + 1, pos + 5);
+            if (!/^[0-9a-fA-F]{4}$/.test(hex)) throw new Error(`Invalid Unicode escape at position ${pos}`);
+            str += String.fromCharCode(parseInt(hex, 16));
+            pos += 4;
+            break;
+          }
+          case 'x': {
+            // Hex escape \xXX
+            const hex = text.slice(pos + 1, pos + 3);
+            if (!/^[0-9a-fA-F]{2}$/.test(hex)) throw new Error(`Invalid hex escape at position ${pos}`);
+            str += String.fromCharCode(parseInt(hex, 16));
+            pos += 2;
+            break;
+          }
+          default:
+            str += c;
         }
       } else {
         str += text[pos];
