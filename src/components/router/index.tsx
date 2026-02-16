@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { useLocation } from 'frosty/web';
 import { match, ParamData } from 'path-to-regexp';
-import { ComponentNode, ComponentProps, createContext, ElementNode, PropsWithChildren, useContext, useMemo } from 'frosty';
+import { ComponentProps, createContext, ElementNode, PropsWithChildren, useContext, useMemo } from 'frosty';
 
 type RouteProps = PropsWithChildren<{
   title?: string | ((params?: ParamData) => string);
@@ -35,18 +35,32 @@ type RouteProps = PropsWithChildren<{
   element?: ElementNode;
 }>;
 
-const collectRoutes = (element: ElementNode): ComponentNode[] => {
+type _Route = Omit<RouteProps, 'children'> & {
+  children?: _Route[];
+};
+
+const collectRoutes = (element: ElementNode): _Route[] => {
   if (!element || _.isString(element) || _.isNumber(element) || _.isBoolean(element)) return [];
   if (typeof element === 'bigint') return [];
   if (Symbol.iterator in element) {
     return _.flatMap([...element], x => collectRoutes(x));
   }
-  return _.isObject(element) && element.type === Route ? [element] : [];
+  if (_.isObject(element) && element.type === Route) {
+    const { children, ...props } = element.props as RouteProps;
+    return [{
+      ...props,
+      children: collectRoutes(children),
+    }];
+  }
+  return [];
 };
 
-const Context = createContext<{
+type MatchResult = {
   path?: string;
   params?: ParamData;
+};
+
+const Context = createContext<MatchResult & {
   outlet?: ElementNode;
 }>({});
 
@@ -55,12 +69,12 @@ type RoutesProps = PropsWithChildren<{
 }>;
 
 const matchRoute = (
-  parent: string | undefined,
-  routeProps: Pick<RouteProps, 'index' | 'path'>,
+  parentPath: string | undefined,
+  routeProps: Pick<_Route, 'index' | 'path'>,
   location: string,
 ) => {
-  const currentPath = `${_.trimEnd(parent, '/')}/${_.trimStart(routeProps.path, '/')}`;
-  const matchedIndex = !!routeProps.index && !!parent && match(parent)(location);
+  const currentPath = `${_.trimEnd(parentPath, '/')}/${_.trimStart(routeProps.path, '/')}`;
+  const matchedIndex = !!routeProps.index && !!parentPath && match(parentPath)(location);
   const matchedPath = !!currentPath && match(currentPath)(location);
   return matchedIndex || matchedPath || undefined;
 };
@@ -72,39 +86,34 @@ export const Routes = ({
   const routes = collectRoutes(children);
   const location = useLocation();
   const parent = useContext(Context);
-  const currentPath = `${_.trimEnd(parent.path, '/')}/${_.trimStart(path ?? '', '/')}`;
-  return _.find(routes, route => !!matchRoute(currentPath, route.props, location.pathname));
+
+  const resolve = (routes: _Route[], parentPath?: string): (_Route & { matched?: MatchResult; })[] => {
+    for (const route of routes) {
+      const matched = matchRoute(parentPath, route, location.pathname);
+      if (route.children) {
+        const found = resolve(route.children, `${_.trimEnd(parentPath, '/')}/${_.trimStart(route.path, '/')}`);
+        if (found.length) {
+          found.push({ ...route, matched });
+          return found;
+        }
+      }
+      if (matched) {
+        return [{ ...route, matched }];
+      }
+    }
+    return [];
+  };
+
+  return _.reduce(resolve(routes, parent.path), (outlet, { element, matched = {} }) => (
+    <Context value={{ ...matched, outlet }}>
+      {element || outlet}
+    </Context>
+  ), <></>);
 };
 
-export const Route = ({
-  title,
-  path,
-  index,
-  element,
-  children,
-}: RouteProps) => {
-  const location = useLocation();
-  const parent = useContext(Context);
-  const currentPath = `${_.trimEnd(parent.path, '/')}/${_.trimStart(path, '/')}`;
-  const matchedChild = collectRoutes(children).map(route => matchRoute(currentPath, route.props, location.pathname)).find(m => !!m);
-  const matched = matchRoute(parent.path, { path, index }, location.pathname) || matchedChild || undefined;
-  const outlet = (
-    <Context value={{ path: currentPath }}>
-      <Routes>{children}</Routes>
-    </Context>
-  );
-  return (
-    <Context value={{ path: currentPath, params: matched?.params, outlet }}>
-      {matched && (
-        <>
-          {title && !matchedChild && <head><title>{_.isFunction(title) ? title(matched?.params) : title}</title></head>}
-          {element}
-        </>
-      )}
-      {!element && outlet}
-    </Context>
-  );
-};
+export const Route = ({ }: RouteProps) => (
+  <></>
+);
 
 export const Outlet = () => useContext(Context).outlet;
 export const useParams = () => useContext(Context).params ?? {};
