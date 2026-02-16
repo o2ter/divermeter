@@ -38,6 +38,7 @@ import { NotFoundPage } from './pages/notfound';
 import { AlertProvider, useAlert } from './components/alert';
 import { ModalProvider } from './components/modal';
 import { ActivityProvider } from './components/activity';
+import { DiagramPage } from './pages/diagram';
 
 export { useTheme } from './components/theme';
 export { useParams, Outlet } from './components/router';
@@ -71,6 +72,7 @@ const Main = ({ pages }: { pages?: Page[]; }) => {
             <Route title='Dashboard' index element={<HomePage />} />
             <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />
             <Route title='Config' path="/config" element={<ConfigPage />} />
+            <Route title='Diagram' path="/diagram" element={<DiagramPage />} />
             {pages && createPages(pages)}
             <Route path='*path' element={<NotFoundPage />} />
           </Routes>

@@ -164,8 +164,6 @@ type MenuProps = {
 export const Menu = ({ pages }: MenuProps) => {
   const style = useStyle();
   const location = useLocation();
-  const isHome = location.pathname === '/';
-  const isConfig = location.pathname === '/config';
 
   const isPageActive = (page: Page, parentPath: string = ''): boolean => {
     if (!page.path && !page.index) return false;
@@ -231,7 +229,7 @@ export const Menu = ({ pages }: MenuProps) => {
       }}>
         <MenuItem
           label="Dashboard"
-          isActive={isHome}
+          isActive={location.pathname === '/'}
           onClick={() => location.pushState({}, '/')}
         />
 
@@ -251,8 +249,14 @@ export const Menu = ({ pages }: MenuProps) => {
 
         <MenuItem
           label="Config"
-          isActive={isConfig}
+          isActive={location.pathname === '/config'}
           onClick={() => location.pushState({}, '/config')}
+        />
+
+        <MenuItem
+          label="Diagram"
+          isActive={location.pathname === '/diagram'}
+          onClick={() => location.pushState({}, '/diagram')}
         />
 
         {pages && pages.length > 0 && (
