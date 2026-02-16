@@ -54,6 +54,17 @@ type RoutesProps = PropsWithChildren<{
   path?: string;
 }>;
 
+const matchRoute = (
+  parent: string | undefined,
+  routeProps: Pick<RouteProps, 'index' | 'path'>,
+  location: string,
+) => {
+  const currentPath = `${_.trimEnd(parent, '/')}/${_.trimStart(routeProps.path, '/')}`;
+  const matchedIndex = !!routeProps.index && !!parent && match(parent)(location);
+  const matchedPath = !!currentPath && match(currentPath)(location);
+  return matchedIndex || matchedPath || undefined;
+};
+
 export const Routes = ({
   path,
   children,
@@ -62,10 +73,7 @@ export const Routes = ({
   const location = useLocation();
   const parent = useContext(Context);
   const currentPath = `${_.trimEnd(parent.path, '/')}/${_.trimStart(path ?? '', '/')}`;
-  return _.find(routes, route => {
-    const routePath = `${_.trimEnd(currentPath, '/')}/${_.trimStart(route.props.path ?? '', '/')}`;
-    return !!routePath && !!match(routePath)(location.pathname);
-  });
+  return _.find(routes, route => !!matchRoute(currentPath, route.props, location.pathname));
 };
 
 export const Route = ({
@@ -78,15 +86,8 @@ export const Route = ({
   const location = useLocation();
   const parent = useContext(Context);
   const currentPath = `${_.trimEnd(parent.path, '/')}/${_.trimStart(path, '/')}`;
-  const [matchedIndex, matchedPath] = useMemo(() => [
-    !!index && !!parent.path && match(parent.path)(location.pathname),
-    !!currentPath && match(currentPath)(location.pathname),
-  ], [index, location.pathname, parent.path, currentPath]);
-  const matchedChild = collectRoutes(children).map(route => {
-    const routePath = `${_.trimEnd(currentPath, '/')}/${_.trimStart(route.props.path, '/')}`;
-    return routePath && match(routePath)(location.pathname);
-  }).find(m => !!m);
-  const matched = matchedIndex || matchedPath || matchedChild || undefined;
+  const matchedChild = collectRoutes(children).map(route => matchRoute(currentPath, route.props, location.pathname)).find(m => !!m);
+  const matched = matchRoute(parent.path, { path, index }, location.pathname) || matchedChild || undefined;
   const outlet = (
     <Context value={{ path: currentPath }}>
       <Routes>{children}</Routes>
