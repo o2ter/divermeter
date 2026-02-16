@@ -62,15 +62,10 @@ export const Routes = ({
   const location = useLocation();
   const parent = useContext(Context);
   const currentPath = `${_.trimEnd(parent.path, '/')}/${_.trimStart(path ?? '', '/')}`;
-  const matched = _.find(routes, route => {
+  return _.find(routes, route => {
     const routePath = `${_.trimEnd(currentPath, '/')}/${_.trimStart(route.props.path ?? '', '/')}`;
     return !!routePath && !!match(routePath)(location.pathname);
   });
-  return (
-    <Context value={{ path }}>
-      {matched}
-    </Context>
-  );
 };
 
 export const Route = ({
