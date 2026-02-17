@@ -108,7 +108,7 @@ export const BrowserPage = () => {
     let relationQuery: { className: string; objectId: string; field: string } | null = null;
 
     if (relationOf && relationId && relationField) {
-    // Priority 1: relation parameters
+      // Priority 1: relation parameters
       relationQuery = { className: relationOf, objectId: relationId, field: relationField };
     } else {
       // Priority 2: Parse filter parameters using centralized decoder
@@ -459,152 +459,99 @@ export const BrowserPage = () => {
       data: any[][] | Record<string, any>[],
       type: 'json' | 'raw',
     ) => {
-      // Determine mode: creating new objects vs updating existing
-      const isCreating = rows[0] >= items.length;
 
-      if (isCreating) {
-        // MODE: Create new objects (paste into empty row)
-        if (relationQuery && canEditInRelationMode) {
-          // Add existing objects to relation by ID
-          const idColumnIdx = _.findIndex(cols, col => col.key === '_id');
-          if (idColumnIdx < 0) return;
+      if (
+        relationQuery && canEditInRelationMode &&
+        rows[0] >= items.length &&
+        cols.length === 1 &&
+        cols[0].key === '_id'
+      ) {
 
-          const objectsToAdd: TObject[] = [];
+        const objectsToAdd: TObject[] = [];
 
-          for (const values of data) {
-            const idValue = type === 'json' && !_.isArray(values) ? values._id : _.isArray(values) ? values[idColumnIdx] : undefined;
-            if (idValue && _.isString(idValue)) {
-              const targetField = schema?.fields[relationQuery.field.split('.')[0]];
-              const targetClass = !_.isString(targetField) && targetField?.type === 'relation'
-                ? targetField.target : className;
-              const obj = await proto.Object(targetClass, idValue).fetch({ master: true });
-              if (obj) objectsToAdd.push(obj);
-            }
-          }
-
-          if (!_.isEmpty(objectsToAdd)) {
-            const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
-            parentObj.addToSet(relationQuery.field, objectsToAdd);
-            await parentObj.save({ master: true });
-            setResource((prev) => ({
-              className,
-              items: [...(prev?.items ?? []), ...objectsToAdd],
-              count: (prev?.items ?? []).length + objectsToAdd.length,
-            }));
-            alert.showSuccess(`${objectsToAdd.length} object(s) added to relation successfully`);
-          }
-        } else {
-          // Create new objects in normal mode
-          const newObjects: TObject[] = [];
-          const pendingPasswords: Array<{ obj: TObject; password: any }> = [];
-
-          for (const values of data) {
-            const obj = proto.Object(className);
-            if (type === 'json' && !_.isArray(values)) {
-              for (const [column, value] of _.toPairs(values)) {
-                const baseField = column.split('.')[0];
-                if (!_.includes(readonlyKeys, baseField)) {
-                  if (className === 'User' && column === 'password') {
-                    // Save password for later - must set after object is saved
-                    pendingPasswords.push({ obj, password: value });
-                  } else {
-                    await obj.set(column, value as any);
-                  }
-                }
-              }
-            } else if (_.isArray(values)) {
-              for (const [column, value] of _.zip(cols, values)) {
-                if (column && !_.includes(readonlyKeys, column.baseField)) {
-                  if (!_.isNil(value) && _.isString(value)) {
-                    const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                    if (!_.isNil(decoded)) {
-                      if (className === 'User' && column.key === 'password') {
-                        // Save password for later - must set after object is saved
-                        pendingPasswords.push({ obj, password: decoded });
-                      } else {
-                        obj.set(column.key, decoded as any);
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            newObjects.push(obj);
-          }
-
-          if (!_.isEmpty(newObjects)) {
-            await performSaves(newObjects);
-            // Now set passwords for User objects
-            for (const { obj, password } of pendingPasswords) {
-              await proto.setPassword(obj, password, { master: true });
-            }
-            alert.showSuccess(`${newObjects.length} object(s) created successfully`);
+        for (const values of data) {
+          const idValue = type === 'json' && !_.isArray(values) ? values._id : _.isArray(values) ? values[0] : undefined;
+          if (idValue && _.isString(idValue)) {
+            const targetField = schema?.fields[relationQuery.field.split('.')[0]];
+            const targetClass = !_.isString(targetField) && targetField?.type === 'relation'
+              ? targetField.target : className;
+            const obj = await proto.Object(targetClass, idValue).fetch({ master: true });
+            if (obj) objectsToAdd.push(obj);
           }
         }
-      } else {
-        // MODE: Update existing objects (paste into existing rows)
-        const updates: TObject[] = [];
-        const pendingPasswords: Array<{ obj: TObject; password: any }> = [];
-        const targetRows = _.filter(rows, row => row < items.length);
 
-        for (const [idx, row] of _.entries(targetRows)) {
-          const item = items[row];
-          const values = data[parseInt(idx)];
-          if (!item || !values) continue;
+        if (!_.isEmpty(objectsToAdd)) {
+          const parentObj = proto.Object(relationQuery.className, relationQuery.objectId);
+          parentObj.addToSet(relationQuery.field, objectsToAdd);
+          await parentObj.save({ master: true });
+          setResource((prev) => ({
+            className,
+            items: [...(prev?.items ?? []), ...objectsToAdd],
+            count: (prev?.items ?? []).length + objectsToAdd.length,
+          }));
+          alert.showSuccess(`${objectsToAdd.length} object(s) added to relation successfully`);
+        }
 
-          const obj = item.clone();
-          let hasNonPasswordChanges = false;
+        return;
+      }
 
-          if (type === 'json' && !_.isArray(values)) {
-            for (const [column, value] of _.toPairs(values)) {
-              const baseField = column.split('.')[0];
-              if (!_.includes(readonlyKeys, baseField)) {
-                if (className === 'User' && column === 'password') {
+      const updates: TObject[] = [];
+      const pendingPasswords: Array<{ obj: TObject; password: any }> = [];
+
+      for (const [idx, values] of data.entries()) {
+        const row = rows[idx];
+        const obj = row < items.length ? items[row].clone() : proto.Object(className);
+        if (!obj || !values) continue;
+
+        let hasNonPasswordChanges = false;
+
+        if (type === 'json' && !_.isArray(values)) {
+          for (const [column, value] of _.toPairs(values)) {
+            const baseField = column.split('.')[0];
+            if (!_.includes(readonlyKeys, baseField)) {
+              if (className === 'User' && column === 'password') {
+                // Save password for later - must be set after other fields are saved
+                pendingPasswords.push({ obj, password: value });
+              } else {
+                await obj.set(column, value);
+                hasNonPasswordChanges = true;
+              }
+            }
+          }
+        } else if (_.isArray(values)) {
+          for (const [column, value] of _.zip(cols, values)) {
+            if (column && !_.includes(readonlyKeys, column.baseField)) {
+              if (_.isNil(value) || (_.isEmpty(value) && column.fieldType !== 'string')) {
+                obj.set(column.key, null);
+                hasNonPasswordChanges = true;
+              } else if (_.isString(value)) {
+                const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
+                if (className === 'User' && column.key === 'password') {
                   // Save password for later - must be set after other fields are saved
-                  pendingPasswords.push({ obj, password: value });
+                  pendingPasswords.push({ obj, password: decoded });
                 } else {
-                  await obj.set(column, value as any);
+                  obj.set(column.key, decoded);
                   hasNonPasswordChanges = true;
                 }
               }
             }
-          } else if (_.isArray(values)) {
-            for (const [column, value] of _.zip(cols, values)) {
-              if (column && !_.includes(readonlyKeys, column.baseField)) {
-                if (_.isNil(value)) {
-                  obj.set(column.key, null);
-                  hasNonPasswordChanges = true;
-                } else if (_.isString(value)) {
-                  const decoded = await decodeRawValue(_typeOf(column.fieldType) ?? '', value);
-                  if (!_.isNil(decoded)) {
-                    if (className === 'User' && column.key === 'password') {
-                      // Save password for later - must be set after other fields are saved
-                      pendingPasswords.push({ obj, password: decoded });
-                    } else {
-                      obj.set(column.key, decoded as any);
-                      hasNonPasswordChanges = true;
-                    }
-                  }
-                }
-              }
-            }
-          }
-
-          // Only add to updates if there are non-password changes
-          if (hasNonPasswordChanges || pendingPasswords.some(p => p.obj === obj)) {
-            updates.push(obj);
           }
         }
 
-        if (!_.isEmpty(updates)) {
-          await performSaves(updates);
-          // Now set passwords for User objects (after other fields are saved)
-          for (const { obj, password } of pendingPasswords) {
-            await proto.setPassword(obj, password, { master: true });
-          }
-          alert.showSuccess(`${updates.length} object(s) updated successfully`);
+        // Only add to updates if there are non-password changes
+        if (hasNonPasswordChanges || pendingPasswords.some(p => p.obj === obj)) {
+          updates.push(obj);
         }
       }
+
+      if (!_.isEmpty(updates)) {
+        await performSaves(updates);
+      }
+      // Now set passwords for User objects (after other fields are saved)
+      for (const { obj, password } of pendingPasswords) {
+        await proto.setPassword(obj, password, { master: true });
+      }
+      alert.showSuccess(`${updates.length} object(s) updated successfully`);
     },
   });
 
