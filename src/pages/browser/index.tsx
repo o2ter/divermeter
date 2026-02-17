@@ -23,7 +23,7 @@
 //  THE SOFTWARE.
 //
 
-import _, { last } from 'lodash';
+import _ from 'lodash';
 import { tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
