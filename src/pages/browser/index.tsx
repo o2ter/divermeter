@@ -35,7 +35,7 @@ import { TableCell } from './cell';
 import { useTheme } from '../../components/theme';
 import { useAlert } from '../../components/alert';
 import { useActivity } from '../../components/activity';
-import { Decimal, deserialize, serialize } from 'proto.io';
+import { Decimal, serialize } from 'proto.io';
 import { Button } from '../../components/button';
 import { Icon } from '../../components/icon';
 import { FilterModal, decodeFiltersFromURLParams, encodeFiltersToURLParams } from './filter';
