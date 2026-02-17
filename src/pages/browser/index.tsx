@@ -23,7 +23,7 @@
 //  THE SOFTWARE.
 //
 
-import _ from 'lodash';
+import _, { last } from 'lodash';
 import { tsvParseRows } from 'd3-dsv';
 import { useParams } from '../../components/router';
 import { QueryFilter, TObject, TSchema, useProto, useProtoSchema } from '../../proto';
@@ -495,8 +495,12 @@ export const BrowserPage = () => {
       const updates: TObject[] = [];
       const pendingPasswords: Array<{ obj: TObject; password: any }> = [];
 
+      const lastRow = _.last(rows) ?? -1;
+      const hasEmptyRow = lastRow >= items.length;
+
       for (const [idx, values] of data.entries()) {
-        const row = rows[idx];
+        const row = rows[idx] || (hasEmptyRow ? lastRow : -1);
+        if (row < 0) continue;
         const obj = row < items.length ? items[row].clone() : proto.Object(className);
         if (!obj || !values) continue;
 
