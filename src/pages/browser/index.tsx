@@ -265,15 +265,18 @@ export const BrowserPage = () => {
   ) => {
     if (json && clipboard instanceof DataTransfer) {
       const json = clipboard.getData('application/json');
-      if (!_.isEmpty(json)) return { type: 'json', data: deserialize(json) as Record<string, any>[] } as const;
+      if (!_.isEmpty(json))
+        return deserialize(json) as Record<string, any>[];
     }
     if (clipboard instanceof DataTransfer) {
       const text = clipboard.getData('text/plain');
-      if (!_.isEmpty(text)) return { type: 'raw', data: tsvParseRows(text) } as const;
+      if (!_.isEmpty(text)) 
+        return tsvParseRows(text);
     }
     if (clipboard instanceof Clipboard) {
       const text = await clipboard.readText();
-      if (!_.isEmpty(text)) return { type: 'raw', data: tsvParseRows(text) } as const;
+      if (!_.isEmpty(text)) 
+        return tsvParseRows(text);
     }
   };
 
@@ -456,8 +459,7 @@ export const BrowserPage = () => {
     handlePasteData: async (
       rows: number[],
       cols: Array<{ key: string; baseField: string; fieldType: TSchema['fields'][string] }>,
-      data: any[][] | Record<string, any>[],
-      type: 'json' | 'raw',
+      data: string[][] | Record<string, any>[],
     ) => {
 
       if (
@@ -470,7 +472,7 @@ export const BrowserPage = () => {
         const objectsToAdd: TObject[] = [];
 
         for (const values of data) {
-          const idValue = type === 'json' && !_.isArray(values) ? values._id : _.isArray(values) ? values[0] : undefined;
+          const idValue = !_.isArray(values) ? values._id : _.isArray(values) ? values[0] : undefined;
           if (idValue && _.isString(idValue)) {
             const targetField = schema?.fields[relationQuery.field.split('.')[0]];
             const targetClass = !_.isString(targetField) && targetField?.type === 'relation'
@@ -505,7 +507,7 @@ export const BrowserPage = () => {
 
         let hasNonPasswordChanges = false;
 
-        if (type === 'json' && !_.isArray(values)) {
+        if (!_.isArray(values)) {
           for (const [column, value] of _.toPairs(values)) {
             const baseField = column.split('.')[0];
             if (!_.includes(readonlyKeys, baseField)) {
@@ -818,9 +820,9 @@ export const BrowserPage = () => {
             onPasteRows={(rows, clipboard) => {
               startActivity(async () => {
                 try {
-                  const { type, data } = await decodeClipboardData(clipboard, true) ?? {};
-                  if (_.isEmpty(data) || !_.isArray(data) || !type) return;
-                  await handlePasteData(rows, visibleColumns, data, type);
+                  const data = await decodeClipboardData(clipboard, true) ?? {};
+                  if (_.isEmpty(data) || !_.isArray(data)) return;
+                  await handlePasteData(rows, visibleColumns, data);
                 } catch (error) {
                   console.error('Failed to paste data:', error);
                   alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
@@ -832,9 +834,9 @@ export const BrowserPage = () => {
                 try {
                   const rows = _.range(cells.start.row, cells.end.row + 1);
                   const cols = _.range(cells.start.col, cells.end.col + 1).map(c => visibleColumns[c]).filter(Boolean);
-                  const { data } = await decodeClipboardData(clipboard, false) ?? {};
+                  const data = await decodeClipboardData(clipboard, false) ?? {};
                   if (_.isEmpty(data) || !_.isArray(data)) return;
-                  await handlePasteData(rows, cols, data, 'raw');
+                  await handlePasteData(rows, cols, data);
                 } catch (error) {
                   console.error('Failed to paste data:', error);
                   alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
