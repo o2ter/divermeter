@@ -38,5 +38,4 @@ const tsvFormatRows = (data: string[][]) => {
 
 export const defaultEncoders = {
   'text/plain': (data: any[][]) => tsvFormatRows(_.map(data, row => _.map(row, val => encodeValue(val)))),
-  'application/json': (data: any[][]) => JSON.stringify(data),
 };

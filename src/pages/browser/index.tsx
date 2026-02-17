@@ -263,11 +263,6 @@ export const BrowserPage = () => {
     clipboard: DataTransfer | Clipboard,
     json: boolean,
   ) => {
-    if (json && clipboard instanceof DataTransfer) {
-      const json = clipboard.getData('application/json');
-      if (!_.isEmpty(json))
-        return deserialize(json) as Record<string, any>[];
-    }
     if (clipboard instanceof DataTransfer) {
       const text = clipboard.getData('text/plain');
       if (!_.isEmpty(text)) 
