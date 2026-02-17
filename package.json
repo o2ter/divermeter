@@ -48,6 +48,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.6",
+    "@types/d3-dsv": "^3.0.7",
     "@types/lodash": "^4.17.16",
     "frosty": "^0.0.144",
     "proto.io": "^0.0.231",
