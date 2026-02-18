@@ -499,7 +499,7 @@ export const BrowserPage = () => {
       const hasEmptyRow = lastRow >= items.length;
 
       for (const [idx, values] of data.entries()) {
-        const row = rows[idx] || (hasEmptyRow ? lastRow : -1);
+        const row = rows[idx] ?? (hasEmptyRow ? lastRow : -1);
         if (row < 0) continue;
         const obj = row < items.length ? items[row].clone() : proto.Object(className);
         if (!obj || !values) continue;
