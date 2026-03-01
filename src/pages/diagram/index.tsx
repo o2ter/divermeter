@@ -143,13 +143,28 @@ export const DiagramPage = () => {
 
   const nodeMap = useMemo(() => _.keyBy(nodes, 'name'), [nodes]);
 
-  // Relationships between classes in the diagram
+  // Relationships between classes in the diagram, with perpendicular offset index for parallel edges
   const relationships = useMemo(() => {
-    const rels: Array<{ from: string; to: string; fieldName: string; type: 'pointer' | 'relation' }> = [];
+    const rels: Array<{ from: string; to: string; fieldName: string; type: 'pointer' | 'relation'; offsetIndex: number; offsetTotal: number }> = [];
+    // Count how many edges share each undirected pair so we can fan them out
+    const pairCount: Record<string, number> = {};
+    const pairNext: Record<string, number> = {};
+    for (const name of classNames) {
+      for (const [, ftype] of Object.entries(schema[name]?.fields ?? {})) {
+        if (!_.isString(ftype) && (ftype.type === 'pointer' || ftype.type === 'relation') && ftype.target && nodeMap[ftype.target] && name !== ftype.target) {
+          const key = [name, ftype.target].sort().join('\0');
+          pairCount[key] = (pairCount[key] ?? 0) + 1;
+        }
+      }
+    }
     for (const name of classNames) {
       for (const [fname, ftype] of Object.entries(schema[name]?.fields ?? {})) {
-        if (!_.isString(ftype) && (ftype.type === 'pointer' || ftype.type === 'relation') && ftype.target && nodeMap[ftype.target]) {
-          rels.push({ from: name, to: ftype.target, fieldName: fname, type: ftype.type });
+        if (!_.isString(ftype) && (ftype.type === 'pointer' || ftype.type === 'relation') && ftype.target && nodeMap[ftype.target] && name !== ftype.target) {
+          const key = [name, ftype.target].sort().join('\0');
+          const total = pairCount[key] ?? 1;
+          const idx = pairNext[key] ?? 0;
+          pairNext[key] = idx + 1;
+          rels.push({ from: name, to: ftype.target, fieldName: fname, type: ftype.type, offsetIndex: idx, offsetTotal: total });
         }
       }
     }
@@ -311,33 +326,48 @@ export const DiagramPage = () => {
 
           {/* ── Arrows (rendered behind nodes) ── */}
           {relationships.map((rel, i) => {
-            if (rel.from === rel.to) return null;
             const fn = nodeMap[rel.from], tn = nodeMap[rel.to];
             if (!fn || !tn) return null;
             const isPointer = rel.type === 'pointer';
             const color = isPointer ? theme.colors.primary : theme.colors.tint;
             const fcx = fn.x + fn.width / 2, fcy = fn.y + fn.height / 2;
             const tcx = tn.x + tn.width / 2, tcy = tn.y + tn.height / 2;
-            const start = boxEdgePoint(fcx, fcy, fn.width, fn.height, tcx, tcy);
-            const end = boxEdgePoint(tcx, tcy, tn.width, tn.height, fcx, fcy);
-            const mx = (start.x + end.x) / 2, my = (start.y + end.y) / 2;
+            // Perpendicular offset to fan out parallel edges
+            const SPREAD = 28;
+            const offset = rel.offsetTotal > 1
+              ? (rel.offsetIndex - (rel.offsetTotal - 1) / 2) * SPREAD
+              : 0;
+            const dx = tcx - fcx, dy = tcy - fcy;
+            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            const px = -dy / len, py = dx / len; // unit perpendicular
+            // Control point for quadratic bezier
+            const cpx = (fcx + tcx) / 2 + px * offset;
+            const cpy = (fcy + tcy) / 2 + py * offset;
+            // Use the control-point-aware edge intersection
+            const start = boxEdgePoint(fcx, fcy, fn.width, fn.height, cpx, cpy);
+            const end = boxEdgePoint(tcx, tcy, tn.width, tn.height, cpx, cpy);
+            // Label position: point on bezier at t=0.5
+            const lx = 0.25 * start.x + 0.5 * cpx + 0.25 * end.x;
+            const ly = 0.25 * start.y + 0.5 * cpy + 0.25 * end.y;
+            const d = `M ${start.x} ${start.y} Q ${cpx} ${cpy} ${end.x} ${end.y}`;
             return (
               <g key={i}>
-                <line
-                  x1={start.x} y1={start.y} x2={end.x} y2={end.y}
+                <path
+                  d={d}
+                  fill="none"
                   stroke={color} strokeWidth="1.5"
                   strokeDasharray={isPointer ? undefined : '6,3'}
                   markerEnd={`url(#arr-${isPointer ? 'pointer' : 'relation'})`}
                   opacity="0.75"
                 />
-                {/* Field name label on the arrow */}
+                {/* Field name label on the curve */}
                 <rect
-                  x={mx - (rel.fieldName.length * 3.2)} y={my - 9}
+                  x={lx - (rel.fieldName.length * 3.2)} y={ly - 9}
                   width={rel.fieldName.length * 6.4} height={13}
                   rx="2" fill="white" opacity="0.85"
                 />
                 <text
-                  x={mx} y={my}
+                  x={lx} y={ly}
                   textAnchor="middle" fontSize="10" fill={color}
                   style={{ pointerEvents: 'none' }}
                 >
