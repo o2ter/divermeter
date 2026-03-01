@@ -85,7 +85,158 @@ const boxEdgePoint = (cx: number, cy: number, w: number, h: number, tx: number, 
   return { x: cx + dx * t, y: cy + dy * t };
 };
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Sub-components (auto-memoized by Frosty) ────────────────────────────────
+
+type ClassNodeProps = {
+  name: string;
+  fields: FieldInfo[];
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  isDragging: boolean;
+  onMouseDown: (e: any) => void;
+  // theme colours passed as primitives so Frosty can skip re-render when unchanged
+  colorPrimary: string;
+  colorPrimary100: string;
+  colorPrimary200: string;
+  colorPrimary300: string;
+  colorPrimary400: string;
+  colorContrast: string;
+  fontSizeSm: number;
+  fontWeightSemibold: number;
+  fontWeightMedium: number;
+  fontWeightNormal: number;
+  borderRadiusMd: number;
+};
+
+const ClassNode = ({
+  name, fields, width, height, x, y, isDragging, onMouseDown,
+  colorPrimary, colorPrimary100, colorPrimary200, colorPrimary300, colorPrimary400,
+  colorContrast, fontSizeSm, fontWeightSemibold, fontWeightMedium, fontWeightNormal, borderRadiusMd,
+}: ClassNodeProps) => {
+  const isSystem = name.startsWith('_');
+  const headerFill = isSystem ? colorPrimary100 : colorPrimary200;
+  const cardStroke = isSystem ? colorPrimary200 : colorPrimary300;
+  const nameFillNode = isSystem ? colorPrimary400 : colorPrimary;
+  return (
+    <g
+      transform={`translate(${x},${y})`}
+      onMouseDown={onMouseDown}
+      style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+    >
+      {/* Drop shadow */}
+      <rect x={3} y={3} width={width} height={height} rx={borderRadiusMd} fill="rgba(0,0,0,0.09)" />
+      {/* Card */}
+      <rect width={width} height={height} rx={`${borderRadiusMd}`} fill="white" stroke={cardStroke} strokeWidth="1.5" />
+      {/* Header fill */}
+      <rect width={width} height={HEADER_HEIGHT} rx={`${borderRadiusMd}`} fill={headerFill} />
+      {/* Square off bottom corners of header strip */}
+      <rect y={HEADER_HEIGHT - borderRadiusMd} width={width} height={borderRadiusMd} fill={headerFill} />
+      {/* Class name */}
+      <text
+        x={width / 2} y={HEADER_HEIGHT / 2 + 5}
+        textAnchor="middle"
+        fontSize={`${fontSizeSm}`} fontWeight={`${fontWeightSemibold}`}
+        fill={nameFillNode}
+        fontStyle={isSystem ? 'italic' : undefined}
+        style={{ pointerEvents: 'none' }}
+      >
+        {name}
+      </text>
+      {/* Header/body divider */}
+      <line x1={0} y1={HEADER_HEIGHT} x2={width} y2={HEADER_HEIGHT} stroke={colorPrimary300} strokeWidth="1" />
+      {/* Fields */}
+      {fields.map((field, fi) => {
+        const fy = HEADER_HEIGHT + PADDING_V + fi * FIELD_HEIGHT;
+        const isRel = !!field.relationType;
+        const nameFill = isRel ? colorPrimary : colorContrast;
+        const typeFill = isRel ? colorPrimary : colorPrimary400;
+        return (
+          <g key={field.name}>
+            {fi > 0 && (
+              <line x1={0} y1={fy} x2={width} y2={fy} stroke={colorPrimary100} strokeWidth="0.5" />
+            )}
+            <text
+              x={10} y={fy + FIELD_HEIGHT * 0.66}
+              fontSize="11" fill={nameFill}
+              fontWeight={`${isRel ? fontWeightMedium : fontWeightNormal}`}
+              style={{ pointerEvents: 'none' }}
+            >
+              {field.name}
+            </text>
+            <text
+              x={width - 10} y={fy + FIELD_HEIGHT * 0.66}
+              textAnchor="end" fontSize="10" fontFamily="monospace"
+              fill={typeFill}
+              style={{ pointerEvents: 'none' }}
+            >
+              {field.typeStr}
+            </text>
+          </g>
+        );
+      })}
+    </g>
+  );
+};
+
+type ArrowItemProps = {
+  fieldName: string;
+  isPointer: boolean;
+  offsetIndex: number;
+  offsetTotal: number;
+  fromX: number; fromY: number; fromW: number; fromH: number;
+  toX: number; toY: number; toW: number; toH: number;
+  colorPrimary: string;
+  colorTint: string;
+};
+
+const ArrowItem = ({
+  fieldName, isPointer, offsetIndex, offsetTotal,
+  fromX, fromY, fromW, fromH, toX, toY, toW, toH,
+  colorPrimary, colorTint,
+}: ArrowItemProps) => {
+  const color = isPointer ? colorPrimary : colorTint;
+  const fcx = fromX + fromW / 2, fcy = fromY + fromH / 2;
+  const tcx = toX + toW / 2, tcy = toY + toH / 2;
+  const SPREAD = 28;
+  const offset = offsetTotal > 1 ? (offsetIndex - (offsetTotal - 1) / 2) * SPREAD : 0;
+  const dx = tcx - fcx, dy = tcy - fcy;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const px = -dy / len, py = dx / len;
+  const cpx = (fcx + tcx) / 2 + px * offset;
+  const cpy = (fcy + tcy) / 2 + py * offset;
+  const start = boxEdgePoint(fcx, fcy, fromW, fromH, cpx, cpy);
+  const end = boxEdgePoint(tcx, tcy, toW, toH, cpx, cpy);
+  const lx = 0.25 * start.x + 0.5 * cpx + 0.25 * end.x;
+  const ly = 0.25 * start.y + 0.5 * cpy + 0.25 * end.y;
+  const d = `M ${start.x} ${start.y} Q ${cpx} ${cpy} ${end.x} ${end.y}`;
+  return (
+    <g>
+      <path
+        d={d} fill="none"
+        stroke={color} strokeWidth="1.5"
+        strokeDasharray={isPointer ? undefined : '6,3'}
+        markerEnd={`url(#arr-${isPointer ? 'pointer' : 'relation'})`}
+        opacity="0.75"
+      />
+      <rect
+        x={lx - (fieldName.length * 3.2)} y={ly - 9}
+        width={fieldName.length * 6.4} height={13}
+        rx="2" fill="white" opacity="0.85"
+      />
+      <text
+        x={lx} y={ly}
+        textAnchor="middle" fontSize="10" fill={color}
+        style={{ pointerEvents: 'none' }}
+      >
+        {fieldName}
+      </text>
+    </g>
+  );
+};
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export const DiagramPage = () => {
   const theme = useTheme();
@@ -106,7 +257,21 @@ export const DiagramPage = () => {
     [classNames, schema],
   );
 
-  // Initial grid layout — columns stacked with per-class heights
+  // nodeData: schema-only, stable between drags
+  const nodeData = useMemo(
+    () => classNames.map(name => ({
+      name,
+      fields: Object.entries(schema[name]?.fields ?? {}).map(([k, v]) => getFieldInfo(k, v)),
+      width: CLASS_WIDTH,
+      height: heights[name] ?? nodeHeight(0),
+    })),
+    [classNames, heights, schema],
+  );
+
+  // nodeNames: for relationship membership check (no positions needed)
+  const nodeNames = useMemo(() => new Set(classNames), [classNames]);
+
+  // Initial grid layout
   const COLS = Math.max(1, Math.ceil(Math.sqrt(classNames.length)));
 
   const initialPositions = useMemo<Record<string, NodePos>>(() => {
@@ -131,27 +296,14 @@ export const DiagramPage = () => {
     [initialPositions, userPositions],
   );
 
-  // Build node objects
-  const nodes = useMemo(() =>
-    classNames.map(name => {
-      const fields = Object.entries(schema[name]?.fields ?? {}).map(([k, v]) => getFieldInfo(k, v));
-      const pos = positions[name] ?? { x: 0, y: 0 };
-      return { name, fields, ...pos, width: CLASS_WIDTH, height: heights[name] ?? nodeHeight(fields.length) };
-    }),
-    [classNames, heights, positions, schema],
-  );
-
-  const nodeMap = useMemo(() => _.keyBy(nodes, 'name'), [nodes]);
-
-  // Relationships between classes in the diagram, with perpendicular offset index for parallel edges
+  // Relationships — stable unless schema changes
   const relationships = useMemo(() => {
     const rels: Array<{ from: string; to: string; fieldName: string; type: 'pointer' | 'relation'; offsetIndex: number; offsetTotal: number }> = [];
-    // Count how many edges share each undirected pair so we can fan them out
     const pairCount: Record<string, number> = {};
     const pairNext: Record<string, number> = {};
     for (const name of classNames) {
       for (const [, ftype] of Object.entries(schema[name]?.fields ?? {})) {
-        if (!_.isString(ftype) && (ftype.type === 'pointer' || ftype.type === 'relation') && ftype.target && nodeMap[ftype.target] && name !== ftype.target) {
+        if (!_.isString(ftype) && (ftype.type === 'pointer' || ftype.type === 'relation') && ftype.target && nodeNames.has(ftype.target) && name !== ftype.target) {
           const key = [name, ftype.target].sort().join('\0');
           pairCount[key] = (pairCount[key] ?? 0) + 1;
         }
@@ -159,7 +311,7 @@ export const DiagramPage = () => {
     }
     for (const name of classNames) {
       for (const [fname, ftype] of Object.entries(schema[name]?.fields ?? {})) {
-        if (!_.isString(ftype) && (ftype.type === 'pointer' || ftype.type === 'relation') && ftype.target && nodeMap[ftype.target] && name !== ftype.target) {
+        if (!_.isString(ftype) && (ftype.type === 'pointer' || ftype.type === 'relation') && ftype.target && nodeNames.has(ftype.target) && name !== ftype.target) {
           const key = [name, ftype.target].sort().join('\0');
           const total = pairCount[key] ?? 1;
           const idx = pairNext[key] ?? 0;
@@ -169,7 +321,7 @@ export const DiagramPage = () => {
       }
     }
     return rels;
-  }, [classNames, nodeMap, schema]);
+  }, [classNames, nodeNames, schema]);
 
   // ─── Drag ──────────────────────────────────────────────────────────────────
 
@@ -198,10 +350,25 @@ export const DiagramPage = () => {
     };
   }, []);
 
-  // ─── SVG canvas size ───────────────────────────────────────────────────────
+  // ─── Canvas size ───────────────────────────────────────────────────────────
 
-  const canvasW = (_.max(nodes.map(n => n.x + n.width)) ?? 400) + CANVAS_PADDING;
-  const canvasH = (_.max(nodes.map(n => n.y + n.height)) ?? 300) + CANVAS_PADDING;
+  const canvasW = (_.max(nodeData.map(n => (positions[n.name]?.x ?? 0) + n.width)) ?? 400) + CANVAS_PADDING;
+  const canvasH = (_.max(nodeData.map(n => (positions[n.name]?.y ?? 0) + n.height)) ?? 300) + CANVAS_PADDING;
+
+  // ─── Theme values flattened for sub-components ─────────────────────────────
+
+  const colorPrimary = theme.colors.primary;
+  const colorPrimary100 = theme.colors['primary-100'];
+  const colorPrimary200 = theme.colors['primary-200'];
+  const colorPrimary300 = theme.colors['primary-300'];
+  const colorPrimary400 = theme.colors['primary-400'];
+  const colorContrast = theme.colorContrast('#ffffff');
+  const colorTint = theme.colors.tint;
+  const fontSizeSm = theme.fontSize.sm;
+  const fontWeightSemibold = theme.fontWeight.semibold;
+  const fontWeightMedium = theme.fontWeight.medium;
+  const fontWeightNormal = theme.fontWeight.normal;
+  const borderRadiusMd = theme.borderRadius.md;
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -221,6 +388,9 @@ export const DiagramPage = () => {
     );
   }
 
+  // nodeDataMap: fast lookup for arrow rendering
+  const nodeDataMap = _.keyBy(nodeData, 'name');
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
 
@@ -230,21 +400,21 @@ export const DiagramPage = () => {
         alignItems: 'center',
         gap: theme.spacing.lg,
         padding: `${theme.spacing.sm}px ${theme.spacing.lg}px`,
-        borderBottom: `1px solid ${theme.colors['primary-200']}`,
+        borderBottom: `1px solid ${colorPrimary200}`,
         fontSize: theme.fontSize.xs,
-        color: theme.colorContrast('#ffffff'),
+        color: colorContrast,
         background: 'white',
         flexShrink: 0,
       }}>
-        <strong style={{ color: theme.colors.primary }}>Legend:</strong>
+        <strong style={{ color: colorPrimary }}>Legend:</strong>
         <span style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs }}>
           <svg width={36} height={12} style={{ display: 'block' }}>
             <defs>
               <marker id="leg-solid" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                <polygon points="0 0, 6 3, 0 6" fill={theme.colors.primary} />
+                <polygon points="0 0, 6 3, 0 6" fill={colorPrimary} />
               </marker>
             </defs>
-            <line x1={0} y1={6} x2={28} y2={6} stroke={theme.colors.primary} strokeWidth="1.5" markerEnd="url(#leg-solid)" />
+            <line x1={0} y1={6} x2={28} y2={6} stroke={colorPrimary} strokeWidth="1.5" markerEnd="url(#leg-solid)" />
           </svg>
           Pointer
         </span>
@@ -252,10 +422,10 @@ export const DiagramPage = () => {
           <svg width={36} height={12} style={{ display: 'block' }}>
             <defs>
               <marker id="leg-dashed" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                <polygon points="0 0, 6 3, 0 6" fill={theme.colors.tint} />
+                <polygon points="0 0, 6 3, 0 6" fill={colorTint} />
               </marker>
             </defs>
-            <line x1={0} y1={6} x2={28} y2={6} stroke={theme.colors.tint} strokeWidth="1.5" strokeDasharray="5,3" markerEnd="url(#leg-dashed)" />
+            <line x1={0} y1={6} x2={28} y2={6} stroke={colorTint} strokeWidth="1.5" strokeDasharray="5,3" markerEnd="url(#leg-dashed)" />
           </svg>
           Relation
         </span>
@@ -270,7 +440,7 @@ export const DiagramPage = () => {
               width: 32,
               height: 18,
               borderRadius: 9,
-              background: showSystem ? theme.colors.primary : '#c0c0c0',
+              background: showSystem ? colorPrimary : '#c0c0c0',
               transition: 'background 0.2s ease',
               cursor: 'pointer',
               flexShrink: 0,
@@ -296,12 +466,12 @@ export const DiagramPage = () => {
           style={{
             fontSize: theme.fontSize.xs,
             padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-            border: `1px solid ${theme.colors['primary-300']}`,
-            borderRadius: theme.borderRadius.sm,
+            border: `1px solid ${colorPrimary300}`,
+            borderRadius: borderRadiusMd,
             background: 'white',
-            color: theme.colors.primary,
+            color: colorPrimary,
             cursor: 'pointer',
-            '&:hover': { background: theme.colors['primary-100'] },
+            '&:hover': { background: colorPrimary100 },
           } as any}
         >
           Reset layout
@@ -309,7 +479,7 @@ export const DiagramPage = () => {
       </div>
 
       {/* SVG canvas */}
-      <div style={{ flex: 1, overflow: 'auto', background: theme.colors['primary-100'] }}>
+      <div style={{ flex: 1, overflow: 'auto', background: colorPrimary100 }}>
         <svg
           width={canvasW}
           height={canvasH}
@@ -317,145 +487,63 @@ export const DiagramPage = () => {
         >
           <defs>
             <marker id="arr-pointer" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-              <polygon points="0 0, 8 3, 0 6" fill={theme.colors.primary} />
+              <polygon points="0 0, 8 3, 0 6" fill={colorPrimary} />
             </marker>
             <marker id="arr-relation" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-              <polygon points="0 0, 8 3, 0 6" fill={theme.colors.tint} />
+              <polygon points="0 0, 8 3, 0 6" fill={colorTint} />
             </marker>
           </defs>
 
           {/* ── Arrows (rendered behind nodes) ── */}
           {relationships.map((rel, i) => {
-            const fn = nodeMap[rel.from], tn = nodeMap[rel.to];
+            const fn = nodeDataMap[rel.from], tn = nodeDataMap[rel.to];
             if (!fn || !tn) return null;
-            const isPointer = rel.type === 'pointer';
-            const color = isPointer ? theme.colors.primary : theme.colors.tint;
-            const fcx = fn.x + fn.width / 2, fcy = fn.y + fn.height / 2;
-            const tcx = tn.x + tn.width / 2, tcy = tn.y + tn.height / 2;
-            // Perpendicular offset to fan out parallel edges
-            const SPREAD = 28;
-            const offset = rel.offsetTotal > 1
-              ? (rel.offsetIndex - (rel.offsetTotal - 1) / 2) * SPREAD
-              : 0;
-            const dx = tcx - fcx, dy = tcy - fcy;
-            const len = Math.sqrt(dx * dx + dy * dy) || 1;
-            const px = -dy / len, py = dx / len; // unit perpendicular
-            // Control point for quadratic bezier
-            const cpx = (fcx + tcx) / 2 + px * offset;
-            const cpy = (fcy + tcy) / 2 + py * offset;
-            // Use the control-point-aware edge intersection
-            const start = boxEdgePoint(fcx, fcy, fn.width, fn.height, cpx, cpy);
-            const end = boxEdgePoint(tcx, tcy, tn.width, tn.height, cpx, cpy);
-            // Label position: point on bezier at t=0.5
-            const lx = 0.25 * start.x + 0.5 * cpx + 0.25 * end.x;
-            const ly = 0.25 * start.y + 0.5 * cpy + 0.25 * end.y;
-            const d = `M ${start.x} ${start.y} Q ${cpx} ${cpy} ${end.x} ${end.y}`;
+            const fp = positions[rel.from], tp = positions[rel.to];
+            if (!fp || !tp) return null;
             return (
-              <g key={i}>
-                <path
-                  d={d}
-                  fill="none"
-                  stroke={color} strokeWidth="1.5"
-                  strokeDasharray={isPointer ? undefined : '6,3'}
-                  markerEnd={`url(#arr-${isPointer ? 'pointer' : 'relation'})`}
-                  opacity="0.75"
-                />
-                {/* Field name label on the curve */}
-                <rect
-                  x={lx - (rel.fieldName.length * 3.2)} y={ly - 9}
-                  width={rel.fieldName.length * 6.4} height={13}
-                  rx="2" fill="white" opacity="0.85"
-                />
-                <text
-                  x={lx} y={ly}
-                  textAnchor="middle" fontSize="10" fill={color}
-                  style={{ pointerEvents: 'none' }}
-                >
-                  {rel.fieldName}
-                </text>
-              </g>
+              <ArrowItem
+                key={i}
+                fieldName={rel.fieldName}
+                isPointer={rel.type === 'pointer'}
+                offsetIndex={rel.offsetIndex}
+                offsetTotal={rel.offsetTotal}
+                fromX={fp.x} fromY={fp.y} fromW={fn.width} fromH={fn.height}
+                toX={tp.x} toY={tp.y} toW={tn.width} toH={tn.height}
+                colorPrimary={colorPrimary}
+                colorTint={colorTint}
+              />
             );
           })}
 
           {/* ── Class nodes ── */}
-          {nodes.map(node => {
-            const isSystem = node.name.startsWith('_');
-            const headerFill = isSystem ? theme.colors['primary-100'] : theme.colors['primary-200'];
-            const cardStroke = isSystem ? theme.colors['primary-200'] : theme.colors['primary-300'];
-            const nameFillNode = isSystem ? theme.colors['primary-400'] : theme.colors.primary;
+          {nodeData.map(node => {
+            const pos = positions[node.name] ?? { x: 0, y: 0 };
             return (
-            <g
-              key={node.name}
-              transform={`translate(${node.x},${node.y})`}
-              onMouseDown={(e: any) => {
-                e.preventDefault();
-                const pos = positions[node.name] ?? { x: 0, y: 0 };
-                setDragging({ name: node.name, startX: pos.x, startY: pos.y, mx: e.clientX, my: e.clientY });
-              }}
-              style={{ cursor: dragging?.name === node.name ? 'grabbing' : 'grab' }}
-            >
-              {/* Drop shadow */}
-              <rect x={3} y={3} width={node.width} height={node.height} rx={theme.borderRadius.md} fill="rgba(0,0,0,0.09)" />
-
-              {/* Card */}
-                <rect width={node.width} height={node.height} rx={`${theme.borderRadius.md}`} fill="white" stroke={cardStroke} strokeWidth="1.5" />
-
-              {/* Header fill */}
-                <rect width={node.width} height={HEADER_HEIGHT} rx={`${theme.borderRadius.md}`} fill={headerFill} />
-              {/* Square off bottom corners of header strip */}
-                <rect y={HEADER_HEIGHT - theme.borderRadius.md} width={node.width} height={theme.borderRadius.md} fill={headerFill} />
-
-              {/* Class name */}
-              <text
-                x={node.width / 2} y={HEADER_HEIGHT / 2 + 5}
-                textAnchor="middle"
-                fontSize={`${theme.fontSize.sm}`} fontWeight={`${theme.fontWeight.semibold}`}
-                  fill={nameFillNode}
-                  fontStyle={isSystem ? 'italic' : undefined}
-                style={{ pointerEvents: 'none' }}
-              >
-                {node.name}
-              </text>
-
-              {/* Header/body divider */}
-              <line x1={0} y1={HEADER_HEIGHT} x2={node.width} y2={HEADER_HEIGHT} stroke={theme.colors['primary-300']} strokeWidth="1" />
-
-              {/* Fields */}
-              {node.fields.map((field, fi) => {
-                const fy = HEADER_HEIGHT + PADDING_V + fi * FIELD_HEIGHT;
-                const isRel = !!field.relationType;
-                const nameFill = isRel ? theme.colors.primary : theme.colorContrast('#ffffff');
-                const typeFill = isRel ? theme.colors.primary : theme.colors['primary-400'];
-                return (
-                  <g key={field.name}>
-                    {/* Row separator */}
-                    {fi > 0 && (
-                      <line x1={0} y1={fy} x2={node.width} y2={fy} stroke={theme.colors['primary-100']} strokeWidth="0.5" />
-                    )}
-                    {/* Field name */}
-                    <text
-                      x={10} y={fy + FIELD_HEIGHT * 0.66}
-                      fontSize="11"
-                      fill={nameFill}
-                      fontWeight={`${isRel ? theme.fontWeight.medium : theme.fontWeight.normal}`}
-                      style={{ pointerEvents: 'none' }}
-                    >
-                      {field.name}
-                    </text>
-                    {/* Field type */}
-                    <text
-                      x={node.width - 10} y={fy + FIELD_HEIGHT * 0.66}
-                      textAnchor="end"
-                      fontSize="10" fontFamily="monospace"
-                      fill={typeFill}
-                      style={{ pointerEvents: 'none' }}
-                    >
-                      {field.typeStr}
-                    </text>
-                  </g>
-                );
-              })}
-            </g>
+              <ClassNode
+                key={node.name}
+                name={node.name}
+                fields={node.fields}
+                width={node.width}
+                height={node.height}
+                x={pos.x}
+                y={pos.y}
+                isDragging={dragging?.name === node.name}
+                onMouseDown={(e: any) => {
+                  e.preventDefault();
+                  setDragging({ name: node.name, startX: pos.x, startY: pos.y, mx: e.clientX, my: e.clientY });
+                }}
+                colorPrimary={colorPrimary}
+                colorPrimary100={colorPrimary100}
+                colorPrimary200={colorPrimary200}
+                colorPrimary300={colorPrimary300}
+                colorPrimary400={colorPrimary400}
+                colorContrast={colorContrast}
+                fontSizeSm={fontSizeSm}
+                fontWeightSemibold={fontWeightSemibold}
+                fontWeightMedium={fontWeightMedium}
+                fontWeightNormal={fontWeightNormal}
+                borderRadiusMd={borderRadiusMd}
+              />
             );
           })}
         </svg>
