@@ -126,6 +126,36 @@ const boxEdgePoint = (cx: number, cy: number, w: number, h: number, tx: number, 
   return { x: cx + dx * t, y: cy + dy * t };
 };
 
+/**
+ * Returns the Y offset (relative to the top of the node) of the centre of the
+ * row for `fieldPath` (e.g. "name" or "meta.sub") given the currently-expanded
+ * shapes.  Falls back to the node header centre when nothing matches.
+ */
+const getFieldRowY = (fields: FieldInfo[], fieldPath: string, expandedSet: Set<string>): number => {
+  const rows: string[] = [];
+  const buildRows = (fs: FieldInfo[], prefix: string) => {
+    for (const f of fs) {
+      const path = prefix ? `${prefix}.${f.name}` : f.name;
+      rows.push(path);
+      if (f.isShape && f.shapeMembers && expandedSet.has(path)) {
+        buildRows(f.shapeMembers, path);
+      }
+    }
+  };
+  buildRows(fields, '');
+  // exact match
+  const exact = rows.indexOf(fieldPath);
+  if (exact >= 0) return HEADER_HEIGHT + PADDING_V + exact * FIELD_HEIGHT + FIELD_HEIGHT / 2;
+  // collapsed ancestor: find the longest prefix row that is an ancestor of fieldPath
+  let bestIdx = -1, bestLen = -1;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    if (fieldPath.startsWith(r + '.') && r.length > bestLen) { bestLen = r.length; bestIdx = i; }
+  }
+  if (bestIdx >= 0) return HEADER_HEIGHT + PADDING_V + bestIdx * FIELD_HEIGHT + FIELD_HEIGHT / 2;
+  return HEADER_HEIGHT / 2;
+};
+
 // ─── Sub-components (auto-memoized by Frosty) ────────────────────────────────
 
 type ClassNodeProps = {
@@ -273,6 +303,8 @@ type ArrowItemProps = {
   offsetIndex: number;
   offsetTotal: number;
   fromX: number; fromY: number; fromW: number; fromH: number;
+  /** Absolute Y of the source field row centre on the canvas. */
+  fromFieldY: number;
   toX: number; toY: number; toW: number; toH: number;
   // Canonical pair centers (alphabetically stable A→B direction) for consistent perpendicular
   canonicalFromCX: number; canonicalFromCY: number;
@@ -283,12 +315,12 @@ type ArrowItemProps = {
 
 const ArrowItem = ({
   fieldName, isPointer, offsetIndex, offsetTotal,
-  fromX, fromY, fromW, fromH, toX, toY, toW, toH,
+  fromX, fromW, fromFieldY, toX, toY, toW, toH,
   canonicalFromCX, canonicalFromCY, canonicalToCX, canonicalToCY,
   colorPrimary, colorTint,
 }: ArrowItemProps) => {
   const color = isPointer ? colorPrimary : colorTint;
-  const fcx = fromX + fromW / 2, fcy = fromY + fromH / 2;
+  const fcx = fromX + fromW / 2;
   const tcx = toX + toW / 2, tcy = toY + toH / 2;
   const SPREAD = 28;
   const offset = offsetTotal > 1 ? (offsetIndex - (offsetTotal - 1) / 2) * SPREAD : 0;
@@ -297,10 +329,13 @@ const ArrowItem = ({
   const cdx = canonicalToCX - canonicalFromCX, cdy = canonicalToCY - canonicalFromCY;
   const clen = Math.sqrt(cdx * cdx + cdy * cdy) || 1;
   const px = -cdy / clen, py = cdx / clen;
-  const cpx = (fcx + tcx) / 2 + px * offset;
-  const cpy = (fcy + tcy) / 2 + py * offset;
-  const start = boxEdgePoint(fcx, fcy, fromW, fromH, cpx, cpy);
-  const end = boxEdgePoint(tcx, tcy, toW, toH, cpx, cpy);
+  // Start from the field row on the left or right edge of the source node
+  const goRight = tcx >= fcx;
+  const start = { x: goRight ? fromX + fromW : fromX, y: fromFieldY };
+  // End at the box edge of the target node
+  const end = boxEdgePoint(tcx, tcy, toW, toH, start.x, start.y);
+  const cpx = (start.x + end.x) / 2 + px * offset;
+  const cpy = (start.y + end.y) / 2 + py * offset;
   const lx = 0.25 * start.x + 0.5 * cpx + 0.25 * end.x;
   const ly = 0.25 * start.y + 0.5 * cpy + 0.25 * end.y;
   const d = `M ${start.x} ${start.y} Q ${cpx} ${cpy} ${end.x} ${end.y}`;
@@ -623,6 +658,9 @@ export const DiagramPage = () => {
               if (!fn || !tn) return null;
               const fp = positions[rel.from], tp = positions[rel.to];
               if (!fp || !tp) return null;
+              // Compute the absolute Y of the source field row
+              const expandedSet = expandedShapes[rel.from] ?? EMPTY_SET;
+              const fromFieldY = fp.y + getFieldRowY(fn.fields, rel.fieldName, expandedSet);
               // Canonical pair direction (alphabetically stable) for consistent perpendicular offset
               const isCanonical = rel.canonicalFromName === rel.from;
               const cfp = isCanonical ? fp : tp, cfn = isCanonical ? fn : tn;
@@ -635,6 +673,7 @@ export const DiagramPage = () => {
                   offsetIndex={rel.offsetIndex}
                   offsetTotal={rel.offsetTotal}
                   fromX={fp.x} fromY={fp.y} fromW={fn.width} fromH={fn.height}
+                  fromFieldY={fromFieldY}
                   toX={tp.x} toY={tp.y} toW={tn.width} toH={tn.height}
                   canonicalFromCX={cfp.x + cfn.width / 2} canonicalFromCY={cfp.y + cfn.height / 2}
                   canonicalToCX={ctp.x + ctn.width / 2} canonicalToCY={ctp.y + ctn.height / 2}
