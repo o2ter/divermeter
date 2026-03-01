@@ -41,6 +41,7 @@ import { Icon } from '../../components/icon';
 import { FilterModal, decodeFiltersFromURLParams, encodeFiltersToURLParams } from './filter';
 import { ColumnSettingsModal } from './columnSettings';
 import { SchemaInfoModal } from './schemaInfo';
+import { DangerConfirmModal } from './dangerConfirm';
 
 // Helper: Expand schema fields into columns (flatten object types but not arrays)
 const expandColumns = (fields: TSchema['fields']) => {
@@ -87,6 +88,20 @@ export const BrowserPage = () => {
   const [showFilterModal, setShowFilterModal] = useState<number>();
   const [showColumnSettings, setShowColumnSettings] = useState<number>();
   const [showSchemaInfo, setShowSchemaInfo] = useState<number>();
+  const [dangerConfirm, setDangerConfirm] = useState<{
+    key: number;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  } | undefined>();
+
+  // Only ask for confirmation when the operation affects more than this many rows.
+  // Operations within the threshold execute immediately without a dialog.
+  const DANGER_ROW_THRESHOLD = 3;
+
+  const requestDangerConfirm = (title: string, description: string, onConfirm: () => void) => {
+    setDangerConfirm({ key: Date.now(), title, description, onConfirm });
+  };
   const [columnWidth, setColumnWidth] = useState<Record<string, number>>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
@@ -670,6 +685,15 @@ export const BrowserPage = () => {
           onCancel={() => setShowSchemaInfo(undefined)}
         />
       )}
+      {dangerConfirm && (
+        <DangerConfirmModal
+          key={dangerConfirm.key}
+          title={dangerConfirm.title}
+          description={dangerConfirm.description}
+          onConfirm={dangerConfirm.onConfirm}
+          onCancel={() => setDangerConfirm(undefined)}
+        />
+      )}
       <div style={{
         flex: 1,
         position: 'relative',
@@ -817,34 +841,75 @@ export const BrowserPage = () => {
               setEditingValue(undefined);
             }}
             onPasteRows={(rows, clipboard) => {
-              startActivity(async () => {
-                try {
-                  const data = await decodeClipboardData(clipboard, true) ?? {};
-                  if (_.isEmpty(data) || !_.isArray(data)) return;
-                  await handlePasteData(rows, visibleColumns, data);
-                } catch (error) {
-                  console.error('Failed to paste data:', error);
-                  alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
-                }
-              });
+              const existingCount = rows.filter(r => r < items.length).length;
+              const doPaste = () => {
+                startActivity(async () => {
+                  try {
+                    const data = await decodeClipboardData(clipboard, true) ?? {};
+                    if (_.isEmpty(data) || !_.isArray(data)) return;
+                    await handlePasteData(rows, visibleColumns, data);
+                  } catch (error) {
+                    console.error('Failed to paste data:', error);
+                    alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
+                  }
+                });
+              };
+              if (existingCount > DANGER_ROW_THRESHOLD) {
+                requestDangerConfirm(
+                  `Overwrite ${existingCount} rows`,
+                  `You are about to overwrite data in ${existingCount} existing rows of "${className}". The original values will be replaced with pasted data.`,
+                  () => {
+                    setDangerConfirm(undefined);
+                    doPaste();
+                  },
+                );
+              } else {
+                doPaste();
+              }
             }}
             onPasteCells={(cells, clipboard) => {
-              startActivity(async () => {
-                try {
-                  const rows = _.range(cells.start.row, cells.end.row + 1);
-                  const cols = _.range(cells.start.col, cells.end.col + 1).map(c => visibleColumns[c]).filter(Boolean);
-                  const data = await decodeClipboardData(clipboard, false) ?? {};
-                  if (_.isEmpty(data) || !_.isArray(data)) return;
-                  await handlePasteData(rows, cols, data);
-                } catch (error) {
-                  console.error('Failed to paste data:', error);
-                  alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
-                }
-              });
+              const rows = _.range(cells.start.row, cells.end.row + 1);
+              const cols = _.range(cells.start.col, cells.end.col + 1).map(c => visibleColumns[c]).filter(Boolean);
+              const existingCount = rows.filter(r => r < items.length).length;
+              const doPaste = () => {
+                startActivity(async () => {
+                  try {
+                    const data = await decodeClipboardData(clipboard, false) ?? {};
+                    if (_.isEmpty(data) || !_.isArray(data)) return;
+                    await handlePasteData(rows, cols, data);
+                  } catch (error) {
+                    console.error('Failed to paste data:', error);
+                    alert.showError(error instanceof Error ? error.message : 'Failed to paste data');
+                  }
+                });
+              };
+              if (existingCount > DANGER_ROW_THRESHOLD) {
+                requestDangerConfirm(
+                  `Overwrite ${existingCount} rows`,
+                  `You are about to overwrite ${cols.length} field${cols.length === 1 ? '' : 's'} in ${existingCount} existing rows of "${className}". The original values will be replaced with pasted data.`,
+                  () => {
+                    setDangerConfirm(undefined);
+                    doPaste();
+                  },
+                );
+              } else {
+                doPaste();
+              }
             }}
             onDeleteRows={(rows) => {
               const selectedItems = _.compact(_.map(rows, row => items[row]));
-              if (!_.isEmpty(selectedItems)) {
+              if (_.isEmpty(selectedItems)) return;
+              if (selectedItems.length > DANGER_ROW_THRESHOLD) {
+                const label = relationQuery && canEditInRelationMode ? 'removed from relation' : 'permanently deleted';
+                requestDangerConfirm(
+                  `Delete ${selectedItems.length} rows`,
+                  `You are about to ${label} ${selectedItems.length} rows from "${className}". All data in the selected rows will be lost.`,
+                  () => {
+                    setDangerConfirm(undefined);
+                    handleDeleteItems(selectedItems);
+                  },
+                );
+              } else {
                 handleDeleteItems(selectedItems);
               }
             }}
@@ -859,7 +924,17 @@ export const BrowserPage = () => {
                 .map(col => col.key);
               const selectedItems = _.compact(_.map(_rows, row => items[row]));
 
-              if (!_.isEmpty(editableCols) && !_.isEmpty(selectedItems)) {
+              if (_.isEmpty(editableCols) || _.isEmpty(selectedItems)) return;
+              if (selectedItems.length > DANGER_ROW_THRESHOLD) {
+                requestDangerConfirm(
+                  `Clear ${editableCols.length} field${editableCols.length === 1 ? '' : 's'} in ${selectedItems.length} rows`,
+                  `You are about to set ${editableCols.length} field${editableCols.length === 1 ? '' : 's'} to null across ${selectedItems.length} rows in "${className}". The cleared values cannot be recovered.`,
+                  () => {
+                    setDangerConfirm(undefined);
+                    handleDeleteKeys(selectedItems, editableCols);
+                  },
+                );
+              } else {
                 handleDeleteKeys(selectedItems, editableCols);
               }
             }}
