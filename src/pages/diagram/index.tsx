@@ -485,80 +485,90 @@ export const DiagramPage = () => {
       </div>
 
       {/* SVG canvas */}
-      <div style={{ flex: 1, overflow: 'auto', background: colorPrimary100 }}>
-        <svg
-          width={canvasW}
-          height={canvasH}
-          style={{ display: 'block', userSelect: 'none', cursor: dragging ? 'grabbing' : 'default' }}
-        >
-          <defs>
-            <marker id="arr-pointer" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-              <polygon points="0 0, 8 3, 0 6" fill={colorPrimary} />
-            </marker>
-            <marker id="arr-relation" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-              <polygon points="0 0, 8 3, 0 6" fill={colorTint} />
-            </marker>
-          </defs>
+      <div style={{
+        position: 'relative',
+        flex: 1,
+        background: colorPrimary100,
+      }}>
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          overflow: 'auto',
+        }}>
+          <svg
+            width={canvasW}
+            height={canvasH}
+            style={{ display: 'block', userSelect: 'none', cursor: dragging ? 'grabbing' : 'default' }}
+          >
+            <defs>
+              <marker id="arr-pointer" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill={colorPrimary} />
+              </marker>
+              <marker id="arr-relation" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill={colorTint} />
+              </marker>
+            </defs>
 
-          {/* ── Arrows (rendered behind nodes) ── */}
-          {relationships.map((rel, i) => {
-            const fn = nodeDataMap[rel.from], tn = nodeDataMap[rel.to];
-            if (!fn || !tn) return null;
-            const fp = positions[rel.from], tp = positions[rel.to];
-            if (!fp || !tp) return null;
-            // Canonical pair direction (alphabetically stable) for consistent perpendicular offset
-            const isCanonical = rel.canonicalFromName === rel.from;
-            const cfp = isCanonical ? fp : tp, cfn = isCanonical ? fn : tn;
-            const ctp = isCanonical ? tp : fp, ctn = isCanonical ? tn : fn;
-            return (
-              <ArrowItem
-                key={i}
-                fieldName={rel.fieldName}
-                isPointer={rel.type === 'pointer'}
-                offsetIndex={rel.offsetIndex}
-                offsetTotal={rel.offsetTotal}
-                fromX={fp.x} fromY={fp.y} fromW={fn.width} fromH={fn.height}
-                toX={tp.x} toY={tp.y} toW={tn.width} toH={tn.height}
-                canonicalFromCX={cfp.x + cfn.width / 2} canonicalFromCY={cfp.y + cfn.height / 2}
-                canonicalToCX={ctp.x + ctn.width / 2} canonicalToCY={ctp.y + ctn.height / 2}
-                colorPrimary={colorPrimary}
-                colorTint={colorTint}
-              />
-            );
-          })}
+            {/* ── Arrows (rendered behind nodes) ── */}
+            {relationships.map((rel, i) => {
+              const fn = nodeDataMap[rel.from], tn = nodeDataMap[rel.to];
+              if (!fn || !tn) return null;
+              const fp = positions[rel.from], tp = positions[rel.to];
+              if (!fp || !tp) return null;
+              // Canonical pair direction (alphabetically stable) for consistent perpendicular offset
+              const isCanonical = rel.canonicalFromName === rel.from;
+              const cfp = isCanonical ? fp : tp, cfn = isCanonical ? fn : tn;
+              const ctp = isCanonical ? tp : fp, ctn = isCanonical ? tn : fn;
+              return (
+                <ArrowItem
+                  key={i}
+                  fieldName={rel.fieldName}
+                  isPointer={rel.type === 'pointer'}
+                  offsetIndex={rel.offsetIndex}
+                  offsetTotal={rel.offsetTotal}
+                  fromX={fp.x} fromY={fp.y} fromW={fn.width} fromH={fn.height}
+                  toX={tp.x} toY={tp.y} toW={tn.width} toH={tn.height}
+                  canonicalFromCX={cfp.x + cfn.width / 2} canonicalFromCY={cfp.y + cfn.height / 2}
+                  canonicalToCX={ctp.x + ctn.width / 2} canonicalToCY={ctp.y + ctn.height / 2}
+                  colorPrimary={colorPrimary}
+                  colorTint={colorTint}
+                />
+              );
+            })}
 
-          {/* ── Class nodes ── */}
-          {nodeData.map(node => {
-            const pos = positions[node.name] ?? { x: 0, y: 0 };
-            return (
-              <ClassNode
-                key={node.name}
-                name={node.name}
-                fields={node.fields}
-                width={node.width}
-                height={node.height}
-                x={pos.x}
-                y={pos.y}
-                isDragging={dragging?.name === node.name}
-                onMouseDown={(e: any) => {
-                  e.preventDefault();
-                  setDragging({ name: node.name, startX: pos.x, startY: pos.y, mx: e.clientX, my: e.clientY });
-                }}
-                colorPrimary={colorPrimary}
-                colorPrimary100={colorPrimary100}
-                colorPrimary200={colorPrimary200}
-                colorPrimary300={colorPrimary300}
-                colorPrimary400={colorPrimary400}
-                colorContrast={colorContrast}
-                fontSizeSm={fontSizeSm}
-                fontWeightSemibold={fontWeightSemibold}
-                fontWeightMedium={fontWeightMedium}
-                fontWeightNormal={fontWeightNormal}
-                borderRadiusMd={borderRadiusMd}
-              />
-            );
-          })}
-        </svg>
+            {/* ── Class nodes ── */}
+            {nodeData.map(node => {
+              const pos = positions[node.name] ?? { x: 0, y: 0 };
+              return (
+                <ClassNode
+                  key={node.name}
+                  name={node.name}
+                  fields={node.fields}
+                  width={node.width}
+                  height={node.height}
+                  x={pos.x}
+                  y={pos.y}
+                  isDragging={dragging?.name === node.name}
+                  onMouseDown={(e: any) => {
+                    e.preventDefault();
+                    setDragging({ name: node.name, startX: pos.x, startY: pos.y, mx: e.clientX, my: e.clientY });
+                  }}
+                  colorPrimary={colorPrimary}
+                  colorPrimary100={colorPrimary100}
+                  colorPrimary200={colorPrimary200}
+                  colorPrimary300={colorPrimary300}
+                  colorPrimary400={colorPrimary400}
+                  colorContrast={colorContrast}
+                  fontSizeSm={fontSizeSm}
+                  fontWeightSemibold={fontWeightSemibold}
+                  fontWeightMedium={fontWeightMedium}
+                  fontWeightNormal={fontWeightNormal}
+                  borderRadiusMd={borderRadiusMd}
+                />
+              );
+            })}
+          </svg>
+        </div>
       </div>
     </div>
   );
