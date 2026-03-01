@@ -92,10 +92,12 @@ export const DiagramPage = () => {
   const schema = useProtoSchema();
   const doc = useDocument();
 
-  // Only user-defined classes (skip system classes starting with _)
+  const [showSystem, setShowSystem] = useState(false);
+
+  // Filter classes based on showSystem toggle
   const classNames = useMemo(
-    () => _.keys(schema).filter(n => !n.startsWith('_')).sort(),
-    [schema],
+    () => _.keys(schema).filter(n => showSystem || !n.startsWith('_')).sort(),
+    [schema, showSystem],
   );
 
   // Pre-compute heights
@@ -243,6 +245,37 @@ export const DiagramPage = () => {
           Relation
         </span>
         <span style={{ marginLeft: 'auto', opacity: 0.6 }}>Drag to rearrange · {classNames.length} class{classNames.length !== 1 ? 'es' : ''}</span>
+
+        {/* System classes toggle */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.xs, cursor: 'pointer', userSelect: 'none' }}>
+          <div
+            onClick={() => { setShowSystem(v => !v); setUserPositions({}); }}
+            style={{
+              position: 'relative',
+              width: 32,
+              height: 18,
+              borderRadius: 9,
+              background: showSystem ? theme.colors.primary : '#c0c0c0',
+              transition: 'background 0.2s ease',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: 2,
+              left: showSystem ? 16 : 2,
+              width: 14,
+              height: 14,
+              borderRadius: '50%',
+              background: 'white',
+              transition: 'left 0.2s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            }} />
+          </div>
+          System classes
+        </label>
+
         <button
           onClick={() => setUserPositions({})}
           style={{
@@ -315,7 +348,12 @@ export const DiagramPage = () => {
           })}
 
           {/* ── Class nodes ── */}
-          {nodes.map(node => (
+          {nodes.map(node => {
+            const isSystem = node.name.startsWith('_');
+            const headerFill = isSystem ? theme.colors['primary-100'] : theme.colors['primary-200'];
+            const cardStroke = isSystem ? theme.colors['primary-200'] : theme.colors['primary-300'];
+            const nameFillNode = isSystem ? theme.colors['primary-400'] : theme.colors.primary;
+            return (
             <g
               key={node.name}
               transform={`translate(${node.x},${node.y})`}
@@ -330,19 +368,20 @@ export const DiagramPage = () => {
               <rect x={3} y={3} width={node.width} height={node.height} rx={theme.borderRadius.md} fill="rgba(0,0,0,0.09)" />
 
               {/* Card */}
-              <rect width={node.width} height={node.height} rx={`${theme.borderRadius.md}`} fill="white" stroke={theme.colors['primary-300']} strokeWidth="1.5" />
+                <rect width={node.width} height={node.height} rx={`${theme.borderRadius.md}`} fill="white" stroke={cardStroke} strokeWidth="1.5" />
 
               {/* Header fill */}
-              <rect width={node.width} height={HEADER_HEIGHT} rx={`${theme.borderRadius.md}`} fill={theme.colors['primary-200']} />
+                <rect width={node.width} height={HEADER_HEIGHT} rx={`${theme.borderRadius.md}`} fill={headerFill} />
               {/* Square off bottom corners of header strip */}
-              <rect y={HEADER_HEIGHT - theme.borderRadius.md} width={node.width} height={theme.borderRadius.md} fill={theme.colors['primary-200']} />
+                <rect y={HEADER_HEIGHT - theme.borderRadius.md} width={node.width} height={theme.borderRadius.md} fill={headerFill} />
 
               {/* Class name */}
               <text
                 x={node.width / 2} y={HEADER_HEIGHT / 2 + 5}
                 textAnchor="middle"
                 fontSize={`${theme.fontSize.sm}`} fontWeight={`${theme.fontWeight.semibold}`}
-                fill={theme.colors.primary}
+                  fill={nameFillNode}
+                  fontStyle={isSystem ? 'italic' : undefined}
                 style={{ pointerEvents: 'none' }}
               >
                 {node.name}
@@ -387,7 +426,8 @@ export const DiagramPage = () => {
                 );
               })}
             </g>
-          ))}
+            );
+          })}
         </svg>
       </div>
     </div>
