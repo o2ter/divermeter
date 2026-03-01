@@ -73,6 +73,22 @@ const getFieldInfo = (name: string, ftype: TSchema['fields'][string]): FieldInfo
   };
 };
 
+type RelationEntry = { path: string; target: string; relType: 'pointer' | 'relation' };
+
+/** Recursively collect pointer/relation entries from a field, including inside shape members. */
+const collectRelations = (fname: string, ftype: TSchema['fields'][string]): RelationEntry[] => {
+  if (_.isString(ftype)) return [];
+  if (ftype.type === 'pointer' || ftype.type === 'relation') {
+    return [{ path: fname, target: ftype.target, relType: ftype.type }];
+  }
+  if (ftype.type === 'shape') {
+    return Object.entries(ftype.shape).flatMap(
+      ([k, v]) => collectRelations(`${fname}.${k}`, v as TSchema['fields'][string]),
+    );
+  }
+  return [];
+};
+
 const nodeHeight = (fieldCount: number) =>
   HEADER_HEIGHT + 1 + PADDING_V + fieldCount * FIELD_HEIGHT + PADDING_V;
 
@@ -308,21 +324,25 @@ export const DiagramPage = () => {
     const pairCount: Record<string, number> = {};
     const pairNext: Record<string, number> = {};
     for (const name of classNames) {
-      for (const [, ftype] of Object.entries(schema[name]?.fields ?? {})) {
-        if (!_.isString(ftype) && (ftype.type === 'pointer' || ftype.type === 'relation') && ftype.target && nodeNames.has(ftype.target) && name !== ftype.target) {
-          const key = [name, ftype.target].sort().join('\0');
-          pairCount[key] = (pairCount[key] ?? 0) + 1;
+      for (const [fname, ftype] of Object.entries(schema[name]?.fields ?? {})) {
+        for (const { target } of collectRelations(fname, ftype)) {
+          if (target && nodeNames.has(target) && name !== target) {
+            const key = [name, target].sort().join('\0');
+            pairCount[key] = (pairCount[key] ?? 0) + 1;
+          }
         }
       }
     }
     for (const name of classNames) {
       for (const [fname, ftype] of Object.entries(schema[name]?.fields ?? {})) {
-        if (!_.isString(ftype) && (ftype.type === 'pointer' || ftype.type === 'relation') && ftype.target && nodeNames.has(ftype.target) && name !== ftype.target) {
-          const key = [name, ftype.target].sort().join('\0');
-          const total = pairCount[key] ?? 1;
-          const idx = pairNext[key] ?? 0;
-          pairNext[key] = idx + 1;
-          rels.push({ from: name, to: ftype.target, fieldName: fname, type: ftype.type, offsetIndex: idx, offsetTotal: total, canonicalFromName: [name, ftype.target].sort()[0] });
+        for (const { path, target, relType } of collectRelations(fname, ftype)) {
+          if (target && nodeNames.has(target) && name !== target) {
+            const key = [name, target].sort().join('\0');
+            const total = pairCount[key] ?? 1;
+            const idx = pairNext[key] ?? 0;
+            pairNext[key] = idx + 1;
+            rels.push({ from: name, to: target, fieldName: path, type: relType, offsetIndex: idx, offsetTotal: total, canonicalFromName: [name, target].sort()[0] });
+          }
         }
       }
     }
