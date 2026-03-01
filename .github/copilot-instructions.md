@@ -173,6 +173,7 @@ const { handleCopy, handleKeyDown } = _useCallbacks({
 - Use `frosty` hooks: `useContext`, `useMemo`, `useResource`, `createContext`, `createPairs`
 - Web-specific imports from `frosty/web`: `useLocation`
 - TSConfig sets `jsxImportSource: "frosty"`
+- **Frosty auto-memoizes ALL components** - unlike React, you never need `React.memo()`. Every component is automatically memoized and will only re-render when its props actually change. This means extracting expensive render work into a separate component is always sufficient to prevent unnecessary re-renders.
 
 ### Component Structure
 ```
@@ -1005,6 +1006,67 @@ This pattern is specifically for:
 - Event listeners that need to be registered once but access changing data
 - Complex event handling logic that needs current state/props
 
+### Component Auto-Memoization & Performance Pattern
+
+**Frosty automatically memoizes every component.** You never need `React.memo()` — it is built in. A component will only re-render when its own props change.
+
+#### Why This Matters for Lists
+
+When a parent renders a large list (e.g. map over 100 nodes), any state change in the parent (such as a drag position update for a single item) would normally cause every list item to re-render. In Frosty, the fix is straightforward: **extract the loop body into a separate component** and pass only flat primitive props. Frosty will skip re-renders for items whose props have not changed.
+
+```tsx
+// ❌ SLOW: Inline loop — every item re-renders on any state change
+const Parent = () => {
+  const [activeId, setActiveId] = useState<string>();
+  const theme = useTheme();
+  return (
+    <ul>
+      {items.map(item => (
+        <li key={item.id} style={{ color: activeId === item.id ? theme.colors.primary : theme.colorContrast('#fff') }}>
+          {item.name}
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+// ✅ FAST: Extracted component — only the changed item re-renders
+type ItemRowProps = { id: string; name: string; isActive: boolean; colorActive: string; colorNormal: string };
+const ItemRow = ({ id, name, isActive, colorActive, colorNormal }: ItemRowProps) => (
+  <li style={{ color: isActive ? colorActive : colorNormal }}>{name}</li>
+);
+
+const Parent = () => {
+  const [activeId, setActiveId] = useState<string>();
+  const theme = useTheme();
+  const colorActive = theme.colors.primary;
+  const colorNormal = theme.colorContrast('#fff');
+  return (
+    <ul>
+      {items.map(item => (
+        <ItemRow
+          key={item.id}
+          id={item.id}
+          name={item.name}
+          isActive={activeId === item.id}
+          colorActive={colorActive}
+          colorNormal={colorNormal}
+        />
+      ))}
+    </ul>
+  );
+};
+```
+
+#### The Key Rules
+
+1. **Extract loop bodies** - Any `array.map(item => <ComplexThing .../>)` that could be expensive should become its own named component.
+2. **Pass flat primitive props** - Avoid passing objects or arrays as props where possible. Frosty compares props by reference, so a new object `{}` on every render will always look "changed" even if its contents are identical. Flatten theme values and data into individual `string | number | boolean` props.
+3. **Separate stable data from changing data** - In the parent, compute schema-derived data (stable between drag events) in one `useMemo` and position data (changes on drag) separately. The extracted component only receives the position values it needs, so schema changes and position changes don't cross-contaminate re-renders.
+4. **Never call `React.memo`** - It doesn't exist in this project and is not needed. Frosty handles it automatically.
+
+**Real example**: [src/pages/diagram/index.tsx](src/pages/diagram/index.tsx) — `ClassNode` receives flat primitive props for all theme colors and SVG geometry; `ArrowItem` receives flat numeric coordinates. During drag, only the node being dragged (and the arrows connected to it) receive changed props, so all other nodes are skipped.
+
 #### Helper Functions Inside _useCallbacks
 **IMPORTANT: Don't wrap helper functions in `useMemo` when they're only used inside `_useCallbacks`.**
 
@@ -1533,6 +1595,7 @@ const MyComponent = () => {
 19. **Never use useEffect to set state** - If you're using `useEffect` to set state, you're doing something wrong. `useEffect` is ONLY for registering event listeners and subscribing to external systems, NOT for deriving values or syncing state. For modal state that needs to reset on each open, use the timestamp + key prop pattern: `const [showModal, setShowModal] = useState<number>()`, `setShowModal(Date.now())` to open, `{showModal && <Modal key={showModal}>}` for automatic reset. Use `useMemo` for derived values, use props directly, or calculate values during render. Setting state in `useEffect` causes extra renders, performance issues, and can lead to infinite loops.
 20. **NEVER use useMemo for side effects** - `useMemo` is for computing and caching values, NOT for performing actions like setting state, calling functions with side effects, or registering event listeners. If your `useMemo` doesn't return a value that's used elsewhere, you're using the wrong hook. Use `useEffect` for side effects, `useMemo` ONLY for computing values. React/Frosty may skip memoized computations, so side effects in `useMemo` won't reliably execute.
 21. **Always use master mode** - This is a database admin dashboard. Every proto API call MUST include `{ master: true }` option. Without it, ACL restrictions apply and dashboard features will fail. Use `proto.schema({ master: true })`, `proto.Query('Class').find({ master: true })`, `object.save({ master: true })`, etc.
+22. **Frosty auto-memoizes components — use it for performance** - Every Frosty component is automatically memoized; you never need `React.memo()`. When rendering expensive lists, extract the loop body into a separate component and pass flat primitive props (strings/numbers/booleans). Frosty will skip re-rendering items whose props haven't changed. Avoid passing inline objects `{}` or arrays `[]` as props — they create a new reference on every render and defeat memoization. See the "Component Auto-Memoization & Performance Pattern" section for the full pattern.
 
 ## Key Files to Reference
 - [src/index.tsx](src/index.tsx) - Main Dashboard export
