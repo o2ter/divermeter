@@ -70,6 +70,7 @@ const Proto = new ProtoService({
         date: 'date',
         object: 'object',
         array: 'array',
+        user: { type: 'pointer', target: 'User' },
         file: { type: 'pointer', target: 'File' },
         file2: { type: 'pointer', target: 'File' },
         file3: { type: 'pointer', target: 'File' },
