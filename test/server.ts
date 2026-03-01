@@ -71,6 +71,8 @@ const Proto = new ProtoService({
         object: 'object',
         array: 'array',
         file: { type: 'pointer', target: 'File' },
+        file2: { type: 'pointer', target: 'File' },
+        file3: { type: 'pointer', target: 'File' },
         pointer: { type: 'pointer', target: 'Test' },
         relation: { type: 'relation', target: 'Test' },
         relation2: { type: 'relation', target: 'Test', foreignField: 'pointer' },
