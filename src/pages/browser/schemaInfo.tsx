@@ -24,6 +24,7 @@
 //
 
 import _ from 'lodash';
+import { useState } from 'frosty';
 import { TSchema } from '../../proto';
 import { useTheme } from '../../components/theme';
 import { Button } from '../../components/button';
@@ -115,6 +116,85 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
   const theme = useTheme();
   const readonlyKeys = readonlyKeysForSchema(schema);
   const clpOperations = ['get', 'find', 'count', 'create', 'update', 'delete'] as const;
+  const [expandedShapes, setExpandedShapes] = useState(new Set<string>());
+
+  const toggleShape = (path: string) => {
+    setExpandedShapes(prev => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path); else next.add(path);
+      return next;
+    });
+  };
+
+  const renderShapeSubRows = (
+    shape: TSchema['fields'],
+    pathPrefix: string,
+    depth: number,
+    baseIdx: number
+  ): any[] => Object.entries(shape).flatMap(([subName, subType], subIdx) => {
+    const path = `${pathPrefix}.${subName}`;
+    const isSubShape = !_.isString(subType) && subType.type === 'shape';
+    const isExpanded = expandedShapes.has(path);
+    const subDefault = !_.isString(subType) && 'default' in subType ? subType.default : undefined;
+    const subDescription = !_.isString(subType) && 'description' in subType ? subType.description : undefined;
+    const rowIdx = baseIdx + subIdx;
+    const indent = theme.spacing.md + depth * 16;
+
+    const row = (
+      <tr key={path}>
+        <td style={{ ...tdStyle(theme, rowIdx), fontFamily: 'monospace', paddingLeft: indent }}>
+          <span style={{ color: theme.colors.primary, opacity: 0.4, marginRight: 4, userSelect: 'none' }}>└</span>
+          {isSubShape ? (
+            <button
+              onClick={() => toggleShape(path)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: 0, marginRight: 4, verticalAlign: 'middle',
+                color: theme.colors.primary,
+              }}
+            >
+              <Icon
+                name="chevronRight"
+                size="xs"
+                style={{
+                  display: 'inline-block',
+                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.15s ease',
+                }}
+              />
+            </button>
+          ) : null}
+          {subName}
+        </td>
+        <td style={tdStyle(theme, rowIdx)}>
+          <span style={{ fontFamily: 'monospace' }}>{typeOf(subType)}</span>
+          {isSubShape && !isExpanded && (
+            <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.primary, marginTop: 2 }}>
+              {Object.keys((subType as any).shape).length} sub-fields
+            </div>
+          )}
+          {!_.isString(subType) && (subType.type === 'relation' || subType.type === 'pointer') && (
+            <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.success, marginTop: 2 }}>→ {subType.target}</div>
+          )}
+          {!_.isString(subType) && subType.type === 'vector' && (
+            <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.primary, marginTop: 2 }}>dim: {subType.dimension}</div>
+          )}
+        </td>
+        <td style={{ ...tdStyle(theme, rowIdx), fontFamily: 'monospace', fontSize: theme.fontSize.xs }}>
+          {!_.isNil(subDefault) ? encodeValue(subDefault, 0) : <span style={{ opacity: 0.4 }}>—</span>}
+        </td>
+        <td style={{ ...tdStyle(theme, rowIdx), fontSize: theme.fontSize.xs, maxWidth: 200 }}>
+          {subDescription ?? <span style={{ opacity: 0.4 }}>—</span>}
+        </td>
+        <td style={tdStyle(theme, rowIdx)} />
+      </tr>
+    );
+
+    if (isSubShape && isExpanded) {
+      return [row, ...renderShapeSubRows((subType as any).shape, path, depth + 1, rowIdx + 1)];
+    }
+    return [row];
+  });
 
   return (
     <Modal show={true}>
@@ -217,50 +297,78 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
                   const defaultVal = !_.isString(fieldType) && 'default' in fieldType ? fieldType.default : undefined;
                   const description = !_.isString(fieldType) && 'description' in fieldType ? fieldType.description : undefined;
 
+                  const isShape = !_.isString(fieldType) && fieldType.type === 'shape';
+                  const isExpanded = isShape && expandedShapes.has(fieldName);
+
                   return (
-                    <tr key={fieldName}>
-                      <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace' }}>{fieldName}</td>
-                      <td style={tdStyle(theme, idx)}>
-                        <span style={{ fontFamily: 'monospace' }}>{typeOf(fieldType)}</span>
-                        {!_.isString(fieldType) && fieldType.type === 'vector' && (
-                          <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.primary, marginTop: 2 }}>
-                            dim: {fieldType.dimension}
-                          </div>
-                        )}
-                        {!_.isString(fieldType) && fieldType.type === 'shape' && (
-                          <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.primary, marginTop: 2 }}>
-                            {Object.keys(fieldType.shape).length} sub-fields
-                          </div>
-                        )}
-                        {!_.isString(fieldType) && (fieldType.type === 'relation' || fieldType.type === 'pointer') && (
-                          <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.success, marginTop: 2 }}>
-                            → {fieldType.target}
-                          </div>
-                        )}
-                        {!_.isString(fieldType) && fieldType.type === 'relation' && fieldType.foreignField && (
-                          <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.info, marginTop: 2 }}>
-                            via {fieldType.foreignField}
-                          </div>
-                        )}
-                      </td>
-                      <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace', fontSize: theme.fontSize.xs }}>
-                        {!_.isNil(defaultVal) ? encodeValue(defaultVal, 0) : <span style={{ opacity: 0.4 }}>—</span>}
-                      </td>
-                      <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs, maxWidth: 200 }}>
-                        {description ?? <span style={{ opacity: 0.4 }}>—</span>}
-                      </td>
-                      <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs }}>
-                        {isSystem && (
-                          <Badge bg={theme.colors['primary-200']} color={theme.colors.primary} theme={theme}>System</Badge>
-                        )}
-                        {isSecure && (
-                          <Badge bg={theme.colors['warning-200']} color={theme.colors.warning} theme={theme}>Secure</Badge>
-                        )}
-                        {isReadonly && (
-                          <Badge bg={theme.colors['info-200']} color={theme.colors.info} theme={theme}>Readonly</Badge>
-                        )}
-                      </td>
-                    </tr>
+                    <>
+                      <tr key={fieldName}>
+                        <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace' }}>
+                          {isShape ? (
+                            <button
+                              onClick={() => toggleShape(fieldName)}
+                              style={{
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                padding: 0, marginRight: 4, verticalAlign: 'middle',
+                                color: theme.colors.primary,
+                              }}
+                            >
+                              <Icon
+                                name="chevronRight"
+                                size="xs"
+                                style={{
+                                  display: 'inline-block',
+                                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                                  transition: 'transform 0.15s ease',
+                                }}
+                              />
+                            </button>
+                          ) : null}
+                          {fieldName}
+                        </td>
+                        <td style={tdStyle(theme, idx)}>
+                          <span style={{ fontFamily: 'monospace' }}>{typeOf(fieldType)}</span>
+                          {!_.isString(fieldType) && fieldType.type === 'vector' && (
+                            <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.primary, marginTop: 2 }}>
+                              dim: {fieldType.dimension}
+                            </div>
+                          )}
+                          {isShape && !isExpanded && (
+                            <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.primary, marginTop: 2 }}>
+                              {Object.keys((fieldType as any).shape).length} sub-fields
+                            </div>
+                          )}
+                          {!_.isString(fieldType) && (fieldType.type === 'relation' || fieldType.type === 'pointer') && (
+                            <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.success, marginTop: 2 }}>
+                              → {fieldType.target}
+                            </div>
+                          )}
+                          {!_.isString(fieldType) && fieldType.type === 'relation' && fieldType.foreignField && (
+                            <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.info, marginTop: 2 }}>
+                              via {fieldType.foreignField}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace', fontSize: theme.fontSize.xs }}>
+                          {!_.isNil(defaultVal) ? encodeValue(defaultVal, 0) : <span style={{ opacity: 0.4 }}>—</span>}
+                        </td>
+                        <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs, maxWidth: 200 }}>
+                          {description ?? <span style={{ opacity: 0.4 }}>—</span>}
+                        </td>
+                        <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs }}>
+                          {isSystem && (
+                            <Badge bg={theme.colors['primary-200']} color={theme.colors.primary} theme={theme}>System</Badge>
+                          )}
+                          {isSecure && (
+                            <Badge bg={theme.colors['warning-200']} color={theme.colors.warning} theme={theme}>Secure</Badge>
+                          )}
+                          {isReadonly && (
+                            <Badge bg={theme.colors['info-200']} color={theme.colors.info} theme={theme}>Readonly</Badge>
+                          )}
+                        </td>
+                      </tr>
+                      {isShape && isExpanded && renderShapeSubRows((fieldType as any).shape, fieldName, 1, idx)}
+                    </>
                   );
                 })}
               </tbody>
