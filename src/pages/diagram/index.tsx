@@ -44,9 +44,13 @@ const CANVAS_PADDING = 40;
 type FieldInfo = {
   name: string;
   typeStr: string;
+  isShape?: boolean;
+  shapeMembers?: FieldInfo[];
   relationType?: 'pointer' | 'relation';
   target?: string;
 };
+
+type VisRow = { field: FieldInfo; depth: number; path: string };
 
 type NodePos = { x: number; y: number };
 
@@ -65,9 +69,15 @@ const getFieldTypeStr = (ftype: TSchema['fields'][string]): string => {
 
 const getFieldInfo = (name: string, ftype: TSchema['fields'][string]): FieldInfo => {
   const isObj = !_.isString(ftype);
+  const isShape = isObj && ftype.type === 'shape';
   return {
     name,
     typeStr: getFieldTypeStr(ftype),
+    isShape: isShape || undefined,
+    shapeMembers: isShape
+      ? Object.entries((ftype as { type: 'shape'; shape: Record<string, any> }).shape)
+        .map(([k, v]) => getFieldInfo(k, v))
+      : undefined,
     relationType: isObj && (ftype.type === 'pointer' || ftype.type === 'relation') ? ftype.type : undefined,
     target: isObj && (ftype.type === 'pointer' || ftype.type === 'relation') ? ftype.target : undefined,
   };
@@ -92,6 +102,21 @@ const collectRelations = (fname: string, ftype: TSchema['fields'][string]): Rela
 const nodeHeight = (fieldCount: number) =>
   HEADER_HEIGHT + 1 + PADDING_V + fieldCount * FIELD_HEIGHT + PADDING_V;
 
+const EMPTY_SET = new Set<string>();
+
+/** Count total visible rows including expanded shape members. */
+const countVisibleRows = (fields: FieldInfo[], expandedSet: Set<string>, prefix = ''): number => {
+  let count = 0;
+  for (const f of fields) {
+    count++;
+    const path = prefix ? `${prefix}.${f.name}` : f.name;
+    if (f.isShape && f.shapeMembers && expandedSet.has(path)) {
+      count += countVisibleRows(f.shapeMembers, expandedSet, path);
+    }
+  }
+  return count;
+};
+
 /** Find where a ray from (cx,cy) towards (tx,ty) exits a rectangle of size w×h centred at (cx,cy). */
 const boxEdgePoint = (cx: number, cy: number, w: number, h: number, tx: number, ty: number) => {
   const dx = tx - cx, dy = ty - cy;
@@ -112,6 +137,9 @@ type ClassNodeProps = {
   y: number;
   isDragging: boolean;
   onMouseDown: (e: any) => void;
+  onToggleShape: (className: string, fieldPath: string) => void;
+  /** Pipe-separated sorted list of expanded shape field paths for this node. */
+  expandedShapesStr: string;
   // theme colours passed as primitives so Frosty can skip re-render when unchanged
   colorPrimary: string;
   colorPrimary100: string;
@@ -128,9 +156,22 @@ type ClassNodeProps = {
 
 const ClassNode = ({
   name, fields, width, height, x, y, isDragging, onMouseDown,
+  onToggleShape, expandedShapesStr,
   colorPrimary, colorPrimary100, colorPrimary200, colorPrimary300, colorPrimary400,
   colorContrast, fontSizeSm, fontWeightSemibold, fontWeightMedium, fontWeightNormal, borderRadiusMd,
 }: ClassNodeProps) => {
+  const expandedSet = expandedShapesStr ? new Set(expandedShapesStr.split('|')) : EMPTY_SET;
+  const visibleRows: VisRow[] = [];
+  const buildRows = (fs: FieldInfo[], depth: number, prefix: string) => {
+    for (const f of fs) {
+      const path = prefix ? `${prefix}.${f.name}` : f.name;
+      visibleRows.push({ field: f, depth, path });
+      if (f.isShape && f.shapeMembers && expandedSet.has(path)) {
+        buildRows(f.shapeMembers, depth + 1, path);
+      }
+    }
+  };
+  buildRows(fields, 0, '');
   const isSystem = name.startsWith('_');
   const headerFill = isSystem ? colorPrimary100 : colorPrimary200;
   const cardStroke = isSystem ? colorPrimary200 : colorPrimary300;
@@ -163,20 +204,50 @@ const ClassNode = ({
       {/* Header/body divider */}
       <line x1={0} y1={HEADER_HEIGHT} x2={width} y2={HEADER_HEIGHT} stroke={colorPrimary300} strokeWidth="1" />
       {/* Fields */}
-      {fields.map((field, fi) => {
-        const fy = HEADER_HEIGHT + PADDING_V + fi * FIELD_HEIGHT;
+      {visibleRows.map(({ field, depth, path }, ri) => {
+        const fy = HEADER_HEIGHT + PADDING_V + ri * FIELD_HEIGHT;
         const isRel = !!field.relationType;
-        const nameFill = isRel ? colorPrimary : colorContrast;
+        const isMember = depth > 0;
+        const isExpanded = !!field.isShape && expandedSet.has(path);
+        const indentX = 10 + depth * 14;
+        const nameFill = isRel ? colorPrimary : (isMember ? colorPrimary400 : colorContrast);
         const typeFill = isRel ? colorPrimary : colorPrimary400;
         return (
-          <g key={field.name}>
-            {fi > 0 && (
+          <g key={path}>
+            {ri > 0 && (
               <line x1={0} y1={fy} x2={width} y2={fy} stroke={colorPrimary100} strokeWidth="0.5" />
             )}
+            {/* Row background: tinted for shape rows and indented members */}
+            {(field.isShape || isMember) && (
+              <rect
+                x={0} y={fy} width={width} height={FIELD_HEIGHT}
+                fill={colorPrimary100}
+                opacity={`${isMember ? 0.35 : 0.55}`}
+              />
+            )}
+            {/* Clickable hit-area + chevron for shape fields */}
+            {field.isShape && (
+              <g
+                onClick={(e: any) => { e.stopPropagation(); onToggleShape(name, path); }}
+                onMouseDown={(e: any) => e.stopPropagation()}
+                style={{ cursor: 'pointer' }}
+              >
+                <rect x={0} y={fy} width={width} height={FIELD_HEIGHT} fill="transparent" />
+                {/* Chevron triangle */}
+                <path
+                  d={isExpanded
+                    ? `M ${indentX} ${fy + 6} L ${indentX + 7} ${fy + 6} L ${indentX + 3.5} ${fy + 11} Z`
+                    : `M ${indentX} ${fy + 5} L ${indentX} ${fy + 12} L ${indentX + 6} ${fy + 8.5} Z`
+                  }
+                  fill={colorPrimary}
+                />
+              </g>
+            )}
             <text
-              x={10} y={fy + FIELD_HEIGHT * 0.66}
+              x={field.isShape ? indentX + 10 : indentX} y={fy + FIELD_HEIGHT * 0.66}
               fontSize="11" fill={nameFill}
               fontWeight={`${isRel ? fontWeightMedium : fontWeightNormal}`}
+              fontStyle={isMember && !field.isShape ? 'italic' : undefined}
               style={{ pointerEvents: 'none' }}
             >
               {field.name}
@@ -266,6 +337,7 @@ export const DiagramPage = () => {
   const doc = useDocument();
 
   const [showSystem, setShowSystem] = useState(false);
+  const [expandedShapes, setExpandedShapes] = useState<Record<string, Set<string>>>({});
 
   // Filter classes based on showSystem toggle
   const classNames = useMemo(
@@ -273,21 +345,29 @@ export const DiagramPage = () => {
     [schema, showSystem],
   );
 
-  // Pre-compute heights
-  const heights = useMemo(
-    () => _.fromPairs(classNames.map(n => [n, nodeHeight(_.keys(schema[n]?.fields ?? {}).length)])),
-    [classNames, schema],
-  );
-
-  // nodeData: schema-only, stable between drags
-  const nodeData = useMemo(
+  // nodeBaseData: schema-only fields — stable between drags and expand/collapse
+  const nodeBaseData = useMemo(
     () => classNames.map(name => ({
       name,
       fields: Object.entries(schema[name]?.fields ?? {}).map(([k, v]) => getFieldInfo(k, v)),
       width: CLASS_WIDTH,
-      height: heights[name] ?? nodeHeight(0),
     })),
-    [classNames, heights, schema],
+    [classNames, schema],
+  );
+
+  // Pre-compute heights (depends on which shape fields are expanded)
+  const heights = useMemo(
+    () => _.fromPairs(nodeBaseData.map(n => [
+      n.name,
+      nodeHeight(countVisibleRows(n.fields, expandedShapes[n.name] ?? EMPTY_SET)),
+    ])),
+    [nodeBaseData, expandedShapes],
+  );
+
+  // nodeData: base data + dynamic height
+  const nodeData = useMemo(
+    () => nodeBaseData.map(n => ({ ...n, height: heights[n.name] ?? nodeHeight(0) })),
+    [nodeBaseData, heights],
   );
 
   // nodeNames: for relationship membership check (no positions needed)
@@ -353,7 +433,7 @@ export const DiagramPage = () => {
 
   const [dragging, setDragging] = useState<{ name: string; startX: number; startY: number; mx: number; my: number } | null>(null);
 
-  const { handleMouseMove, handleMouseUp } = _useCallbacks({
+  const { handleMouseMove, handleMouseUp, handleToggleShape } = _useCallbacks({
     handleMouseMove: (e: MouseEvent) => {
       if (!dragging) return;
       setUserPositions(prev => ({
@@ -365,6 +445,14 @@ export const DiagramPage = () => {
       }));
     },
     handleMouseUp: () => setDragging(null),
+    handleToggleShape: (className: string, fieldPath: string) => {
+      setExpandedShapes(prev => {
+        const current = prev[className] ?? EMPTY_SET;
+        const next = new Set(current);
+        if (next.has(fieldPath)) next.delete(fieldPath); else next.add(fieldPath);
+        return { ...prev, [className]: next };
+      });
+    },
   });
 
   useEffect(() => {
@@ -573,6 +661,8 @@ export const DiagramPage = () => {
                     e.preventDefault();
                     setDragging({ name: node.name, startX: pos.x, startY: pos.y, mx: e.clientX, my: e.clientY });
                   }}
+                  onToggleShape={handleToggleShape}
+                  expandedShapesStr={[...(expandedShapes[node.name] ?? EMPTY_SET)].sort().join('|')}
                   colorPrimary={colorPrimary}
                   colorPrimary100={colorPrimary100}
                   colorPrimary200={colorPrimary200}
