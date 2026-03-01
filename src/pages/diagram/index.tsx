@@ -187,6 +187,9 @@ type ArrowItemProps = {
   offsetTotal: number;
   fromX: number; fromY: number; fromW: number; fromH: number;
   toX: number; toY: number; toW: number; toH: number;
+  // Canonical pair centers (alphabetically stable A→B direction) for consistent perpendicular
+  canonicalFromCX: number; canonicalFromCY: number;
+  canonicalToCX: number; canonicalToCY: number;
   colorPrimary: string;
   colorTint: string;
 };
@@ -194,6 +197,7 @@ type ArrowItemProps = {
 const ArrowItem = ({
   fieldName, isPointer, offsetIndex, offsetTotal,
   fromX, fromY, fromW, fromH, toX, toY, toW, toH,
+  canonicalFromCX, canonicalFromCY, canonicalToCX, canonicalToCY,
   colorPrimary, colorTint,
 }: ArrowItemProps) => {
   const color = isPointer ? colorPrimary : colorTint;
@@ -201,9 +205,11 @@ const ArrowItem = ({
   const tcx = toX + toW / 2, tcy = toY + toH / 2;
   const SPREAD = 28;
   const offset = offsetTotal > 1 ? (offsetIndex - (offsetTotal - 1) / 2) * SPREAD : 0;
-  const dx = tcx - fcx, dy = tcy - fcy;
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  const px = -dy / len, py = dx / len;
+  // Always use the canonical (alphabetically stable) direction for the perpendicular so that
+  // A→B and B→A get offsets on opposite sides rather than the same side.
+  const cdx = canonicalToCX - canonicalFromCX, cdy = canonicalToCY - canonicalFromCY;
+  const clen = Math.sqrt(cdx * cdx + cdy * cdy) || 1;
+  const px = -cdy / clen, py = cdx / clen;
   const cpx = (fcx + tcx) / 2 + px * offset;
   const cpy = (fcy + tcy) / 2 + py * offset;
   const start = boxEdgePoint(fcx, fcy, fromW, fromH, cpx, cpy);
@@ -298,7 +304,7 @@ export const DiagramPage = () => {
 
   // Relationships — stable unless schema changes
   const relationships = useMemo(() => {
-    const rels: Array<{ from: string; to: string; fieldName: string; type: 'pointer' | 'relation'; offsetIndex: number; offsetTotal: number }> = [];
+    const rels: Array<{ from: string; to: string; fieldName: string; type: 'pointer' | 'relation'; offsetIndex: number; offsetTotal: number; canonicalFromName: string }> = [];
     const pairCount: Record<string, number> = {};
     const pairNext: Record<string, number> = {};
     for (const name of classNames) {
@@ -316,7 +322,7 @@ export const DiagramPage = () => {
           const total = pairCount[key] ?? 1;
           const idx = pairNext[key] ?? 0;
           pairNext[key] = idx + 1;
-          rels.push({ from: name, to: ftype.target, fieldName: fname, type: ftype.type, offsetIndex: idx, offsetTotal: total });
+          rels.push({ from: name, to: ftype.target, fieldName: fname, type: ftype.type, offsetIndex: idx, offsetTotal: total, canonicalFromName: [name, ftype.target].sort()[0] });
         }
       }
     }
@@ -500,6 +506,10 @@ export const DiagramPage = () => {
             if (!fn || !tn) return null;
             const fp = positions[rel.from], tp = positions[rel.to];
             if (!fp || !tp) return null;
+            // Canonical pair direction (alphabetically stable) for consistent perpendicular offset
+            const isCanonical = rel.canonicalFromName === rel.from;
+            const cfp = isCanonical ? fp : tp, cfn = isCanonical ? fn : tn;
+            const ctp = isCanonical ? tp : fp, ctn = isCanonical ? tn : fn;
             return (
               <ArrowItem
                 key={i}
@@ -509,6 +519,8 @@ export const DiagramPage = () => {
                 offsetTotal={rel.offsetTotal}
                 fromX={fp.x} fromY={fp.y} fromW={fn.width} fromH={fn.height}
                 toX={tp.x} toY={tp.y} toW={tn.width} toH={tn.height}
+                canonicalFromCX={cfp.x + cfn.width / 2} canonicalFromCY={cfp.y + cfn.height / 2}
+                canonicalToCX={ctp.x + ctn.width / 2} canonicalToCY={ctp.y + ctn.height / 2}
                 colorPrimary={colorPrimary}
                 colorTint={colorTint}
               />
