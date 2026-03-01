@@ -29,7 +29,7 @@ import { useTheme } from '../../components/theme';
 import { Button } from '../../components/button';
 import { Icon } from '../../components/icon';
 import { Modal } from '../../components/modal';
-import { readonlyKeysForSchema, systemFields, typeOf } from './utils';
+import { encodeValue, readonlyKeysForSchema, systemFields, typeOf } from './utils';
 
 type SchemaInfoModalProps = {
   schema: TSchema;
@@ -37,9 +37,84 @@ type SchemaInfoModalProps = {
   onCancel: () => void;
 };
 
+const renderACL = (acl: string[] | undefined): string => {
+  if (!acl) return '—';
+  if (acl.length === 0) return 'None';
+  if (acl.includes('*')) return 'Everyone';
+  return acl.join(', ');
+};
+
+const SectionHeader = ({ children, theme }: { children: any; theme: ReturnType<typeof useTheme> }) => (
+  <h4 style={{
+    margin: 0,
+    marginBottom: theme.spacing.sm,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.primary,
+  }}>
+    {children}
+  </h4>
+);
+
+const TableWrapper = ({ children, theme }: { children: any; theme: ReturnType<typeof useTheme> }) => (
+  <div style={{
+    border: `1px solid ${theme.colors['primary-200']}`,
+    borderRadius: theme.borderRadius.md,
+    overflow: 'hidden',
+  }}>
+    <table style={{
+      width: '100%',
+      borderCollapse: 'collapse',
+      fontSize: theme.fontSize.sm,
+    }}>
+      {children}
+    </table>
+  </div>
+);
+
+const thStyle = (theme: ReturnType<typeof useTheme>) => ({
+  padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
+  textAlign: 'left' as const,
+  fontWeight: theme.fontWeight.semibold,
+  color: theme.colors.primary,
+  backgroundColor: theme.colors['primary-100'],
+  borderBottom: `1px solid ${theme.colors['primary-200']}`,
+  whiteSpace: 'nowrap' as const,
+});
+
+const tdStyle = (theme: ReturnType<typeof useTheme>, idx: number) => ({
+  padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
+  color: theme.colorContrast('#ffffff'),
+  backgroundColor: idx % 2 === 0 ? '#ffffff' : theme.colors['primary-100'],
+  borderBottom: `1px solid ${theme.colors['primary-100']}`,
+  verticalAlign: 'top' as const,
+});
+
+const Badge = ({ children, bg, color, theme }: {
+  children: any;
+  bg: string;
+  color: string;
+  theme: ReturnType<typeof useTheme>;
+}) => (
+  <span style={{
+    display: 'inline-block',
+    padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
+    marginRight: theme.spacing.xs,
+    marginBottom: 2,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: bg,
+    color: color,
+    fontWeight: theme.fontWeight.medium,
+    fontSize: theme.fontSize.xs,
+  }}>
+    {children}
+  </span>
+);
+
 export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModalProps) => {
   const theme = useTheme();
   const readonlyKeys = readonlyKeysForSchema(schema);
+  const clpOperations = ['get', 'find', 'count', 'create', 'update', 'delete'] as const;
 
   return (
     <Modal show={true}>
@@ -47,8 +122,8 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
         backgroundColor: '#ffffff',
         borderRadius: theme.borderRadius.lg,
         padding: theme.spacing.lg,
-        maxWidth: '800px',
-        width: '90vw',
+        maxWidth: '1000px',
+        width: '92vw',
         maxHeight: '90vh',
         display: 'flex',
         flexDirection: 'column',
@@ -73,14 +148,11 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
             style={{
               background: 'none',
               border: 'none',
-              fontSize: theme.fontSize.lg,
               cursor: 'pointer',
               color: theme.colorContrast('#ffffff'),
               opacity: 0.6,
               padding: 0,
-              '&:hover': {
-                opacity: 1,
-              },
+              '&:hover': { opacity: 1 },
             }}
           >
             <Icon name="close" size="lg" />
@@ -97,184 +169,230 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
         }}>
           {/* Summary */}
           <div>
-            <h4 style={{
-              margin: 0,
-              marginBottom: theme.spacing.sm,
+            <SectionHeader theme={theme}>Summary</SectionHeader>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr',
+              gap: `${theme.spacing.xs}px ${theme.spacing.lg}px`,
               fontSize: theme.fontSize.sm,
-              fontWeight: theme.fontWeight.semibold,
-              color: theme.colors.primary,
+              color: theme.colorContrast('#ffffff'),
             }}>
-              Summary
-            </h4>
-            <div style={{ fontSize: theme.fontSize.sm, color: theme.colorContrast('#ffffff') }}>
-              <div style={{ marginBottom: theme.spacing.xs }}>
-                <strong>Class Name:</strong> {className}
-              </div>
-              <div style={{ marginBottom: theme.spacing.xs }}>
-                <strong>Total Fields:</strong> {Object.keys(schema.fields).length}
-              </div>
+              <strong>Class Name:</strong><span style={{ fontFamily: 'monospace' }}>{className}</span>
+              <strong>Total Fields:</strong><span>{Object.keys(schema.fields).length}</span>
+              <strong>Live Query:</strong>
+              <span>
+                {schema.liveQuery ? (
+                  <Badge bg={theme.colors['success-200']} color={theme.colors.success} theme={theme}>Enabled</Badge>
+                ) : (
+                  <Badge bg={theme.colors['primary-100']} color={theme.colors.primary} theme={theme}>Disabled</Badge>
+                )}
+              </span>
               {schema.secureFields && schema.secureFields.length > 0 && (
-                <div style={{ marginBottom: theme.spacing.xs }}>
-                  <strong>Secure Fields:</strong> {schema.secureFields.join(', ')}
-                </div>
+                <>
+                  <strong>Secure Fields:</strong>
+                  <span style={{ fontFamily: 'monospace' }}>{schema.secureFields.join(', ')}</span>
+                </>
               )}
             </div>
           </div>
 
           {/* Fields */}
           <div>
-            <h4 style={{
-              margin: 0,
-              marginBottom: theme.spacing.sm,
-              fontSize: theme.fontSize.sm,
-              fontWeight: theme.fontWeight.semibold,
-              color: theme.colors.primary,
-            }}>
-              Fields
-            </h4>
-            <div style={{
-              border: `1px solid ${theme.colors['primary-200']}`,
-              borderRadius: theme.borderRadius.md,
-              overflow: 'hidden',
-            }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: theme.fontSize.sm,
-              }}>
+            <SectionHeader theme={theme}>Fields</SectionHeader>
+            <TableWrapper theme={theme}>
+              <thead>
+                <tr>
+                  <th style={thStyle(theme)}>Field Name</th>
+                  <th style={thStyle(theme)}>Type</th>
+                  <th style={thStyle(theme)}>Default</th>
+                  <th style={thStyle(theme)}>Description</th>
+                  <th style={thStyle(theme)}>Attributes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(schema.fields).map(([fieldName, fieldType], idx) => {
+                  const isSecure = schema.secureFields?.includes(fieldName);
+                  const isReadonly = readonlyKeys.includes(fieldName);
+                  const isSystem = systemFields.includes(fieldName);
+                  const defaultVal = !_.isString(fieldType) && 'default' in fieldType ? fieldType.default : undefined;
+                  const description = !_.isString(fieldType) && 'description' in fieldType ? fieldType.description : undefined;
+
+                  return (
+                    <tr key={fieldName}>
+                      <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace' }}>{fieldName}</td>
+                      <td style={tdStyle(theme, idx)}>
+                        <span style={{ fontFamily: 'monospace' }}>{typeOf(fieldType)}</span>
+                        {!_.isString(fieldType) && fieldType.type === 'vector' && (
+                          <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.primary, marginTop: 2 }}>
+                            dim: {fieldType.dimension}
+                          </div>
+                        )}
+                        {!_.isString(fieldType) && fieldType.type === 'shape' && (
+                          <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.primary, marginTop: 2 }}>
+                            {Object.keys(fieldType.shape).length} sub-fields
+                          </div>
+                        )}
+                        {!_.isString(fieldType) && (fieldType.type === 'relation' || fieldType.type === 'pointer') && (
+                          <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.success, marginTop: 2 }}>
+                            → {fieldType.target}
+                          </div>
+                        )}
+                        {!_.isString(fieldType) && fieldType.type === 'relation' && fieldType.foreignField && (
+                          <div style={{ fontSize: theme.fontSize.xs, color: theme.colors.info, marginTop: 2 }}>
+                            via {fieldType.foreignField}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace', fontSize: theme.fontSize.xs }}>
+                        {!_.isNil(defaultVal) ? encodeValue(defaultVal, 0) : <span style={{ opacity: 0.4 }}>—</span>}
+                      </td>
+                      <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs, maxWidth: 200 }}>
+                        {description ?? <span style={{ opacity: 0.4 }}>—</span>}
+                      </td>
+                      <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs }}>
+                        {isSystem && (
+                          <Badge bg={theme.colors['primary-200']} color={theme.colors.primary} theme={theme}>System</Badge>
+                        )}
+                        {isSecure && (
+                          <Badge bg={theme.colors['warning-200']} color={theme.colors.warning} theme={theme}>Secure</Badge>
+                        )}
+                        {isReadonly && (
+                          <Badge bg={theme.colors['info-200']} color={theme.colors.info} theme={theme}>Readonly</Badge>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </TableWrapper>
+          </div>
+
+          {/* Indexes */}
+          {schema.indexes && schema.indexes.length > 0 && (
+            <div>
+              <SectionHeader theme={theme}>Indexes</SectionHeader>
+              <TableWrapper theme={theme}>
                 <thead>
-                  <tr style={{
-                    backgroundColor: theme.colors['primary-100'],
-                    borderBottom: `1px solid ${theme.colors['primary-200']}`,
-                  }}>
-                    <th style={{
-                      padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
-                      textAlign: 'left',
-                      fontWeight: theme.fontWeight.semibold,
-                      color: theme.colors.primary,
-                    }}>
-                      Field Name
-                    </th>
-                    <th style={{
-                      padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
-                      textAlign: 'left',
-                      fontWeight: theme.fontWeight.semibold,
-                      color: theme.colors.primary,
-                    }}>
-                      Type
-                    </th>
-                    <th style={{
-                      padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
-                      textAlign: 'left',
-                      fontWeight: theme.fontWeight.semibold,
-                      color: theme.colors.primary,
-                    }}>
-                      Attributes
-                    </th>
+                  <tr>
+                    <th style={thStyle(theme)}>#</th>
+                    <th style={thStyle(theme)}>Type</th>
+                    <th style={thStyle(theme)}>Keys</th>
+                    <th style={thStyle(theme)}>Options</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(schema.fields).map(([fieldName, fieldType], idx) => {
-                    const isSecure = schema.secureFields?.includes(fieldName);
-                    const isReadonly = readonlyKeys.includes(fieldName);
-                    const isSystem = systemFields.includes(fieldName);
-
-                    return (
-                      <tr
-                        key={fieldName}
-                        style={{
-                          backgroundColor: idx % 2 === 0 ? '#ffffff' : theme.colors['primary-100'],
-                          borderBottom: `1px solid ${theme.colors['primary-100']}`,
-                        }}
-                      >
-                        <td style={{
-                          padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
-                          fontFamily: 'monospace',
-                          color: theme.colorContrast('#ffffff'),
-                        }}>
-                          {fieldName}
-                        </td>
-                        <td style={{
-                          padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
-                          color: theme.colorContrast('#ffffff'),
-                        }}>
-                          {typeOf(fieldType)}
-                        </td>
-                        <td style={{
-                          padding: `${theme.spacing.sm}px ${theme.spacing.md}px`,
-                          fontSize: theme.fontSize.xs,
-                        }}>
-                          {isSystem && (
-                            <span style={{
-                              display: 'inline-block',
-                              padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-                              marginRight: theme.spacing.xs,
-                              borderRadius: theme.borderRadius.sm,
-                              backgroundColor: theme.colors['primary-200'],
-                              color: theme.colors.primary,
-                              fontWeight: theme.fontWeight.medium,
-                            }}>
-                              System
-                            </span>
-                          )}
-                          {isSecure && (
-                            <span style={{
-                              display: 'inline-block',
-                              padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-                              marginRight: theme.spacing.xs,
-                              borderRadius: theme.borderRadius.sm,
-                              backgroundColor: theme.colors['warning-200'],
-                              color: theme.colors.warning,
-                              fontWeight: theme.fontWeight.medium,
-                            }}>
-                              Secure
-                            </span>
-                          )}
-                          {isReadonly && !isSystem && (
-                            <span style={{
-                              display: 'inline-block',
-                              padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-                              marginRight: theme.spacing.xs,
-                              borderRadius: theme.borderRadius.sm,
-                              backgroundColor: theme.colors['info-200'],
-                              color: theme.colors.info,
-                              fontWeight: theme.fontWeight.medium,
-                            }}>
-                              Readonly
-                            </span>
-                          )}
-                          {!_.isString(fieldType) && fieldType.type === 'relation' && (
-                            <span style={{
-                              display: 'inline-block',
-                              padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-                              borderRadius: theme.borderRadius.sm,
-                              backgroundColor: theme.colors['success-200'],
-                              color: theme.colors.success,
-                              fontWeight: theme.fontWeight.medium,
-                            }}>
-                              → {fieldType.target}
-                            </span>
-                          )}
-                          {!_.isString(fieldType) && fieldType.type === 'pointer' && (
-                            <span style={{
-                              display: 'inline-block',
-                              padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
-                              borderRadius: theme.borderRadius.sm,
-                              backgroundColor: theme.colors['success-200'],
-                              color: theme.colors.success,
-                              fontWeight: theme.fontWeight.medium,
-                            }}>
-                              → {fieldType.target}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {schema.indexes.map((index, idx) => (
+                    <tr key={idx}>
+                      <td style={{ ...tdStyle(theme, idx), width: 32, color: theme.colors.primary }}>{idx + 1}</td>
+                      <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace' }}>
+                        {index.type ?? 'basic'}
+                      </td>
+                      <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace' }}>
+                        {index.type === 'vector'
+                          ? (_.isArray(index.keys) ? index.keys.join(', ') : index.keys)
+                          : Object.entries(index.keys).map(([k, dir]) => `${k}: ${dir === 1 ? 'asc' : 'desc'}`).join(', ')
+                        }
+                      </td>
+                      <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs }}>
+                        {index.type !== 'vector' && index.unique && (
+                          <Badge bg={theme.colors['warning-200']} color={theme.colors.warning} theme={theme}>Unique</Badge>
+                        )}
+                        {index.type === 'vector' && index.method && (
+                          <Badge bg={theme.colors['info-200']} color={theme.colors.info} theme={theme}>{index.method}</Badge>
+                        )}
+                        {!(index.type !== 'vector' && index.unique) && !(index.type === 'vector' && index.method) && (
+                          <span style={{ opacity: 0.4 }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
-              </table>
+              </TableWrapper>
             </div>
-          </div>
+          )}
+
+          {/* Class Level Permissions */}
+          {schema.classLevelPermissions && (
+            <div>
+              <SectionHeader theme={theme}>Class Level Permissions</SectionHeader>
+              <TableWrapper theme={theme}>
+                <thead>
+                  <tr>
+                    <th style={thStyle(theme)}>Operation</th>
+                    <th style={thStyle(theme)}>Allowed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {clpOperations.map((op, idx) => (
+                    <tr key={op}>
+                      <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace', width: 100 }}>{op}</td>
+                      <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs, fontFamily: 'monospace' }}>
+                        {renderACL(schema.classLevelPermissions![op])}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </TableWrapper>
+            </div>
+          )}
+
+          {/* Additional Object Permissions */}
+          {schema.additionalObjectPermissions && (
+            <div>
+              <SectionHeader theme={theme}>Additional Object Permissions</SectionHeader>
+              <TableWrapper theme={theme}>
+                <thead>
+                  <tr>
+                    <th style={thStyle(theme)}>Operation</th>
+                    <th style={thStyle(theme)}>Allowed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(['read', 'update'] as const).map((op, idx) => (
+                    <tr key={op}>
+                      <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace', width: 100 }}>{op}</td>
+                      <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs, fontFamily: 'monospace' }}>
+                        {renderACL(schema.additionalObjectPermissions![op])}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </TableWrapper>
+            </div>
+          )}
+
+          {/* Field Level Permissions */}
+          {schema.fieldLevelPermissions && !_.isEmpty(schema.fieldLevelPermissions) && (
+            <div>
+              <SectionHeader theme={theme}>Field Level Permissions</SectionHeader>
+              <TableWrapper theme={theme}>
+                <thead>
+                  <tr>
+                    <th style={thStyle(theme)}>Field</th>
+                    <th style={thStyle(theme)}>Read</th>
+                    <th style={thStyle(theme)}>Create</th>
+                    <th style={thStyle(theme)}>Update</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(schema.fieldLevelPermissions).map(([fieldName, flp], idx) => (
+                    <tr key={fieldName}>
+                      <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace' }}>{fieldName}</td>
+                      <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs, fontFamily: 'monospace' }}>
+                        {renderACL(flp.read)}
+                      </td>
+                      <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs, fontFamily: 'monospace' }}>
+                        {renderACL(flp.create)}
+                      </td>
+                      <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs, fontFamily: 'monospace' }}>
+                        {renderACL(flp.update)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </TableWrapper>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
