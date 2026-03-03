@@ -56,7 +56,6 @@ const collectRoutes = (element: ElementNode): _Route[] => {
 };
 
 type MatchResult = {
-  path?: string;
   params?: ParamData;
 };
 
@@ -85,7 +84,6 @@ export const Routes = ({
 }: RoutesProps) => {
   const routes = collectRoutes(children);
   const location = useLocation();
-  const parent = useContext(Context);
 
   const resolve = (routes: _Route[], parentPath?: string): (_Route & { matched?: MatchResult; })[] => {
     for (const route of routes) {
@@ -101,7 +99,7 @@ export const Routes = ({
     return [];
   };
 
-  const stacks = resolve(routes, parent.path);
+  const stacks = resolve(routes, path);
   const title = stacks.find(x => x.title)?.title;
   const matched = stacks.find(x => x.matched)?.matched;
 
