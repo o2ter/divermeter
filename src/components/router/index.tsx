@@ -105,8 +105,8 @@ export const Routes = ({
       {!!title && (
         <head><title>{_.isFunction(title) ? title(params) : title}</title></head>
       )}
-      {_.reduce(stacks, (outlet, { element, matched = {} }) => (
-        <Context value={{ ...matched, outlet }}>
+      {_.reduce(stacks, (outlet, { element, params }) => (
+        <Context value={{ params, outlet }}>
           {element || outlet}
         </Context>
       ), <></>)}
