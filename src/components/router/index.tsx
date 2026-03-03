@@ -55,11 +55,8 @@ const collectRoutes = (element: ElementNode): _Route[] => {
   return [];
 };
 
-type MatchResult = {
+const Context = createContext<{
   params?: ParamData;
-};
-
-const Context = createContext<MatchResult & {
   outlet?: ElementNode;
 }>({});
 
@@ -85,15 +82,15 @@ export const Routes = ({
   const routes = collectRoutes(children);
   const location = useLocation();
 
-  const resolve = (routes: _Route[], parentPath?: string): (_Route & { matched?: MatchResult; })[] => {
+  const resolve = (routes: _Route[], parentPath?: string): (_Route & { params?: ParamData; })[] => {
     for (const route of routes) {
       const matched = matchRoute(parentPath, route, location.pathname);
       if (route.children) {
         const found = resolve(route.children, `${_.trimEnd(parentPath, '/')}/${_.trimStart(route.path, '/')}`);
-        if (found.length) return [...found, { ...route, matched }];
+        if (found.length) return [...found, { ...route, params: matched?.params }];
       }
       if (matched) {
-        return [{ ...route, matched }];
+        return [{ ...route, params: matched?.params }];
       }
     }
     return [];
@@ -101,12 +98,12 @@ export const Routes = ({
 
   const stacks = resolve(routes, path);
   const title = stacks.find(x => x.title)?.title;
-  const matched = stacks.find(x => x.matched)?.matched;
+  const params = stacks.find(x => x.params)?.params;
 
   return (
     <>
       {!!title && (
-        <head><title>{_.isFunction(title) ? title(matched?.params) : title}</title></head>
+        <head><title>{_.isFunction(title) ? title(params) : title}</title></head>
       )}
       {_.reduce(stacks, (outlet, { element, matched = {} }) => (
         <Context value={{ ...matched, outlet }}>
