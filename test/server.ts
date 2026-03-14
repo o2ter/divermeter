@@ -106,6 +106,9 @@ const Proto = new ProtoService({
           }),
         }),
       },
+      classLevelPermissions: {
+        readUserFields: ['user']
+      },
     }
   },
 });

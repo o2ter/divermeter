@@ -439,6 +439,19 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
                       </td>
                     </tr>
                   ))}
+                  {(['readUserFields', 'updateUserFields', 'readRoleFields', 'updateRoleFields'] as const).map((k, i) => {
+                    const fields = schema.classLevelPermissions![k];
+                    if (!fields || fields.length === 0) return null;
+                    const idx = clpOperations.length + i;
+                    return (
+                      <tr key={k}>
+                        <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace', width: 100 }}>{k}</td>
+                        <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs, fontFamily: 'monospace' }}>
+                          {fields.join(', ')}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </TableWrapper>
             </div>
