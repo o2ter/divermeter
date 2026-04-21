@@ -6,7 +6,7 @@ module.exports = (env, argv) => ({
   client: {
     main: {
       entry: './test/app.tsx',
-      uri: '/',
+      basepath: '/',
     },
   },
   serverEntry: './test/server.ts'
