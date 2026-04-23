@@ -3580,10 +3580,10 @@ process-nextick-args@~2.0.0:
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"
   integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
 
-proto.io@^0.0.242:
-  version "0.0.242"
-  resolved "https://registry.yarnpkg.com/proto.io/-/proto.io-0.0.242.tgz#4e146aa2ea42307b8f2e8169ade3d4631e7a40cb"
-  integrity sha512-OmHptvmq9AqsZmnYNLQPWIjXQXMfei3lI/Lq0BFM2uaB+bHtLfQVaZJkBV/b6tGZdcwroSKDR6s/VLuQn2RtkA==
+proto.io@^0.0.243:
+  version "0.0.243"
+  resolved "https://registry.yarnpkg.com/proto.io/-/proto.io-0.0.243.tgz#d5f473c3b4720897bc9b1242d44110f6adcdd5c6"
+  integrity sha512-vQ5cZ8G1Wdyi4mv5N7KNJsH/S8JFNm69TXCVWQoP2d1boWyZchFGoisPsxg5ItwmBQNjLjr9cuWhsJsWdePIgg==
   dependencies:
     "@google-cloud/storage" "^7.16.0"
     "@o2ter/crypto-js" "^0.0.7"
