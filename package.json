@@ -53,8 +53,6 @@
     "frosty": "^0.0.151",
     "proto.io": "^0.0.244",
     "rollup": "^4.59.0",
-    "proto.io": "^0.0.244",
-    "rollup": "^4.22.4",
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-scss": "^4.0.1",
     "sass": "^1.90.0",
