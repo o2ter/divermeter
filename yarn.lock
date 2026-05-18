@@ -1342,10 +1342,10 @@
   resolved "https://registry.yarnpkg.com/@nodable/entities/-/entities-2.1.0.tgz#f543e5c6446720d4cf9e498a83019dd159973bc2"
   integrity sha512-nyT7T3nbMyBI/lvr6L5TyWbFJAI9FTgVRakNoBqCD+PmID8DzFrrNdLLtHMwMszOtqZa8PAOV24ZqDnQrhQINA==
 
-"@o2ter/colors.js@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@o2ter/colors.js/-/colors.js-1.0.2.tgz#dfec77cdaecaf0bd016cfe02293583e852c826d7"
-  integrity sha512-MAUKfibx68rJYqVFspg2mcH6V3uIVPKTThsjrNX8zNA5owBbVg8JUoHkLtFSVSjZIrGwyZy3eC8P0hp2vizsPw==
+"@o2ter/colors.js@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@o2ter/colors.js/-/colors.js-1.0.3.tgz#3b28524432ae5c5a2960fffe159c1de6471cb41d"
+  integrity sha512-S9mR/+oDmIQ1MqyJ3Qtq+7/x7WlF09oKDRmMMTcNaxK5eG+Bru+guaOgOHzN9JbsYrm3QbEpTt2NXfmIFeGqRg==
   dependencies:
     lodash "^4.17.21"
 
@@ -2735,10 +2735,10 @@ fresh@^2.0.0:
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-2.0.0.tgz#8dd7df6a1b3a1b3a5cf186c05a5dd267622635a4"
   integrity sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==
 
-frosty@^0.0.153:
-  version "0.0.153"
-  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.153.tgz#b575581fd31a4d563d218767ccdab88eaa9fda9d"
-  integrity sha512-RkYvFAJQTaZmk+GT16cq2lObilSgjg9e1cfIytBH1Mrq7zR3yY0vAkdEZRFrGexpkir58E3+qskUe2HfTcKuIA==
+frosty@^0.0.154:
+  version "0.0.154"
+  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.154.tgz#6b8ad0852484a0def5909accff478617da6b4e5a"
+  integrity sha512-352k1v8eaG+JFnMi74KL8ImCtOahMSQTxqlTPSwucb6/MMVO324WtGH5x5B/L2VxkUxlZnVjrEtGK/EucbLp/w==
   dependencies:
     "@o2ter/utils-js" "^0.0.19"
     "@types/jsdom" "^21.1.7"
@@ -3725,10 +3725,10 @@ process-nextick-args@~2.0.0:
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"
   integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
 
-proto.io@^0.0.244:
-  version "0.0.244"
-  resolved "https://registry.yarnpkg.com/proto.io/-/proto.io-0.0.244.tgz#b7d1a9057633b95c2883af1e8e4fc2ae64e469d2"
-  integrity sha512-Yp+rjQ/AWyWU0ODnw8tylKflFn4DoASKQdunmz3GOpWNrrURaKvJs7sBgyQMlXC23suI3wWgYtz090OYmJfREg==
+proto.io@^0.0.245:
+  version "0.0.245"
+  resolved "https://registry.yarnpkg.com/proto.io/-/proto.io-0.0.245.tgz#8e7a774a02c149f9671df429c3fd476ce29cec1c"
+  integrity sha512-6aTHR9jIeGQqVu/3K6NseKEAKcm/BjQhKnbU9zrbhLfYux2tu9Pyi9ykXzZ68Yr319GqaKg0b3hF+0W+may5gA==
   dependencies:
     "@google-cloud/storage" "^7.16.0"
     "@o2ter/crypto-js" "^0.0.7"

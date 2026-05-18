@@ -27,15 +27,15 @@
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.4",
-    "@o2ter/colors.js": "^1.0.2",
+    "@o2ter/colors.js": "^1.0.3",
     "codemirror": "^6.0.2",
     "d3-dsv": "^3.0.1",
     "lodash": "^4.18.1",
     "path-to-regexp": "^8.4.0"
   },
   "peerDependencies": {
-    "frosty": "^0.0.153",
-    "proto.io": "^0.0.244"
+    "frosty": "^0.0.154",
+    "proto.io": "^0.0.245"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
@@ -50,8 +50,8 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/d3-dsv": "^3.0.7",
     "@types/lodash": "^4.17.16",
-    "frosty": "^0.0.153",
-    "proto.io": "^0.0.244",
+    "frosty": "^0.0.154",
+    "proto.io": "^0.0.245",
     "rollup": "^4.59.0",
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-scss": "^4.0.1",
