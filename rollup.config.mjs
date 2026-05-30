@@ -43,6 +43,7 @@ export default [
         format: 'cjs',
         sourcemap: true,
         exports: 'named',
+        interop: 'auto',
       },
       {
         file: 'dist/index.mjs',
