@@ -1217,6 +1217,18 @@
   resolved "https://registry.yarnpkg.com/@exodus/bytes/-/bytes-1.8.0.tgz#8382835f71db8377cf634a4ef5a71806e86ba9c7"
   integrity sha512-8JPn18Bcp8Uo1T82gR8lh2guEOa5KKU/IEKvvdp0sgmi7coPBWf1Doi1EXsGZb2ehc8ym/StJCjffYV+ne7sXQ==
 
+"@formatjs/fast-memoize@3.1.6":
+  version "3.1.6"
+  resolved "https://registry.yarnpkg.com/@formatjs/fast-memoize/-/fast-memoize-3.1.6.tgz#fca16a7d60f89df48f506f130f58223d7d81c2a2"
+  integrity sha512-H5aexk1Le7T9TPmscacZ+1pR6CTa2n1wq+HDVGXhH8TzUlQQpeXzZs91dRtmFHrbeNbjPFPfQujUqm7MHgVoXQ==
+
+"@formatjs/intl-localematcher@^0.8.10":
+  version "0.8.10"
+  resolved "https://registry.yarnpkg.com/@formatjs/intl-localematcher/-/intl-localematcher-0.8.10.tgz#e9bd512178122dd7c7a92d2f145daed7ce598147"
+  integrity sha512-P/IC3qws3jH+1fEs+o0RIFgXKRaQlFehjS5W0FPAqdo6hgzawLl+eD0q0JjheQ3XtoOe5n8WSYfX06KQZI/QJA==
+  dependencies:
+    "@formatjs/fast-memoize" "3.1.6"
+
 "@google-cloud/paginator@^5.0.0":
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/@google-cloud/paginator/-/paginator-5.0.2.tgz#86ad773266ce9f3b82955a8f75e22cd012ccc889"
@@ -2735,11 +2747,12 @@ fresh@^2.0.0:
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-2.0.0.tgz#8dd7df6a1b3a1b3a5cf186c05a5dd267622635a4"
   integrity sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==
 
-frosty@^0.0.155:
-  version "0.0.155"
-  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.155.tgz#fc2c884c3dc06c4f69587cbf1b1f7ee9051efcf4"
-  integrity sha512-wroXAMLocBJaB7C5w6aFRWhJh+7q5CxAZI6HWpEsaxuQRRdGPej9x1TlAbDrSxxQj5pRzzUiPLODRHQ173mVBg==
+frosty@^0.0.156:
+  version "0.0.156"
+  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.156.tgz#d0ceb4f979155835b6a163601f30ff1bc8afd738"
+  integrity sha512-Of2sSqXcz41fGHfTPiJoEqpEKVdqqkrqHtRWN/CBqGeEF3IyZ0bj08q4HmKWzfl5aVtJwj50YObAaT3GgwTfTQ==
   dependencies:
+    "@formatjs/intl-localematcher" "^0.8.10"
     "@o2ter/utils-js" "^0.0.19"
     "@types/jsdom" "^21.1.7"
     "@types/lodash" "^4.17.16"
