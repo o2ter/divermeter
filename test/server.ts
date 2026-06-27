@@ -57,7 +57,10 @@ const Proto = new ProtoService({
   schema: {
     'User': {
       fields: {
-        name: 'string',
+        name: {
+          type: 'string',
+          required: true,
+        },
       }
     },
     'Test': {

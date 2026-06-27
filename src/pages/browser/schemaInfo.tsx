@@ -136,6 +136,7 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
     const isSubShape = !_.isString(subType) && subType.type === 'shape';
     const isExpanded = expandedShapes.has(path);
     const subDefault = !_.isString(subType) && 'default' in subType ? subType.default : undefined;
+    const subRequired = !_.isString(subType) && 'required' in subType ? subType.required : undefined;
     const subDescription = !_.isString(subType) && 'description' in subType ? subType.description : undefined;
     const rowIdx = baseIdx + subIdx;
     const indent = theme.spacing.md + depth * 16;
@@ -182,6 +183,9 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
         </td>
         <td style={{ ...tdStyle(theme, rowIdx), fontFamily: 'monospace', fontSize: theme.fontSize.xs }}>
           {!_.isNil(subDefault) ? encodeValue(subDefault, 0) : <span style={{ opacity: 0.4 }}>—</span>}
+        </td>
+        <td style={{ ...tdStyle(theme, rowIdx), fontFamily: 'monospace', fontSize: theme.fontSize.xs }}>
+          {subRequired ? 'Yes' : 'No'}
         </td>
         <td style={{ ...tdStyle(theme, rowIdx), fontSize: theme.fontSize.xs, maxWidth: 200 }}>
           {subDescription ?? <span style={{ opacity: 0.4 }}>—</span>}
@@ -285,6 +289,7 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
                   <th style={thStyle(theme)}>Field Name</th>
                   <th style={thStyle(theme)}>Type</th>
                   <th style={thStyle(theme)}>Default</th>
+                  <th style={thStyle(theme)}>Required</th>
                   <th style={thStyle(theme)}>Description</th>
                   <th style={thStyle(theme)}>Attributes</th>
                 </tr>
@@ -295,6 +300,7 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
                   const isReadonly = readonlyKeys.includes(fieldName);
                   const isSystem = systemFields.includes(fieldName);
                   const defaultVal = !_.isString(fieldType) && 'default' in fieldType ? fieldType.default : undefined;
+                  const required = !_.isString(fieldType) && 'required' in fieldType ? fieldType.required : undefined;
                   const description = !_.isString(fieldType) && 'description' in fieldType ? fieldType.description : undefined;
 
                   const isShape = !_.isString(fieldType) && fieldType.type === 'shape';
@@ -351,6 +357,9 @@ export const SchemaInfoModal = ({ schema, className, onCancel }: SchemaInfoModal
                         </td>
                         <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace', fontSize: theme.fontSize.xs }}>
                           {!_.isNil(defaultVal) ? encodeValue(defaultVal, 0) : <span style={{ opacity: 0.4 }}>—</span>}
+                        </td>
+                        <td style={{ ...tdStyle(theme, idx), fontFamily: 'monospace', fontSize: theme.fontSize.xs }}>
+                          {required ? 'Yes' : 'No'}
                         </td>
                         <td style={{ ...tdStyle(theme, idx), fontSize: theme.fontSize.xs, maxWidth: 200 }}>
                           {description ?? <span style={{ opacity: 0.4 }}>—</span>}
