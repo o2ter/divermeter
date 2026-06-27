@@ -34,8 +34,8 @@
     "path-to-regexp": "^8.4.0"
   },
   "peerDependencies": {
-    "frosty": "^0.0.156",
-    "proto.io": "^0.0.246"
+    "frosty": "^0.0.157",
+    "proto.io": "^0.0.247"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
@@ -50,8 +50,8 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/d3-dsv": "^3.0.7",
     "@types/lodash": "^4.17.16",
-    "frosty": "^0.0.156",
-    "proto.io": "^0.0.246",
+    "frosty": "^0.0.157",
+    "proto.io": "^0.0.247",
     "rollup": "^4.59.0",
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-scss": "^4.0.1",
