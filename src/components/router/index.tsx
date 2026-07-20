@@ -26,7 +26,7 @@
 import _ from 'lodash';
 import { useLocation } from 'frosty/web';
 import { match, ParamData } from 'path-to-regexp';
-import { ComponentProps, createContext, ElementNode, PropsWithChildren, useContext, useMemo } from 'frosty';
+import { ComponentProps, createContext, ElementNode, PropsWithChildren, useCallback, useContext, useMemo } from 'frosty';
 
 type RouteProps = PropsWithChildren<{
   title?: string | ((params?: ParamData) => string);
@@ -58,6 +58,7 @@ const collectRoutes = (element: ElementNode): _Route[] => {
 const Context = createContext<{
   params?: ParamData;
   outlet?: ElementNode;
+  parentPath?: string;
 }>({});
 
 type RoutesProps = PropsWithChildren<{
@@ -82,15 +83,15 @@ export const Routes = ({
   const routes = collectRoutes(children);
   const location = useLocation();
 
-  const resolve = (routes: _Route[], parentPath?: string): (_Route & { params?: ParamData; })[] => {
+  const resolve = (routes: _Route[], parentPath?: string): (_Route & { params?: ParamData; parentPath?: string; })[] => {
     for (const route of routes) {
       const matched = matchRoute(parentPath, route, location.pathname);
       if (route.children) {
         const found = resolve(route.children, `${_.trimEnd(parentPath, '/')}/${_.trimStart(route.path, '/')}`);
-        if (found.length) return [...found, { ...route, params: matched?.params }];
+        if (found.length) return [...found, { ...route, params: matched?.params, parentPath }];
       }
       if (matched) {
-        return [{ ...route, params: matched?.params }];
+        return [{ ...route, params: matched?.params, parentPath }];
       }
     }
     return [];
@@ -105,8 +106,8 @@ export const Routes = ({
       {!!title && (
         <head><title>{_.isFunction(title) ? title(params) : title}</title></head>
       )}
-      {_.reduce(stacks, (outlet, { element, params }) => (
-        <Context value={{ params, outlet }}>
+      {_.reduce(stacks, (outlet, { element, params, parentPath }) => (
+        <Context value={{ params, outlet, parentPath }}>
           {element || outlet}
         </Context>
       ), <></>)}
@@ -130,3 +131,31 @@ export const createPages = (pages: Page[]) => _.map(pages, ({ children, ...props
     {children && createPages(children)}
   </Route>
 ));
+
+export const useMatch = () => {
+  const location = useLocation();
+  const { parentPath } = useContext(Context);
+  return useCallback((url: string | URL) => {
+    const resolved = parentPath
+      ? `${_.trimEnd(parentPath, '/')}/${_.trimStart(url.toString(), '/')}`
+      : url.toString();
+    return match(resolved)(location.pathname);
+  });
+};
+
+export const useNavigate = () => {
+  const location = useLocation();
+  const { parentPath } = useContext(Context);
+  return useCallback((url: string | URL, state?: any, options: {
+    replace?: boolean;
+  } = {}) => {
+    const resolved = parentPath
+      ? `${_.trimEnd(parentPath, '/')}/${_.trimStart(url.toString(), '/')}`
+      : url.toString();
+  if (options.replace) {
+      location.replaceState(state, resolved);
+    } else {
+      location.pushState(state, resolved);
+    }
+  });
+};

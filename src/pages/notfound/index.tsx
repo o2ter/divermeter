@@ -24,12 +24,12 @@
 //
 
 import { useTheme } from '../../components/theme';
-import { useLocation } from 'frosty/web';
 import { normalizeColor, getRed, getGreen, getBlue, rgba, toHexString } from '@o2ter/colors.js';
+import { useNavigate } from '../../components/router';
 
 export const NotFoundPage = () => {
   const theme = useTheme();
-  const location = useLocation();
+  const navigate = useNavigate();
 
   // Get text color that contrasts with white background
   const textColor = theme.colorContrast('#ffffff');
@@ -81,7 +81,7 @@ export const NotFoundPage = () => {
         The page you're looking for doesn't exist.
       </div>
       <button
-        onClick={() => location.pushState({}, '/')}
+        onClick={() => navigate('/')}
         style={{
           padding: `${theme.spacing.sm}px ${theme.spacing.lg}px`,
           fontSize: theme.fontSize.md,

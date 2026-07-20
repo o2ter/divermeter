@@ -27,9 +27,8 @@ import _ from 'lodash';
 import { useProto, useProtoSchema } from '../../proto';
 import { useLocation } from 'frosty/web';
 import { useResource } from 'frosty';
-import { match } from 'path-to-regexp';
 import { useStyle } from '../style';
-import { Page } from '../router';
+import { Page, useMatch, useNavigate } from '../router';
 
 const MenuItem = ({
   label,
@@ -70,10 +69,12 @@ const MenuItem = ({
 
 const SchemaList = () => {
   const style = useStyle();
-  const location = useLocation();
   const proto = useProto();
   const schema = useProtoSchema();
-  const selected = match('/classes/:schema')(location.pathname) || undefined;
+  const match = useMatch();
+  const selected = match('/classes/:schema') || undefined;
+
+  const navigate = useNavigate();
 
   // Fetch counts for all schemas
   const { resource: counts } = useResource(async () => {
@@ -136,7 +137,7 @@ const SchemaList = () => {
                 }),
               }}
               onClick={() => {
-                location.pushState({}, `/classes/${key}`);
+                navigate(`/classes/${key}`);
               }}
             >
               <span>{key}</span>
@@ -164,6 +165,8 @@ type MenuProps = {
 export const Menu = ({ pages }: MenuProps) => {
   const style = useStyle();
   const location = useLocation();
+  const match = useMatch();
+  const navigate = useNavigate();
 
   const isPageActive = (page: Page, parentPath: string = ''): boolean => {
     if (!page.path && !page.index) return false;
@@ -173,8 +176,8 @@ export const Menu = ({ pages }: MenuProps) => {
       : parentPath;
 
     // Check if current page matches
-    const matchedIndex = page.index && match(parentPath)(location.pathname);
-    const matchedPath = !!currentPath && match(currentPath)(location.pathname);
+    const matchedIndex = page.index && match(parentPath);
+    const matchedPath = !!currentPath && match(currentPath);
     const isDirectMatch = !!(matchedIndex || matchedPath);
 
     // Check if any subpage matches
@@ -187,7 +190,7 @@ export const Menu = ({ pages }: MenuProps) => {
     if (!page.path || page.index) return null;
 
     const currentPath = `${_.trimEnd(parentPath, '/')}/${_.trimStart(page.path, '/')}`;
-    const isActive = !!match(currentPath)(location.pathname);
+    const isActive = !!match(currentPath);
     const hasActiveDescendant = page.children?.some(child => isPageActive(child, currentPath)) ?? false;
     const pageLabel = typeof page.title === 'string' ? page.title : page.path;
     const hasChildren = page.children && page.children.length > 0;
@@ -198,7 +201,7 @@ export const Menu = ({ pages }: MenuProps) => {
           <MenuItem
             label={pageLabel}
             isActive={isActive}
-            onClick={() => location.pushState({}, currentPath)}
+            onClick={() => navigate(currentPath)}
           />
         </div>
         {hasChildren && (isActive || hasActiveDescendant) && (
@@ -230,7 +233,7 @@ export const Menu = ({ pages }: MenuProps) => {
         <MenuItem
           label="Dashboard"
           isActive={location.pathname === '/'}
-          onClick={() => location.pushState({}, '/')}
+          onClick={() => navigate('/')}
         />
 
         <div style={{
@@ -250,13 +253,13 @@ export const Menu = ({ pages }: MenuProps) => {
         <MenuItem
           label="Config"
           isActive={location.pathname === '/config'}
-          onClick={() => location.pushState({}, '/config')}
+          onClick={() => navigate('/config')}
         />
 
         <MenuItem
           label="Diagram"
           isActive={location.pathname === '/diagram'}
-          onClick={() => location.pushState({}, '/diagram')}
+          onClick={() => navigate('/diagram')}
         />
 
         {pages && pages.length > 0 && (

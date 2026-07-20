@@ -187,8 +187,7 @@ src/
 ### Custom Router (Not React Router)
 - Uses `path-to-regexp` for path matching
 - Components: `<Routes>`, `<Route>`, `<Outlet>`
-- Hooks: `useParams()` for URL parameters, `useLocation()` for navigation
-- Navigate via `location.pushState({}, '/path')`
+- Hooks: `useParams()` for URL parameters, `useNavigate()` for navigation
 - See [src/components/router/index.tsx](src/components/router/index.tsx) for implementation
 
 ### Context Providers

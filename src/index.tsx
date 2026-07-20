@@ -30,7 +30,7 @@ import { ThemeProvider, ThemeSettings } from './components/theme';
 import type { ProtoClient } from 'proto.io';
 import { StyleProvider } from './components/style';
 import { Menu } from './components/menu';
-import { createPages, Page, Route, Routes } from './components/router';
+import { createPages, Outlet, Page, Route, Routes } from './components/router';
 import { HomePage } from './pages/home';
 import { BrowserPage } from './pages/browser';
 import { ConfigPage } from './pages/config';
@@ -41,7 +41,7 @@ import { ActivityProvider } from './components/activity';
 import { DiagramPage } from './pages/diagram';
 
 export { useTheme } from './components/theme';
-export { useParams, Outlet } from './components/router';
+export { useParams, Outlet, useMatch, useNavigate } from './components/router';
 export { useProto, useProtoSchema } from './proto';
 export { useAlert } from './components/alert';
 export { Modal } from './components/modal';
@@ -52,32 +52,43 @@ export type { SpinnerProps } from './components/spinner';
 export type { ButtonProps } from './components/button';
 export type { IconProps, IconName, IconSize } from './components/icon';
 
-const Main = ({ pages }: { pages?: Page[]; }) => {
+const Layout = ({ pages }: {
+  pages?: Page[];
+}) => (
+  <div style={{
+    display: 'flex',
+    flexDirection: 'row',
+    height: '100%',
+    width: '100%',
+  }}>
+    <div style={{ width: 240 }}>
+      <Menu pages={pages} />
+    </div>
+    <div style={{
+      flex: 1
+    }}>
+      <Outlet />
+    </div>
+  </div>
+);
+
+const Main = ({ pages, basePath }: {
+  pages?: Page[];
+  basePath?: string;
+}) => {
   const { showError } = useAlert();
   return (
     <ErrorBoundary onError={error => showError(error.message)}>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'row',
-        height: '100%',
-        width: '100%',
-      }}>
-        <div style={{ width: 240 }}>
-          <Menu pages={pages} />
-        </div>
-        <div style={{
-          flex: 1
-        }}>
-          <Routes>
-            <Route title='Dashboard' index element={<HomePage />} />
-            <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />
-            <Route title='Config' path="/config" element={<ConfigPage />} />
-            <Route title='Diagram' path="/diagram" element={<DiagramPage />} />
-            {pages && createPages(pages)}
-            <Route path='*path' element={<NotFoundPage />} />
-          </Routes>
-        </div>
-      </div>
+      <Routes path={basePath}>
+        <Route index element={<Layout pages={pages} />}>
+          <Route title='Dashboard' index element={<HomePage />} />
+          <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />
+          <Route title='Config' path="/config" element={<ConfigPage />} />
+          <Route title='Diagram' path="/diagram" element={<DiagramPage />} />
+          {pages && createPages(pages)}
+          <Route path='*path' element={<NotFoundPage />} />
+        </Route>
+      </Routes>
     </ErrorBoundary>
   );
 };
@@ -86,14 +97,15 @@ export const Dashboard: ComponentType<{
   proto: ProtoClient;
   theme?: ThemeSettings;
   pages?: Page[];
-}> = ({ proto, theme, pages }) => (
+  basePath?: string;
+}> = ({ proto, theme, pages, basePath }) => (
   <ThemeProvider theme={theme}>
     <StyleProvider>
       <AlertProvider>
         <ModalProvider>
           <ActivityProvider>
             <ProtoProvider proto={proto}>
-              <Main pages={pages} />
+              <Main pages={pages} basePath={basePath} />
             </ProtoProvider>
           </ActivityProvider>
         </ModalProvider>

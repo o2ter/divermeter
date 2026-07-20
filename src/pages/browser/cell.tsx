@@ -25,7 +25,6 @@
 
 import _ from 'lodash';
 import { useState, useRef } from 'frosty';
-import { useLocation } from 'frosty/web';
 import { Decimal } from 'proto.io';
 import { TObject, TSchema, useProto } from '../../proto';
 import { useTheme } from '../../components/theme';
@@ -34,6 +33,7 @@ import { JSCode } from '../../components/jscode';
 import { Modal } from '../../components/modal';
 import { Button } from '../../components/button';
 import { Icon } from '../../components/icon';
+import { useNavigate } from '../../components/router';
 import { typeOf, encodeValue, decodeValue, verifyValue } from './utils';
 import { Resize } from '../../components/resize';
 
@@ -89,7 +89,7 @@ export const TableCell = ({
   item, column, schema, className, isEditing, editingValue, setEditingValue,
 }: TableCellProps) => {
   const theme = useTheme();
-  const location = useLocation();
+  const navigate = useNavigate();
 
   // Helper to extract field type from dot-notated column names
   const getFieldFromColumn = (column: string) => {
@@ -310,7 +310,7 @@ export const TableCell = ({
                 onClick={() => {
                   if (!field || _.isString(field) || field.type !== 'pointer' || !field.target) return;
                   const targetId = editingValue?.id ?? value?.id;
-                  location.pushState({}, `/classes/${field.target}?filter[_id]=${encodeURIComponent(targetId)}`);
+                  navigate(`/classes/${field.target}?filter[_id]=${encodeURIComponent(targetId)}`);
                 }}
               >
                 <Icon name="link" size="sm" />
@@ -337,7 +337,7 @@ export const TableCell = ({
                 }}
                 onClick={() => {
                   if (!field || _.isString(field) || field.type !== 'relation' || !field.target || !item?.id) return;
-                  location.pushState({}, `/classes/${field.target}?relationOf=${encodeURIComponent(className)}&relationId=${encodeURIComponent(item.id)}&relationField=${encodeURIComponent(column)}`);
+                  navigate(`/classes/${field.target}?relationOf=${encodeURIComponent(className)}&relationId=${encodeURIComponent(item.id)}&relationField=${encodeURIComponent(column)}`);
                 }}
               >
                 <Icon name="link" size="sm" />
@@ -443,7 +443,7 @@ export const TableCell = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!field || _.isString(field) || field.type !== 'pointer' || !field.target) return;
-                  location.pushState({}, `/classes/${field.target}?filter[_id]=${encodeURIComponent(value.id)}`);
+                  navigate(`/classes/${field.target}?filter[_id]=${encodeURIComponent(value.id)}`);
                 }}
               >
                 <Icon name="link" size="sm" />
@@ -472,7 +472,7 @@ export const TableCell = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!field || _.isString(field) || field.type !== 'relation' || !field.target || !item?.id) return;
-                  location.pushState({}, `/classes/${field.target}?relationOf=${encodeURIComponent(className)}&relationId=${encodeURIComponent(item.id)}&relationField=${encodeURIComponent(column)}`);
+                  navigate(`/classes/${field.target}?relationOf=${encodeURIComponent(className)}&relationId=${encodeURIComponent(item.id)}&relationField=${encodeURIComponent(column)}`);
                 }}
               >
                 <Icon name="link" size="sm" />

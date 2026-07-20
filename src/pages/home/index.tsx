@@ -27,8 +27,8 @@ import _ from 'lodash';
 import { useProto, useProtoSchema } from '../../proto';
 import { useTheme } from '../../components/theme';
 import { useResource } from 'frosty';
-import { useLocation } from 'frosty/web';
 import { normalizeColor, getRed, getGreen, getBlue, rgba, toHexString, mixColor } from '@o2ter/colors.js';
+import { useNavigate } from '../../components/router';
 import { Spinner } from '../../components/spinner';
 
 type DashboardStats = {
@@ -175,7 +175,7 @@ export const HomePage = () => {
   const proto = useProto();
   const schema = useProtoSchema();
   const theme = useTheme();
-  const location = useLocation();
+  const navigate = useNavigate();
 
   const { resource: stats, loading } = useResource<DashboardStats>(async () => {
     const config = await proto.config({ master: true });
@@ -287,13 +287,13 @@ export const HomePage = () => {
             <QuickLink
               title="Browse Data"
               description={`Explore records in ${firstSchema} and other classes`}
-              onClick={() => location.pushState({}, `/classes/${firstSchema}`)}
+              onClick={() => navigate(`/classes/${firstSchema}`)}
             />
           )}
           <QuickLink
             title="Manage Configuration"
             description="View and edit backend configuration settings"
-            onClick={() => location.pushState({}, '/config')}
+            onClick={() => navigate('/config')}
           />
         </div>
       </div>
