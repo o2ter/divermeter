@@ -79,15 +79,13 @@ const Main = ({ pages, basePath }: {
   const { showError } = useAlert();
   return (
     <ErrorBoundary onError={error => showError(error.message)}>
-      <Routes path={basePath}>
-        <Route index element={<Layout pages={pages} />}>
-          <Route title='Dashboard' index element={<HomePage />} />
-          <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />
-          <Route title='Config' path="/config" element={<ConfigPage />} />
-          <Route title='Diagram' path="/diagram" element={<DiagramPage />} />
-          {pages && createPages(pages)}
-          <Route path='*path' element={<NotFoundPage />} />
-        </Route>
+      <Routes path={basePath} element={<Layout pages={pages} />}>
+        <Route title='Dashboard' index element={<HomePage />} />
+        <Route title={({ schema } = {}) => `${schema}`} path="/classes/:schema" element={<BrowserPage />} />
+        <Route title='Config' path="/config" element={<ConfigPage />} />
+        <Route title='Diagram' path="/diagram" element={<DiagramPage />} />
+        {pages && createPages(pages)}
+        <Route path='*path' element={<NotFoundPage />} />
       </Routes>
     </ErrorBoundary>
   );

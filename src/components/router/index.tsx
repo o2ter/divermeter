@@ -63,6 +63,7 @@ const Context = createContext<{
 
 type RoutesProps = PropsWithChildren<{
   path?: string;
+  element?: ElementNode;
 }>;
 
 const matchRoute = (
@@ -78,6 +79,7 @@ const matchRoute = (
 
 export const Routes = ({
   path,
+  element,
   children,
 }: RoutesProps) => {
   const routes = collectRoutes(children);
@@ -106,11 +108,15 @@ export const Routes = ({
       {!!title && (
         <head><title>{_.isFunction(title) ? title(params) : title}</title></head>
       )}
-      {_.reduce(stacks, (outlet, { element, params, parentPath }) => (
-        <Context value={{ params, outlet, parentPath }}>
-          {element || outlet}
-        </Context>
-      ), <></>)}
+      {_.reduce(
+        _.compact([...stacks, element && { element, parentPath: path }]),
+        (outlet, { element, params, parentPath }) => (
+          <Context value={{ params, outlet, parentPath }}>
+            {element || outlet}
+          </Context>
+        ),
+        <></>
+      )}
     </>
   );
 };
@@ -152,7 +158,7 @@ export const useNavigate = () => {
     const resolved = parentPath
       ? `${_.trimEnd(parentPath, '/')}/${_.trimStart(url.toString(), '/')}`
       : url.toString();
-  if (options.replace) {
+    if (options.replace) {
       location.replaceState(state, resolved);
     } else {
       location.pushState(state, resolved);
