@@ -23,9 +23,10 @@
 //  THE SOFTWARE.
 //
 
-import _ from 'lodash';
-
+// @ts-expect-error -- side-effect stylesheet import resolved by bundler
 import './app.scss';
+
+import _ from 'lodash';
 import { Main } from './main';
 
 export const App = () => {
