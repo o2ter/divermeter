@@ -29,7 +29,7 @@ import { useStyle } from '../style';
 
 type ButtonVariant = 'solid' | 'subtle' | 'outline' | 'ghost' | 'link' | 'unstyled';
 type ButtonSize = 'sm' | 'md' | 'lg';
-type ButtonColor = 'primary' | 'success' | 'info' | 'warning' | 'error';
+type ButtonColor = keyof ReturnType<typeof useStyle>['button']['colors'];
 
 type ButtonState = {
   hovered: boolean;
