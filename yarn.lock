@@ -1293,10 +1293,10 @@
   dependencies:
     lodash ">=4.17.21"
 
-"@o2ter/utils-js@^0.0.21":
-  version "0.0.21"
-  resolved "https://registry.yarnpkg.com/@o2ter/utils-js/-/utils-js-0.0.21.tgz#0696678af5dd8d70e5995ecb2b0569c99f10bef0"
-  integrity sha512-AfftMW9G5n7J4+v2/BaQ7UFRua3BMO2YgiMQ5/MkFQm9jOvRIBxruycgeV1QlPavw+mUnWQ7DQ4JMILirlnruA==
+"@o2ter/utils-js@^0.0.22":
+  version "0.0.22"
+  resolved "https://registry.yarnpkg.com/@o2ter/utils-js/-/utils-js-0.0.22.tgz#2444d627876a5090e2cf132ff2248575b372537c"
+  integrity sha512-xZr+kXvzb5MDqBwOEK7PKvFbrNrf4Pvh5YMneszjJFMNENIQBgZcU2adBFJ/kqc148JVmnO7MFJqArQ9NwJVRg==
   dependencies:
     lodash ">=4.18.1"
 
@@ -3569,14 +3569,14 @@ process-nextick-args@~2.0.0:
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"
   integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
 
-proto.io@^0.0.262:
-  version "0.0.262"
-  resolved "https://registry.yarnpkg.com/proto.io/-/proto.io-0.0.262.tgz#8d230639d2cbd4bfcb43aaf80e6a6fde7d16540f"
-  integrity sha512-mqUje29vYUSkkDxJ/j+Z46L4wQvOqMiKzVB0aZ8/K6o5IXOR5mVv2y5Y7bVcm+fGUa54cRFMO40V6v7Id5pzog==
+proto.io@^0.0.263:
+  version "0.0.263"
+  resolved "https://registry.yarnpkg.com/proto.io/-/proto.io-0.0.263.tgz#511498f6193f9674fa13222a57da3b6ab7654590"
+  integrity sha512-YwPmAQYzpzJ+FKlT7zLy3MYi7zLYoP0VLWsnRuslmgN1SV1a+PlQjFxLQIKnGPGAk/PzJxOuwn5xrhUpijPytg==
   dependencies:
     "@google-cloud/storage" "^7.16.0"
     "@o2ter/crypto-js" "^0.0.7"
-    "@o2ter/utils-js" "^0.0.21"
+    "@o2ter/utils-js" "^0.0.22"
     ali-oss "^6.23.0"
     axios "^1.18.0"
     busboy "^1.6.0"
