@@ -1293,6 +1293,13 @@
   dependencies:
     lodash ">=4.17.21"
 
+"@o2ter/utils-js@^0.0.20":
+  version "0.0.20"
+  resolved "https://registry.yarnpkg.com/@o2ter/utils-js/-/utils-js-0.0.20.tgz#b071165eb159179613a4b214ee64227d07913f8e"
+  integrity sha512-b77xkdc45fsUQ8atC8lASWR85uS8maMJwtN3ZZSbYzZlL8ejrCS9MKJm4zGr2UCECl9sd+jnGX18mT1b7MrwDw==
+  dependencies:
+    lodash ">=4.18.1"
+
 "@parcel/watcher-android-arm64@2.5.0":
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/@parcel/watcher-android-arm64/-/watcher-android-arm64-2.5.0.tgz#e32d3dda6647791ee930556aee206fcd5ea0fb7a"
@@ -3562,14 +3569,14 @@ process-nextick-args@~2.0.0:
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"
   integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
 
-proto.io@^0.0.260:
-  version "0.0.260"
-  resolved "https://registry.yarnpkg.com/proto.io/-/proto.io-0.0.260.tgz#794dfcf0e0d0a4d49239fbd0ba766831c8b75076"
-  integrity sha512-pnkftuBoYENnMuHaHpwl+z2VUeXolxqHrNen1RQsuSTIPqgzwM8qkl1rbPubFYmW990PTYWRKxCPT2dW9jy3ew==
+proto.io@^0.0.261:
+  version "0.0.261"
+  resolved "https://registry.yarnpkg.com/proto.io/-/proto.io-0.0.261.tgz#518343cadb3d40acaf82e05c7bb2ad10f92cd997"
+  integrity sha512-NOyoG5J2DhBmtgf7vulFkrPmXqYGbL4qvgS/f2wOxCD0EDIZH/OaeJ1ykLI07mfftta8d9eP9hOokmm6LtinuA==
   dependencies:
     "@google-cloud/storage" "^7.16.0"
     "@o2ter/crypto-js" "^0.0.7"
-    "@o2ter/utils-js" "^0.0.19"
+    "@o2ter/utils-js" "^0.0.20"
     ali-oss "^6.23.0"
     axios "^1.18.0"
     busboy "^1.6.0"
