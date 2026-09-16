@@ -195,13 +195,35 @@ export const TableCell = ({
     switch (type) {
       case 'string':
         return (
-          <input
-            type="text"
-            style={inputStyle}
-            value={editingValue ?? value ?? ''}
-            onInput={(e) => setEditingValue?.(e.currentTarget.value)}
-            autofocus
-          />
+          <Resize
+            style={{
+              ...inputStyle,
+              padding: 0,
+              paddingRight: theme.spacing.md,
+              minHeight: '80px',
+            }}
+          >
+            <textarea
+              style={{
+                width: '100%',
+                height: '100%',
+                minWidth: '100%',
+                minHeight: '100%',
+                border: 'none',
+                outline: 'none',
+                margin: 0,
+                padding: 0,
+                fontSize: 'inherit',
+                fontFamily: 'inherit',
+                backgroundColor: 'transparent',
+                resize: 'none',
+              }}
+              value={editingValue ?? value ?? ''}
+              onInput={(e) => setEditingValue?.(e.currentTarget.value)}
+              rows={3}
+              autofocus
+            />
+          </Resize>
         );
       case 'number':
         return (
