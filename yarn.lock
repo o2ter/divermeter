@@ -2610,13 +2610,13 @@ fresh@^2.0.0:
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-2.0.0.tgz#8dd7df6a1b3a1b3a5cf186c05a5dd267622635a4"
   integrity sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==
 
-frosty@^0.0.163:
-  version "0.0.163"
-  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.163.tgz#66000b807f146ea0375c09b44b36aa162f567b31"
-  integrity sha512-i+u7iRva1w9T7gle4baY6XP+WE0jdbjfrvZX8RVQXo8gCtq1f5BhjmAsAARCtttu6NPpirCF5dwWxEChuudrAg==
+frosty@^0.0.165:
+  version "0.0.165"
+  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.165.tgz#d46c810a98706a2ee6b609785699c8bfaa984fbc"
+  integrity sha512-z2dk6IncFVISSA+mUeHIG1aMfJsTKSP8d0vtiQulahjzj5vzjLXjcB9FYJ4nzjijZXsVupyVi0aENZCNTazWBg==
   dependencies:
     "@formatjs/intl-localematcher" "^0.8.12"
-    "@o2ter/utils-js" "^0.0.19"
+    "@o2ter/utils-js" "^0.0.23"
     "@types/jsdom" "^28.0.3"
     "@types/lodash" "^4.17.24"
     csstype "^3.2.3"
@@ -2624,7 +2624,7 @@ frosty@^0.0.163:
     lodash ">=4.18.1"
     myers.js "^0.0.22"
     nextick "^0.0.2"
-    postcss "^8.5.19"
+    postcss "^8.5.23"
     postcss-js "^5.1.0"
     postcss-nested "^7.0.2"
 
@@ -3277,10 +3277,10 @@ mz@^2.7.0:
     object-assign "^4.0.1"
     thenify-all "^1.0.0"
 
-nanoid@^3.3.12:
-  version "3.3.16"
-  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.16.tgz#a04d8ec4b1f10009d2d533947aefe4293737816c"
-  integrity sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==
+nanoid@^3.3.18:
+  version "3.3.19"
+  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.19.tgz#336d4aa4bcd4fb24d2cddede7ffeae40bec03f0a"
+  integrity sha512-Y2tUNy4ouw6tq5oDSKeQYGOyhkUBhNOcGV/02KC+6kd9eDGqdZd++mjMiIDilrBYvjEnCYvVtsuHCuP+okSfug==
 
 negotiator@0.6.3:
   version "0.6.3"
@@ -3551,12 +3551,12 @@ postcss-selector-parser@^7.0.0:
     cssesc "^3.0.0"
     util-deprecate "^1.0.2"
 
-postcss@^8.5.19:
-  version "8.5.19"
-  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.5.19.tgz#45ad5cfde499408e20147348237551381a922037"
-  integrity sha512-Mz8SaolMd8nB+G13WkORcxQKHZ/NE4xXevtkJHVuG+guo9/wYKlIMTKAqGdEmYOXR2ijPjTYNHssizdaVSUNdQ==
+postcss@^8.5.23:
+  version "8.5.28"
+  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.5.28.tgz#da4563a99a06e62d6c1cd1acae363224bcaed6e9"
+  integrity sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==
   dependencies:
-    nanoid "^3.3.12"
+    nanoid "^3.3.18"
     picocolors "^1.1.1"
     source-map-js "^1.2.1"
 
