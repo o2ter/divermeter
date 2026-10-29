@@ -2610,10 +2610,10 @@ fresh@^2.0.0:
   resolved "https://registry.yarnpkg.com/fresh/-/fresh-2.0.0.tgz#8dd7df6a1b3a1b3a5cf186c05a5dd267622635a4"
   integrity sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==
 
-frosty@^0.0.165:
-  version "0.0.165"
-  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.165.tgz#d46c810a98706a2ee6b609785699c8bfaa984fbc"
-  integrity sha512-z2dk6IncFVISSA+mUeHIG1aMfJsTKSP8d0vtiQulahjzj5vzjLXjcB9FYJ4nzjijZXsVupyVi0aENZCNTazWBg==
+frosty@^0.0.166:
+  version "0.0.166"
+  resolved "https://registry.yarnpkg.com/frosty/-/frosty-0.0.166.tgz#8f6bf66adba2c9ba0bd3d70af67e75b3aad361d1"
+  integrity sha512-DdbULuzFuhPYbOI2n1nhBZdCTEZ20spVoetny1Eq8DI7Kxc69c1AuPwXJto4kOKn5X5WzeHE5vzuu03VmPRs3Q==
   dependencies:
     "@formatjs/intl-localematcher" "^0.8.12"
     "@o2ter/utils-js" "^0.0.23"
